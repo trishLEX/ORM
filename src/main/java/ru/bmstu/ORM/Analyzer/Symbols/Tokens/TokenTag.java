@@ -20,6 +20,7 @@ public enum TokenTag implements SymbolType {
     DEFAULT,
     DELETE,
     DOUBLE,
+    ELSE,
     EXISTS,
     FALSE,
     FLOAT,
@@ -45,6 +46,7 @@ public enum TokenTag implements SymbolType {
     SET,
     SMALLINT,
     TABLE,
+    THEN,
     TIME,
     TIMESTAMP,
     TRUE,
@@ -69,7 +71,12 @@ public enum TokenTag implements SymbolType {
     MUL,
     DIV,
     IDENTIFIER,
-    NUMBER_CONST,
-    CHARACTER_CONST,
-    DATE_TIME_CONST
+    BYTE_CONST,
+    SHORT_CONST,
+    INT_CONST,
+    LONG_CONST,
+    FLOAT_CONST,
+    DOUBLE_CONST,
+    STRING_CONST
+    //DATE_TIME_CONST //UNSUPPORTED TILL
 }

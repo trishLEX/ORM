@@ -1,5 +1,5 @@
-and
-AND
-ANDD anda.asd.a..s
 character
 between betweek.between
+then 1.5
+2147483649
+'123123 abracadabra'
