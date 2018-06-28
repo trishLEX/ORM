@@ -1,118 +1,118 @@
-CreateTableStmt: CREATE TABLE (IF NOT EXISTS)?
-                 qualified_name '(' TableElementList? ')' Inherit?
+//Синтаксическое описание
+S                    ::= CreateTableStmt+
 
-Inherit:     INHERITS '(' qualified_name (',' qualified_name)* ')'
+CreateTableStmt      ::= CREATE TABLE (IF NOT EXISTS)?
+                         QualifiedName '(' (TableElement (',' TableElement)*)? ')' Inherit?
 
-qualified_name: ColId ('.'ColId)*
-ColId: IDENT | unreserved_keyword | col_name_keyword
+QualifiedName        ::= ColId ('.'ColId)*
 
-TableElementList: TableElement (',' TableElement)*
-TableElement:     columnDef | TableConstraint
-columnDef: ColId Typename ColConstraint*
+ColId                ::= IDENT | UnreservedKeyword | ColNameKeyword
 
-Typename:  SimpleTypename
-SimpleTypename: Numeric
-                | CharacterType
-                | ConstDatetime
+Inherit              ::= INHERITS '(' QualifiedName (',' QualifiedName)* ')'
 
-Numeric: INT
-         | INTEGER
-         | SMALLINT
-         | BIGINT
-         | REAL
-         | FLOAT  ( '('intConst')' )? //1 <= intConst <= 53
-         | DOUBLE PRECISION
-         | DECIMAL
-         | NUMERIC
-         | BOOLEAN
+TableElement         ::= ColumnDef | TableConstraint
 
-CharacterType: character ( '(' intConst ')' )?
+ColumnDef            ::= ColId Typename ColConstraint*
 
-character: CHARACTER
-           | CHAR
-           | VARCHAR
+Typename             ::= SimpleTypename
 
-ConstDatetime: TIMESTAMP ( '(' intConst ')' )? //0 <= intConst < 6
-               | TIME ( '(' intConst ')' )?
-               | DATE
+SimpleTypename       ::= NumericType
+                     |   CharacterType
+                   //|   Datetime NOT SUPPORTED TILL
 
-TableConstraint: CONSTRAINT ColId ConstraintElem
-                 | ConstraintElem
+NumericType          ::= INT
+                     |   INTEGER
+                     |   SMALLINT
+                     |   BIGINT
+                     |   REAL
+                     |   FLOAT  ( '('intConst')' )? //1 <= intConst <= 53
+                     |   DOUBLE PRECISION
+                     |   DECIMAL
+                     |   NUMERIC
+                     |   BOOLEAN
 
-ConstraintElem:  UNIQUE        '(' ColId (',' ColId)* ')'
-                 | PRIMARY KEY '(' ColId (',' ColId)* ')'
-                 | FOREIGN KEY '(' ColId (',' ColId)* ')' REFERENCES qualified_name
-                   opt_column_list key_actions
+CharacterType        ::= CharacterKeyword ( '(' intConst ')' )?
 
-ColConstraint:  CONSTRAINT ColId ColConstraintElem
-                | ColConstraintElem
+CharacterKeyword     ::= CHARACTER
+                     |   CHAR
+                     |   VARCHAR
 
-ColConstraintElem: NOT NULL
-                   | NULL
-                   | UNIQUE
-                   | PRIMARY KEY
-                   | CHECK '(' b_expr ')'     //HERE NEED TO CHECK APPLICATION OF OPs
-                   | DEFAULT expr_no_vars     //ARITHMETIC ONLY EXPR OR VALUE TILL
-                   | REFERENCES qualified_name opt_column_list key_actions
+Datetime             ::= TIMESTAMP ( '(' intConst ')' )? //0 <= intConst < 6
+                     |   TIME ( '(' intConst ')' )?
+                     |   DATE
 
-opt_column_list:   ( '(' ColId (',' ColId)* ')' )?
+TableConstraint      ::= CONSTRAINT ColId ConstraintElem
+                     |   ConstraintElem
 
-key_actions: ON UPDATE key_action
-             | ON DELETE key_action
-             | ON UPDATE key_action ON DELETE key_action
-             | ON DELETE key_action ON UPDATE key_action
-             | /*EMPTY*/
+ConstraintElem       ::= UNIQUE        '(' ColId (',' ColId)* ')'
+                     |   PRIMARY KEY '(' ColId (',' ColId)* ')'
+                     |   FOREIGN KEY '(' ColId (',' ColId)* ')' REFERENCES QualifiedName
+                         ( '(' ColId (',' ColId)* ')' )? KeyActions
 
-key_action:  NO ACTION
-             | RESTRICT
-             | CASCADE
-             | SET NULL
-             | SET DEFAULT
+ColConstraint        ::= CONSTRAINT ColId ColConstraintElem
+                     |   ColConstraintElem
 
-expr_no_vars: an_expr | NumericValue | TRUE | FALSE | CharacterValue | DateValue
+ColConstraintElem    ::= NOT NULL
+                     |   NULL
+                     |   UNIQUE
+                     |   PRIMARY KEY
+                     |   CHECK '(' BoolExpr ')'    //HERE NEED TO CHECK APPLICATION OF OPs
+                     |   DEFAULT ExprNoVars     //ARITHMETIC ONLY EXPR OR VALUE TILL
+                     |   REFERENCES qualified_name ( '(' ColId (',' ColId)* ')' )? KeyActions
 
-an_expr: an_term ( {'+' | '-'} an_term )*
-an_term: an_factor ( {'*' | '/'} an_factor )*
-an_factor: NumericValue
-          | '-' an_factor
-          | '(' an_expr ')'
+KeyActions           ::= ON UPDATE KeyAction
+                     |   ON DELETE KeyAction
+                     |   ON UPDATE KeyAction ON DELETE KeyAction
+                     |   ON DELETE KeyAction ON UPDATE KeyAction
+                     |   /*EMPTY*/
 
-a_expr: a_term ( {'+' | '-'} a_term )*
-a_term: a_factor ( {'*' | '/'} a_factor )*
-a_factor: ColId
-          | NumericValue
-          | '-' a_factor
-          | '(' a_expr ')'
+KeyAction            ::= NO ACTION
+                     |   RESTRICT
+                     |   CASCADE
+                     |   SET NULL
+                     |   SET DEFAULT
 
-b_stmt: a_expr   '<'  a_expr
-        | a_expr '<=' a_expr
-        | a_expr '>'  a_expr
-        | a_expr '>=' a_expr
-        | a_expr '='  a_expr
-        | a_expr '!=' a_expr
-        | a_expr IS NULL
-        | a_expr IS NOT NULL
-        | a_expr IS TRUE
-        | a_expr IS NOT TRUE
-        | a_expr IS FALSE
-        | a_expr IS NOT FALSE
-        | ColId LIKE StringValue               // ONLY FOR STRING TYPE OF ColId
-        | StringValue LIKE ColId               // ONLY FOR STRING TYPE OF ColId
-        | ColId NOT LIKE StringValue           // ONLY FOR STRING TYPE OF ColId
-        | StringValue NOT LIKE ColId           // ONLY FOR STRING TYPE OF ColId
-        | a_expr BETWEEN b_expr AND a_expr     // ARITHMETIC OR DATE ONLY TILL
-        | a_expr NOT BETWEEN a_expr AND a_expr // ARITHMETIC OR DATE ONLY TILL
+ExprNoVars           ::= ArithmExprNoVar | NumericValue | TRUE | FALSE | CharacterValue | DateValue
 
-b_expr: b_term (OR b_term)*
-b_term: b_factor (AND b_factor)*
-b_factor: b_const | NOT b_factor | '(' b_expr ')'
-b_const: ColId | TRUE | FALSE | NULL | b_stmt
+ArithmExprNoVar      ::= ArithmExprNoVarTerm ( {'+' | '-'} ArithmExprNoVarTerm )*
+ArithmExprNoVarTerm  ::= ArithmExprNoVarFactor ( {'*' | '/'} ArithmExprNoVarFactor )*
+ArithmExprNoVarFactor::= NumericValue
+                     |   '-' ArithmExprNoVarFactor
+                     |   '(' ArithmExprNoVar ')'
+
+ArithmExpr           ::= ArithmExprTerm ( {'+' | '-'} ArithmExprTerm )*
+ArithmExprTerm       ::= ArithmExprFactor ( {'*' | '/'} ArithmExprFactor )*
+ArithmExprFactor     ::= ColId
+                     |   NumericValue
+                     |   '-' ArithmExprFactor
+                     |   '(' ArithmExpr ')'
+
+BoolStmt             ::= ArithmExpr   '<'  ArithmExpr
+                     |   ArithmExpr '<=' ArithmExpr
+                     |   ArithmExpr '>'  ArithmExpr
+                     |   ArithmExpr '>=' ArithmExpr
+                     |   ArithmExpr '='  ArithmExpr
+                     |   ArithmExpr '!=' ArithmExpr
+                     |   ArithmExpr IS NULL
+                     |   ArithmExpr IS NOT NULL
+                     |   ArithmExpr IS TRUE
+                     |   ArithmExpr IS NOT TRUE
+                     |   ArithmExpr IS FALSE
+                     |   ArithmExpr IS NOT FALSE
+                     |   ColId LIKE StringValue                           // ONLY FOR STRING TYPE OF ColId
+                     |   StringValue LIKE ColId                           // ONLY FOR STRING TYPE OF ColId
+                     |   ColId NOT LIKE StringValue                       // ONLY FOR STRING TYPE OF ColId
+                     |   StringValue NOT LIKE ColId                       // ONLY FOR STRING TYPE OF ColId
+                     |   ArithmExpr BETWEEN BoolExpr AND ArithmExpr       // ARITHMETIC OR DATE ONLY TILL
+                     |   ArithmExpr NOT BETWEEN ArithmExpr AND ArithmExpr // ARITHMETIC OR DATE ONLY TILL
+
+BoolExpr             ::= BoolExprTerm (OR BoolExprTerm)*
+BoolExprTerm         ::= BoolExprFactor (AND BoolExprFactor)*
+BoolExprFactor       ::= BoolConst | NOT BoolExprFactor  | '(' BoolExpr ')'
+BoolConst            ::= ColId     | TRUE | FALSE | NULL | BoolStmt
 
 
-
-
-
-col_name_keyword:
+ColNameKeyword::=
 			  BETWEEN
 			| BIGINT
 			| BIT
@@ -164,7 +164,7 @@ col_name_keyword:
 			| XMLSERIALIZE
 			| XMLTABLE
 
-unreserved_keyword:
+UnreservedKeyword::=
 			  ABORT_P
 			| ABSOLUTE_P
 			| ACCESS
