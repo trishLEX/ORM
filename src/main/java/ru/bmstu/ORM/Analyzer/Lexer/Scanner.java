@@ -1189,6 +1189,10 @@ public class Scanner {
                     cur.nextCp();
 
                     return new CommaToken(start, (Position) cur.clone());
+                case '.':
+                    cur.nextCp();
+
+                    return new DotToken(start, (Position) cur.clone());
 
                 default:
                    if (cur.isLetter())
@@ -1209,18 +1213,11 @@ public class Scanner {
 
     private IdentToken getIdent(Position start, String value) throws CloneNotSupportedException {
         StringBuilder valueBuilder = new StringBuilder(value);
-        boolean wasLastComma = false;
-        while (cur.isLetterOrDigit() || cur.getChar() == '.') {
-            if (cur.getChar() == '.' && wasLastComma)
-                messages.add(new Message((Position) cur.clone(), "Two dots are in order"));
-
-            if (cur.isDigit() && wasLastComma)
-                messages.add(new Message((Position) cur.clone(), "Wrong identifier"));
-
-            wasLastComma = cur.getChar() == '.';
+        while (cur.isLetterOrDigit()) {
             valueBuilder.append(cur.getChar());
             cur.nextCp();
         }
+
         value = valueBuilder.toString();
 
         return new IdentToken(start, (Position) cur.clone(), value);
