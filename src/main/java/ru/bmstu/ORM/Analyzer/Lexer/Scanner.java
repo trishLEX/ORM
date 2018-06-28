@@ -1185,6 +1185,10 @@ public class Scanner {
                     cur.nextCp();
 
                     return new StringToken(start, (Position) cur.clone(), value.toString());
+                case ',':
+                    cur.nextCp();
+
+                    return new CommaToken(start, (Position) cur.clone());
 
                 default:
                    if (cur.isLetter())

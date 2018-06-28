@@ -52,7 +52,8 @@ public class Position implements Comparable<Position>, Cloneable {
                 text.charAt(index) == '<' ||
                 text.charAt(index) == '>' ||
                 text.charAt(index) == '=' ||
-                text.charAt(index) == '!'
+                text.charAt(index) == '!' ||
+                text.charAt(index) == ','
                 );
     }
 
