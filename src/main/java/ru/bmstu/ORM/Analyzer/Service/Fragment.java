@@ -12,4 +12,20 @@ public class Fragment {
     public String toString() {
         return start.toString() + "-" + follow.toString();
     }
+
+    public void setStart(Position start) {
+        this.start = start;
+    }
+
+    public void setFollow(Position follow) {
+        this.follow = follow;
+    }
+
+    public Position getStart() {
+        return start;
+    }
+
+    public Position getFollow() {
+        return follow;
+    }
 }

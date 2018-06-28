@@ -6,7 +6,7 @@ CreateTableStmt      ::= CREATE TABLE (IF NOT EXISTS)?
 
 QualifiedName        ::= ColId ('.'ColId)*
 
-ColId                ::= IDENT | UnreservedKeyword | ColNameKeyword
+ColId                ::= IDENT //UNSUPPORTED TILL | UnreservedKeyword | ColNameKeyword
 
 Inherit              ::= INHERITS '(' QualifiedName (',' QualifiedName)* ')'
 
@@ -44,10 +44,10 @@ DateTimeType         ::= TIMESTAMP ( '(' intConst ')' )? //0 <= intConst < 6
 TableConstraint      ::= CONSTRAINT ColId ConstraintElem
                      |   ConstraintElem
 
-ConstraintElem       ::= UNIQUE        '(' ColId (',' ColId)* ')'
+ConstraintElem       ::= UNIQUE      '(' ColId (',' ColId)* ')'
                      |   PRIMARY KEY '(' ColId (',' ColId)* ')'
                      |   FOREIGN KEY '(' ColId (',' ColId)* ')' REFERENCES QualifiedName
-                         ( '(' ColId (',' ColId)* ')' )? KeyActions
+                         ('(' ColId (',' ColId)* ')' )? KeyActions?
 
 ColConstraint        ::= CONSTRAINT ColId ColConstraintElem
                      |   ColConstraintElem
@@ -57,14 +57,11 @@ ColConstraintElem    ::= NOT NULL
                      |   UNIQUE
                      |   PRIMARY KEY
                      |   CHECK '(' BoolExpr ')'    //HERE NEED TO CHECK APPLICATION OF OPs
-                     |   DEFAULT ExprNoVars     //ARITHMETIC ONLY EXPR OR VALUE TILL
-                     |   REFERENCES qualified_name ( '(' ColId (',' ColId)* ')' )? KeyActions
+                     |   DEFAULT ExprNoVars        //ARITHMETIC ONLY EXPR OR VALUE TILL
+                     |   REFERENCES qualified_name ( '(' ColId (',' ColId)* ')' )? KeyActions?
 
-KeyActions           ::= ON UPDATE KeyAction
-                     |   ON DELETE KeyAction
-                     |   ON UPDATE KeyAction ON DELETE KeyAction
-                     |   ON DELETE KeyAction ON UPDATE KeyAction
-                     |   /*EMPTY*/
+KeyActions           ::= ON UPDATE KeyAction (ON DELETE KeyAction)?
+                     |   ON DELETE KeyAction (ON UPDATE KeyAction)?
 
 KeyAction            ::= NO ACTION
                      |   RESTRICT
@@ -72,7 +69,7 @@ KeyAction            ::= NO ACTION
                      |   SET NULL
                      |   SET DEFAULT
 
-ExprNoVars           ::= ArithmExprNoVar | NumericValue | TRUE | FALSE | CharacterValue | DateValue
+ExprNoVars           ::= ArithmExprNoVar | TRUE | FALSE | CharacterValue | DateValue
 
 ArithmExprNoVar      ::= ArithmExprNoVarTerm ( {'+' | '-'} ArithmExprNoVarTerm )*
 ArithmExprNoVarTerm  ::= ArithmExprNoVarFactor ( {'*' | '/'} ArithmExprNoVarFactor )*
@@ -80,12 +77,10 @@ ArithmExprNoVarFactor::= NumericValue
                      |   '-' ArithmExprNoVarFactor
                      |   '(' ArithmExprNoVar ')'
 
-ArithmExpr           ::= ArithmExprTerm ( {'+' | '-'} ArithmExprTerm )*
-ArithmExprTerm       ::= ArithmExprFactor ( {'*' | '/'} ArithmExprFactor )*
-ArithmExprFactor     ::= ColId
-                     |   NumericValue
-                     |   '-' ArithmExprFactor
-                     |   '(' ArithmExpr ')'
+BoolExpr             ::= BoolExprTerm (OR BoolExprTerm)*
+BoolExprTerm         ::= BoolExprFactor (AND BoolExprFactor)*
+BoolExprFactor       ::= BoolConst | NOT BoolExprFactor  | '(' BoolExpr ')'
+BoolConst            ::= ColId     | TRUE | FALSE | NULL | BoolStmt
 
 BoolStmt             ::= ArithmExpr   '<'  ArithmExpr
                      |   ArithmExpr '<=' ArithmExpr
@@ -106,10 +101,12 @@ BoolStmt             ::= ArithmExpr   '<'  ArithmExpr
                      |   ArithmExpr BETWEEN BoolExpr AND ArithmExpr       // ARITHMETIC OR DATE ONLY TILL
                      |   ArithmExpr NOT BETWEEN ArithmExpr AND ArithmExpr // ARITHMETIC OR DATE ONLY TILL
 
-BoolExpr             ::= BoolExprTerm (OR BoolExprTerm)*
-BoolExprTerm         ::= BoolExprFactor (AND BoolExprFactor)*
-BoolExprFactor       ::= BoolConst | NOT BoolExprFactor  | '(' BoolExpr ')'
-BoolConst            ::= ColId     | TRUE | FALSE | NULL | BoolStmt
+ArithmExpr           ::= ArithmExprTerm ( {'+' | '-'} ArithmExprTerm )*
+ArithmExprTerm       ::= ArithmExprFactor ( {'*' | '/'} ArithmExprFactor )*
+ArithmExprFactor     ::= ColId
+                     |   NumericValue
+                     |   '-' ArithmExprFactor
+                     |   '(' ArithmExpr ')'
 
 
 ColNameKeyword::=

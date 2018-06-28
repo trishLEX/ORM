@@ -5,12 +5,10 @@ import ru.bmstu.ORM.Analyzer.Service.Position;
 import ru.bmstu.ORM.Analyzer.Symbols.Symbol;
 
 public abstract class Token<T> extends Symbol {
-    private Fragment coords;
     private T value;
 
     public Token(TokenTag tag, Position start, Position follow, T value) {
-        super(tag);
-        this.coords = new Fragment(start, follow);
+        super(tag, new Fragment(start, follow));
         this.value = value;
     }
 
@@ -21,7 +19,7 @@ public abstract class Token<T> extends Symbol {
 
     @Override
     public String toString() {
-        return this.getTag() + " " + coords + ": " + value;
+        return this.getTag() + " " + getCoords() + ": " + value;
     }
 
     @Override

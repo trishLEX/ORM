@@ -1,0 +1,37 @@
+package ru.bmstu.ORM.Analyzer.Symbols.Variables;
+
+import ru.bmstu.ORM.Analyzer.Symbols.SymbolType;
+
+public enum VarTag implements SymbolType {
+    S,
+    CREATE_TABLE_STMT,
+    INHERIT,
+    QUALIFIED_NAME,
+    COL_ID,
+    TABLE_ELEMENT,
+    COLUMN_DEF,
+    TABLE_CONSTRAINT,
+    TYPENAME,
+    SIMPLE_TYPENAME,
+    NUMERIC_TYPE,
+    CHARACTER_TYPE,
+    CHARACTER_KEYWORD,
+    DATETIME, //UNSUPPORTED TILL
+    COL_CONSTRAINT,
+    CONSTRAINT_ELEM,
+    COL_CONSTRAINT_ELEM,
+    BOOL_EXPR,
+    BOOL_EXPR_TERM,
+    BOOL_EXPR_FACTOR,
+    BOOL_CONST,
+    BOOL_STMT,
+    KEY_ACTIONS,
+    KEY_ACTION,
+    EXPR_NO_VARS,
+    ARITHM_EXPR_NO_VAR,
+    ARITHM_EXPR_NO_VAR_TERM,
+    ARITHM_EXPR_NO_VAR_FACTOR,
+    ARITHM_EXPR,
+    ARITHM_EXPR_TERM,
+    ARITHM_EXPR_FACTOR,
+}
