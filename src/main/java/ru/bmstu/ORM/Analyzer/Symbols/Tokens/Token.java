@@ -9,7 +9,7 @@ public abstract class Token<T> extends Symbol {
     private T value;
 
     public Token(TokenTag tag, Position start, Position follow, T value) {
-        this.setTag(tag);
+        super(tag);
         this.coords = new Fragment(start, follow);
         this.value = value;
     }
