@@ -18,7 +18,7 @@ Typename             ::= SimpleTypename
 
 SimpleTypename       ::= NumericType
                      |   CharacterType
-                   //|   Datetime NOT SUPPORTED TILL
+                   //|   DateTimeType NOT SUPPORTED TILL
 
 NumericType          ::= INT
                      |   INTEGER
@@ -37,7 +37,7 @@ CharacterKeyword     ::= CHARACTER
                      |   CHAR
                      |   VARCHAR
 
-Datetime             ::= TIMESTAMP ( '(' intConst ')' )? //0 <= intConst < 6
+DateTimeType         ::= TIMESTAMP ( '(' intConst ')' )? //0 <= intConst < 6
                      |   TIME ( '(' intConst ')' )?
                      |   DATE
 
