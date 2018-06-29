@@ -125,7 +125,7 @@ public class Parser {
         ColIdVar colIdVar = colId;
 
         while (sym.getTag() == TokenTag.DOT) {
-            if (colIdVar.getFollow() != sym.getStart())
+            if (!colIdVar.getFollow().equals(sym.getStart()))
                 throw new RuntimeException("Wrong identifier at " + sym.getStart());
 
             qualifiedName.addSymbol(sym);

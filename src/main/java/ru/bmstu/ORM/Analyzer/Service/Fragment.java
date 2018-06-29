@@ -29,6 +29,19 @@ public class Fragment {
         return follow;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+
+        if (obj == null || obj.getClass() != this.getClass())
+            return false;
+
+        Fragment other = (Fragment) obj;
+
+        return this.start.equals(other.start) && this.follow.equals(other.follow);
+    }
+
     public static Fragment dummyCoords() {
         return new Fragment(Position.dummyPosition(), Position.dummyPosition());
     }

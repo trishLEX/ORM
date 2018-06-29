@@ -92,6 +92,18 @@ public class Position implements Comparable<Position>, Cloneable {
         return " ( " + line + " , " + pos + " ) ";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+
+        if (obj == null || obj.getClass() != this.getClass())
+            return false;
+
+        Position other = (Position) obj;
+        return this.index.equals(other.index);
+    }
+
     public static Position dummyPosition() {
         return new Position("");
     }
