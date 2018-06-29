@@ -766,26 +766,26 @@ public class Scanner {
                                         }
                                     }
                                 }
-                            } else if (cur.getChar() == 'i') {
-                                value.append("i");
+                            }
+                        } else if (cur.getChar() == 'i') {
+                            value.append("i");
+                            cur.nextCp();
+                            if (cur.getChar() == 'm') {
+                                value.append("m");
                                 cur.nextCp();
-                                if (cur.getChar() == 'm') {
-                                    value.append("m");
+                                if (cur.getChar() == 'a') {
+                                    value.append("a");
                                     cur.nextCp();
-                                    if (cur.getChar() == 'a') {
-                                        value.append("a");
+                                    if (cur.getChar() == 'r') {
+                                        value.append("r");
                                         cur.nextCp();
-                                        if (cur.getChar() == 'r') {
-                                            value.append("r");
+                                        if (cur.getChar() == 'y') {
+                                            value.append("y");
                                             cur.nextCp();
-                                            if (cur.getChar() == 'y') {
-                                                value.append("y");
-                                                cur.nextCp();
-                                                if (cur.isWhiteSpace() || cur.isSpecial())
-                                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.PRIMARY);
-                                                else
-                                                    return getIdent(start, value.toString());
-                                            }
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.PRIMARY);
+                                            else
+                                                return getIdent(start, value.toString());
                                         }
                                     }
                                 }
