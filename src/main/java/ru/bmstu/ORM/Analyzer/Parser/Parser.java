@@ -527,8 +527,7 @@ public class Parser {
             ColConstraintElemVar colConstraintElem = new ColConstraintElemVar();
             colConstraint.addSymbol(colConstraintElem);
             parseColConstraintElem(colConstraintElem);
-            colConstraintElem.setStart(colConstraintElem.getStart());
-            colConstraintElem.setFollow(colConstraintElem.getFollow());
+            colConstraint.setCoords(colConstraintElem.getCoords());
         }
     }
 
