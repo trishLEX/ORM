@@ -874,14 +874,9 @@ public class Parser {
         }
     }
 
-    //BoolConst            ::= ColId     | TRUE | FALSE | NULL | BoolStmt
+    //BoolConst            ::= TRUE | FALSE | NULL | BoolStmt
     private void parseBoolConst(BoolConstVar boolConst) throws CloneNotSupportedException {
-        //TODO UNSUPPORTED FIRST(ColId)
-        if (sym.getTag() == TokenTag.IDENTIFIER) {
-            boolConst.addSymbol(sym);
-            boolConst.setCoords(sym.getCoords());
-            parse(TokenTag.IDENTIFIER);
-        } else if (sym.getTag() == TokenTag.TRUE) {
+        if (sym.getTag() == TokenTag.TRUE) {
             boolConst.addSymbol(sym);
             boolConst.setCoords(sym.getCoords());
             parse(TokenTag.TRUE);

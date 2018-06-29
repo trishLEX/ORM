@@ -80,7 +80,7 @@ ArithmExprNoVarFactor::= NumericValue
 BoolExpr             ::= BoolExprTerm (OR BoolExprTerm)*
 BoolExprTerm         ::= BoolExprFactor (AND BoolExprFactor)*
 BoolExprFactor       ::= BoolConst | NOT BoolExprFactor  | '(' BoolExpr ')'
-BoolConst            ::= ColId     | TRUE | FALSE | NULL | BoolStmt
+BoolConst            ::= TRUE | FALSE | NULL | BoolStmt
 
 BoolStmt             ::= ArithmExpr '<'  ArithmExpr
                      |   ArithmExpr '<=' ArithmExpr
