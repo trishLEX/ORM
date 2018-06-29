@@ -15,4 +15,9 @@ public abstract class Var extends Symbol {
     public void addSymbol(Symbol s) {
         this.symbols.add(s);
     }
+
+    @Override
+    public String toString() {
+        return this.getTag() + " " + getCoords();
+    }
 }

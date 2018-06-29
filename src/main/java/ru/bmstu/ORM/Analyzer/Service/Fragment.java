@@ -28,4 +28,8 @@ public class Fragment {
     public Position getFollow() {
         return follow;
     }
+
+    public static Fragment dummyCoords() {
+        return new Fragment(Position.dummyPosition(), Position.dummyPosition());
+    }
 }

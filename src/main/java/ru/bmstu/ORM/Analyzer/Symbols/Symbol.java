@@ -9,6 +9,7 @@ public abstract class Symbol {
 
     public Symbol(SymbolType tag) {
         this.tag = tag;
+        coords = Fragment.dummyCoords();
     }
 
     public Symbol(SymbolType tag, Fragment coords) {

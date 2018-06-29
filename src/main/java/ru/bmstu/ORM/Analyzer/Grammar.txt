@@ -82,7 +82,7 @@ BoolExprTerm         ::= BoolExprFactor (AND BoolExprFactor)*
 BoolExprFactor       ::= BoolConst | NOT BoolExprFactor  | '(' BoolExpr ')'
 BoolConst            ::= ColId     | TRUE | FALSE | NULL | BoolStmt
 
-BoolStmt             ::= ArithmExpr   '<'  ArithmExpr
+BoolStmt             ::= ArithmExpr '<'  ArithmExpr
                      |   ArithmExpr '<=' ArithmExpr
                      |   ArithmExpr '>'  ArithmExpr
                      |   ArithmExpr '>=' ArithmExpr
@@ -94,16 +94,17 @@ BoolStmt             ::= ArithmExpr   '<'  ArithmExpr
                      |   ArithmExpr IS NOT TRUE
                      |   ArithmExpr IS FALSE
                      |   ArithmExpr IS NOT FALSE
-                     |   ColId LIKE StringValue                           // ONLY FOR STRING TYPE OF ColId
-                     |   StringValue LIKE ColId                           // ONLY FOR STRING TYPE OF ColId
-                     |   ColId NOT LIKE StringValue                       // ONLY FOR STRING TYPE OF ColId
-                     |   StringValue NOT LIKE ColId                       // ONLY FOR STRING TYPE OF ColId
-                     |   ArithmExpr BETWEEN BoolExpr AND ArithmExpr       // ARITHMETIC OR DATE ONLY TILL
+                     |   ArithmExpr BETWEEN ArithmExpr AND ArithmExpr     // ARITHMETIC OR DATE ONLY TILL
                      |   ArithmExpr NOT BETWEEN ArithmExpr AND ArithmExpr // ARITHMETIC OR DATE ONLY TILL
+                   //|   ColId LIKE StringValue                           // ONLY FOR STRING TYPE OF ColId
+                   //|   ColId NOT LIKE StringValue                       // ONLY FOR STRING TYPE OF ColId
+                   //|   StringValue LIKE ColId                           // ONLY FOR STRING TYPE OF ColId
+                   //|   StringValue NOT LIKE ColId                       // ONLY FOR STRING TYPE OF ColId
+
 
 ArithmExpr           ::= ArithmExprTerm ( {'+' | '-'} ArithmExprTerm )*
 ArithmExprTerm       ::= ArithmExprFactor ( {'*' | '/'} ArithmExprFactor )*
-ArithmExprFactor     ::= ColId
+ArithmExprFactor     ::= ColId //MUST BE NUMERIC TYPE
                      |   NumericValue
                      |   '-' ArithmExprFactor
                      |   '(' ArithmExpr ')'

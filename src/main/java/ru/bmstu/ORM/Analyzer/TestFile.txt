@@ -1,9 +1,3 @@
-character
-between betweek.between
-then 1.5
-2147483649
-'123123 abracadabra'
-
 CREATE TABLE table1 (
 a int,
 b float

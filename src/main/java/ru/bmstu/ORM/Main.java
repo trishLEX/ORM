@@ -2,8 +2,10 @@ package ru.bmstu.ORM;
 
 import ru.bmstu.ORM.Analyzer.Lexer.Message;
 import ru.bmstu.ORM.Analyzer.Lexer.Scanner;
+import ru.bmstu.ORM.Analyzer.Parser.Parser;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.SVar;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,5 +34,9 @@ public class Main {
 
         for (Message msg: scanner.getMessages())
             System.out.println("ERROR: " + msg);
+
+        Parser parser = new Parser(new Scanner(program));
+        SVar start = parser.parse();
+        System.out.println(start);
     }
 }

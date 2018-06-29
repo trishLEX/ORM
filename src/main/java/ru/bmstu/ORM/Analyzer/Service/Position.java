@@ -91,4 +91,8 @@ public class Position implements Comparable<Position>, Cloneable {
     public String toString() {
         return " ( " + line + " , " + pos + " ) ";
     }
+
+    public static Position dummyPosition() {
+        return new Position("");
+    }
 }
