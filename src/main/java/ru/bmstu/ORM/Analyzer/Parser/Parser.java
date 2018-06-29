@@ -281,7 +281,14 @@ public class Parser {
                 parse(TokenTag.LPAREN);
 
                 numericType.addSymbol(sym);
-                parse(TokenTag.INT_CONST);
+                if (sym.getTag() == TokenTag.BYTE_CONST)
+                    parse(TokenTag.BYTE_CONST);
+                else if (sym.getTag() == TokenTag.SHORT_CONST)
+                    parse(TokenTag.SHORT_CONST);
+                else if (sym.getTag() == TokenTag.INT_CONST)
+                    parse(TokenTag.INT_CONST);
+                else if (sym.getTag() == TokenTag.LONG_CONST)
+                    parse(TokenTag.LONG_CONST);
 
                 numericType.addSymbol(sym);
                 numericType.setFollow(sym.getFollow());
@@ -317,7 +324,14 @@ public class Parser {
             parse(TokenTag.LPAREN);
 
             characterType.addSymbol(sym);
-            parse(TokenTag.INT_CONST);
+            if (sym.getTag() == TokenTag.BYTE_CONST)
+                parse(TokenTag.BYTE_CONST);
+            else if (sym.getTag() == TokenTag.SHORT_CONST)
+                parse(TokenTag.SHORT_CONST);
+            else if (sym.getTag() == TokenTag.INT_CONST)
+                parse(TokenTag.INT_CONST);
+            else if (sym.getTag() == TokenTag.LONG_CONST)
+                parse(TokenTag.LONG_CONST);
 
             characterType.setFollow(sym.getFollow());
             characterType.addSymbol(sym);
