@@ -496,7 +496,9 @@ public class Parser {
                     parseColId(colIdVar);
                 }
 
-                constraintElem.setFollow(colIdVar.getFollow());
+                constraintElem.setFollow(sym.getFollow());
+                constraintElem.addSymbol(sym);
+                parse(TokenTag.RPAREN);
             }
 
             if (sym.getTag() == TokenTag.ON) {
