@@ -33,8 +33,11 @@ public class Parser {
         CreateTableStmtVar createTableStmt = new CreateTableStmtVar();
         s.addSymbol(createTableStmt);
         parseCreateTableStmt(createTableStmt);
-
         s.setStart(createTableStmt.getStart());
+
+        s.setFollow(sym.getFollow());
+        s.addSymbol(sym);
+        parse(TokenTag.SEMICOLON);
 
         CreateTableStmtVar createTableStmtVar;
 
@@ -42,12 +45,15 @@ public class Parser {
             createTableStmtVar = new CreateTableStmtVar();
             s.addSymbol(createTableStmtVar);
             parseCreateTableStmt(createTableStmtVar);
-            s.setFollow(createTableStmtVar.getFollow());
+
+            s.setFollow(sym.getFollow());
+            s.addSymbol(sym);
+            parse(TokenTag.SEMICOLON);
         }
     }
 
     //CreateTableStmt      ::= CREATE TABLE (IF NOT EXISTS)?
-    //QualifiedName '(' (TableElement (',' TableElement)*)? ')' Inherit?
+    //                         QualifiedName '(' (TableElement (',' TableElement)*)? ')' Inherit?
     private void parseCreateTableStmt(CreateTableStmtVar createTableStmt) throws CloneNotSupportedException {
         createTableStmt.setStart(sym.getStart());
 

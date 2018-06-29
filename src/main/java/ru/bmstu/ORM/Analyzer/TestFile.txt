@@ -1,4 +1,4 @@
 CREATE TABLE table1 (
 a int,
 b float
-)
+);

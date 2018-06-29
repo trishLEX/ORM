@@ -66,6 +66,7 @@ public enum TokenTag implements SymbolType {
     NOTEQUAL,
     DOT,
     COMMA,
+    SEMICOLON,
     ADD,
     SUB,
     MUL,

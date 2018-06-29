@@ -1193,6 +1193,10 @@ public class Scanner {
                     cur.nextCp();
 
                     return new DotToken(start, (Position) cur.clone());
+                case ';':
+                    cur.nextCp();
+
+                    return new SemicolonToken(start, (Position) cur.clone());
 
                 default:
                    if (cur.isLetter())

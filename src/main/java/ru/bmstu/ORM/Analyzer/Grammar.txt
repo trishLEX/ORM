@@ -1,5 +1,5 @@
 //Синтаксическое описание
-S                    ::= CreateTableStmt+
+S                    ::= (CreateTableStmt ';')+
 
 CreateTableStmt      ::= CREATE TABLE (IF NOT EXISTS)?
                          QualifiedName '(' (TableElement (',' TableElement)*)? ')' Inherit?
