@@ -1205,6 +1205,8 @@ public class Scanner {
                        Token number = getNumber(start);
                        if (number != null)
                            return number;
+                       else
+                           messages.add(new Message((Position) cur.clone(), "Unrecognizable number"));
                    }
 //                   else {
 //                       messages.add(new Message((Position) cur.clone(), "Unrecognizable token"));
