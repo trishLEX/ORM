@@ -79,5 +79,7 @@ public enum TokenTag implements SymbolType {
     FLOAT_CONST,
     DOUBLE_CONST,
     STRING_CONST,
-    DATE_TIME_CONST //UNSUPPORTED TILL
+    TIMESTAMP_CONST,
+    DATE_CONST,
+    TIME_CONST //UNSUPPORTED TILL
 }

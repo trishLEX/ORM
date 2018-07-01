@@ -18,7 +18,7 @@ Typename             ::= SimpleTypename
 
 SimpleTypename       ::= NumericType
                      |   CharacterType
-                   //|   DateTimeType NOT SUPPORTED TILL
+                     |   DateTimeType
 
 NumericType          ::= INT
                      |   INTEGER
@@ -38,7 +38,7 @@ CharacterKeyword     ::= CHARACTER
                      |   VARCHAR
 
 DateTimeType         ::= TIMESTAMP ( '(' intConst ')' )? //0 <= intConst < 6
-                     |   TIME ( '(' intConst ')' )?
+                     |   TIME ( '(' intConst ')' )?      //0 <= intConst < 6
                      |   DATE
 
 TableConstraint      ::= CONSTRAINT ColId ConstraintElem

@@ -230,7 +230,7 @@ public class Parser {
         typename.setFollow(simpleTypeName.getFollow());
     }
 
-    //SimpleTypename       ::= NumericType | CharacterType //| DateTimeType TODO NOT SUPPORTED TILL
+    //SimpleTypename       ::= NumericType | CharacterType | DateTimeType
     private void parseSympleTypeName(SimpleTypeNameVar simpleTypeName) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.CHARACTER
                 || sym.getTag() == TokenTag.CHAR
@@ -241,6 +241,14 @@ public class Parser {
             parseCharacterType(characterType);
             simpleTypeName.setStart(characterType.getStart());
             simpleTypeName.setFollow(characterType.getFollow());
+        } else if (sym.getTag() == TokenTag.DATE
+                || sym.getTag() == TokenTag.TIME
+                || sym.getTag() == TokenTag.TIMESTAMP){
+
+            DateTimeTypeVar dateTimeType = new DateTimeTypeVar();
+            simpleTypeName.addSymbol(dateTimeType);
+            parseDateTimeType(dateTimeType);
+            simpleTypeName.setCoords(dateTimeType.getCoords());
         } else {
             NumericTypeVar numericType = new NumericTypeVar();
             simpleTypeName.addSymbol(numericType);
@@ -365,12 +373,81 @@ public class Parser {
         }
     }
 
-    //TODO UNSUPPORTED: DateTimeType         ::= TIMESTAMP ( '(' intConst ')' )? //0 <= intConst < 6
-    //                     |   TIME ( '(' intConst ')' )?
+    //DateTimeType         ::= TIMESTAMP ( '(' intConst ')' )? //0 <= intConst < 6
+    //                     |   TIME ( '(' intConst ')' )?      //0 <= intConst < 6
     //                     |   DATE
-//    private void parseDateTimeType(DateTimeTypeVar dateTimeType) throws CloneNotSupportedException {
-//
-//    }
+    private void parseDateTimeType(DateTimeTypeVar dateTimeType) throws CloneNotSupportedException {
+        dateTimeType.addSymbol(sym);
+        dateTimeType.setCoords(sym.getCoords());
+
+        if (sym.getTag() == TokenTag.TIMESTAMP) {
+            parse(TokenTag.TIMESTAMP);
+
+            if (sym.getTag() == TokenTag.LPAREN) {
+                dateTimeType.addSymbol(sym);
+                parse(TokenTag.LPAREN);
+
+                dateTimeType.addSymbol(sym);
+                Token number = sym;
+
+                if (sym.getTag() == TokenTag.BYTE_CONST)
+                    parse(TokenTag.BYTE_CONST);
+                else if (sym.getTag() == TokenTag.SHORT_CONST)
+                    parse(TokenTag.SHORT_CONST);
+                else if (sym.getTag() == TokenTag.INT_CONST)
+                    parse(TokenTag.INT_CONST);
+                else if (sym.getTag() == TokenTag.LONG_CONST)
+                    parse(TokenTag.LONG_CONST);
+                else
+                    throw new RuntimeException("Wrong number at " + sym + " int number expected");
+
+                Number value = (Number) number.getValue();
+                if (value.byteValue() < 0 || value.byteValue() >= 6)
+                    throw new RuntimeException("Number: " + number + " should be >= 0 and < 6");
+
+                dateTimeType.addSymbol(number);
+
+                dateTimeType.addSymbol(sym);
+                dateTimeType.setFollow(sym.getFollow());
+                parse(TokenTag.RPAREN);
+            }
+        } else if (sym.getTag() == TokenTag.TIME) {
+            parse(TokenTag.TIME);
+
+            if (sym.getTag() == TokenTag.LPAREN) {
+                dateTimeType.addSymbol(sym);
+                parse(TokenTag.LPAREN);
+
+                dateTimeType.addSymbol(sym);
+                Token number = sym;
+
+                if (sym.getTag() == TokenTag.BYTE_CONST)
+                    parse(TokenTag.BYTE_CONST);
+                else if (sym.getTag() == TokenTag.SHORT_CONST)
+                    parse(TokenTag.SHORT_CONST);
+                else if (sym.getTag() == TokenTag.INT_CONST)
+                    parse(TokenTag.INT_CONST);
+                else if (sym.getTag() == TokenTag.LONG_CONST)
+                    parse(TokenTag.LONG_CONST);
+                else
+                    throw new RuntimeException("Wrong number at " + sym + " int number expected");
+
+                Number value = (Number) number.getValue();
+                if (value.byteValue() < 0 || value.byteValue() >= 6)
+                    throw new RuntimeException("Number: " + number + " should be >= 0 and < 6");
+
+                dateTimeType.addSymbol(number);
+
+                dateTimeType.addSymbol(sym);
+                dateTimeType.setFollow(sym.getFollow());
+                parse(TokenTag.RPAREN);
+            }
+        } else if (sym.getTag() == TokenTag.DATE) {
+            parse(TokenTag.DATE);
+        } else {
+            throw new RuntimeException("Invalid Date/Time type at " + sym);
+        }
+    }
 
     //TableConstraint      ::= CONSTRAINT ColId ConstraintElem | ConstraintElem
     private void parseTableConstraint(TableConstraintVar tableConstraint) throws CloneNotSupportedException {
@@ -718,11 +795,20 @@ public class Parser {
             exprNoVars.addSymbol(sym);
             exprNoVars.setCoords(sym.getCoords());
             parse(TokenTag.STRING_CONST);
-        } else {
-            //TODO UNSUPPORTED
+        } else if (sym.getTag() == TokenTag.TIME_CONST
+                || sym.getTag() == TokenTag.TIMESTAMP_CONST
+                || sym.getTag() == TokenTag.DATE_CONST) {
+
             exprNoVars.addSymbol(sym);
             exprNoVars.setCoords(sym.getCoords());
-            parse(TokenTag.DATE_TIME_CONST);
+            if (sym.getTag() == TokenTag.TIMESTAMP_CONST)
+                parse(TokenTag.TIMESTAMP_CONST);
+            else if (sym.getTag() == TokenTag.DATE_CONST)
+                parse(TokenTag.DATE_CONST);
+            else
+                parse(TokenTag.TIME_CONST);
+        } else {
+            throw new RuntimeException("Expected expression without variables");
         }
     }
 
