@@ -263,7 +263,7 @@ public class Parser {
     //                     |   SMALLINT
     //                     |   BIGINT
     //                     |   REAL
-    //                     |   FLOAT  ( '('intConst')' )? //TODO 1 <= intConst <= 53
+    //                     |   FLOAT  ( '('intConst')' )?
     //                     |   DOUBLE PRECISION
     //                     |   DECIMAL
     //                     |   NUMERIC
@@ -289,7 +289,6 @@ public class Parser {
                 parse(TokenTag.LPAREN);
 
                 numericType.addSymbol(sym);
-
                 Token number = sym;
 
                 if (sym.getTag() == TokenTag.BYTE_CONST)
