@@ -281,6 +281,9 @@ public class Parser {
                 parse(TokenTag.LPAREN);
 
                 numericType.addSymbol(sym);
+
+                Token number = sym;
+
                 if (sym.getTag() == TokenTag.BYTE_CONST)
                     parse(TokenTag.BYTE_CONST);
                 else if (sym.getTag() == TokenTag.SHORT_CONST)
@@ -289,6 +292,12 @@ public class Parser {
                     parse(TokenTag.INT_CONST);
                 else if (sym.getTag() == TokenTag.LONG_CONST)
                     parse(TokenTag.LONG_CONST);
+                else
+                    throw new RuntimeException("Wrong number at " + sym + " int number expected");
+
+                Number value = (Number) number.getValue();
+                if (value.byteValue() < 1 || value.byteValue() > 53)
+                    throw new RuntimeException("Number: " + number + " should be >= 1 and <= 53");
 
                 numericType.addSymbol(sym);
                 numericType.setFollow(sym.getFollow());
