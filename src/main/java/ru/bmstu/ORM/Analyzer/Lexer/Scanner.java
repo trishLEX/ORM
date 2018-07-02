@@ -68,6 +68,25 @@ public class Scanner {
                                }
                            }
                        }
+                   } else if (cur.getChar() == 'r') {
+                       value.append("r");
+                       cur.nextCp();
+                       if (cur.getChar() == 'r') {
+                           value.append("r");
+                           cur.nextCp();
+                           if (cur.getChar() == 'a') {
+                               value.append('a');
+                               cur.nextCp();
+                               if (cur.getChar() == 'y') {
+                                   value.append("y");
+                                   cur.nextCp();
+                                   if (cur.isWhiteSpace() || cur.isSpecial())
+                                       return new KeywordToken(start, (Position) cur.clone(), TokenTag.ARRAY);
+                                   else
+                                       return getIdent(start, value.toString());
+                               }
+                           }
+                       }
                    }
 
                    return getIdent(start, value.toString());
@@ -1121,6 +1140,14 @@ public class Scanner {
                     cur.nextCp();
 
                     return new RParenToken(start, (Position) cur.clone());
+                case '[':
+                    cur.nextCp();
+
+                    return new LBracketToken(start, (Position) cur.clone());
+                case ']':
+                    cur.nextCp();
+
+                    return new RBracketToken(start, (Position) cur.clone());
                 case '<':
                     cur.nextCp();
                     if (cur.getChar() == '=') {

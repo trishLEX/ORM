@@ -14,7 +14,8 @@ TableElement         ::= ColumnDef | TableConstraint
 
 ColumnDef            ::= ColId Typename ColConstraint*
 
-Typename             ::= SimpleTypename
+Typename             ::= SimpleTypename ( '[' intConst? ']' )*    //intConst ни на что не влияет
+                     |   SimpleTypename ARRAY ('[' intConst ']')?
 
 SimpleTypename       ::= NumericType
                      |   CharacterType

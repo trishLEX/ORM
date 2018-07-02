@@ -6,6 +6,7 @@ public enum TokenTag implements SymbolType {
     //KEYWORDS
     AND,
     ACTION,
+    ARRAY,
     BETWEEN,
     BIGINT,
     BOOLEAN,
@@ -58,6 +59,8 @@ public enum TokenTag implements SymbolType {
     END_OF_PROGRAM,
     LPAREN,
     RPAREN,
+    LBRACKET,
+    RBRACKET,
     LESS,
     LESSEQ,
     GREATER,

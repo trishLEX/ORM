@@ -221,13 +221,60 @@ public class Parser {
         }
     }
 
-    //Typename             ::= SimpleTypename
+    private void parseIntConst(Var var) throws CloneNotSupportedException {
+        var.addSymbol(sym);
+
+        if (sym.getTag() == TokenTag.BYTE_CONST)
+            parse(TokenTag.BYTE_CONST);
+        else if (sym.getTag() == TokenTag.SHORT_CONST)
+            parse(TokenTag.SHORT_CONST);
+        else if (sym.getTag() == TokenTag.INT_CONST)
+            parse(TokenTag.INT_CONST);
+        else if (sym.getTag() == TokenTag.LONG_CONST)
+            parse(TokenTag.LONG_CONST);
+        else
+            throw new RuntimeException("Wrong number at " + sym + " int number expected");
+    }
+
+    //Typename             ::= SimpleTypename ( '[' intConst? ']' )*
+    //                     |   SimpleTypename ARRAY ('[' intConst ']')?
     private void parseTypename(TypenameVar typename) throws CloneNotSupportedException {
         SimpleTypeNameVar simpleTypeName = new SimpleTypeNameVar();
         typename.addSymbol(simpleTypeName);
         parseSympleTypeName(simpleTypeName);
-        typename.setStart(simpleTypeName.getStart());
-        typename.setFollow(simpleTypeName.getFollow());
+        typename.setCoords(simpleTypeName.getCoords());
+
+        if (sym.getTag() == TokenTag.LBRACKET) {
+            while (sym.getTag() == TokenTag.LBRACKET) {
+                typename.addSymbol(sym);
+                parse(TokenTag.LBRACKET);
+
+                if (sym.getTag() == TokenTag.BYTE_CONST
+                        || sym.getTag() == TokenTag.SHORT_CONST
+                        || sym.getTag() == TokenTag.INT_CONST
+                        || sym.getTag() == TokenTag.LONG_CONST)
+                    parseIntConst(typename);
+
+                typename.setFollow(sym.getFollow());
+                typename.addSymbol(sym);
+                parse(TokenTag.RBRACKET);
+            }
+        } else if (sym.getTag() == TokenTag.ARRAY) {
+            typename.setFollow(sym.getFollow());
+            typename.addSymbol(sym);
+            parse(TokenTag.ARRAY);
+
+            if (sym.getTag() == TokenTag.LBRACKET) {
+                typename.addSymbol(sym);
+                parse(TokenTag.LBRACKET);
+
+                parseIntConst(typename);
+
+                typename.setFollow(sym.getFollow());
+                typename.addSymbol(sym);
+                parse(TokenTag.RBRACKET);
+            }
+        }
     }
 
     //SimpleTypename       ::= NumericType | CharacterType | DateTimeType
@@ -288,19 +335,9 @@ public class Parser {
                 numericType.addSymbol(sym);
                 parse(TokenTag.LPAREN);
 
-                numericType.addSymbol(sym);
                 Token number = sym;
 
-                if (sym.getTag() == TokenTag.BYTE_CONST)
-                    parse(TokenTag.BYTE_CONST);
-                else if (sym.getTag() == TokenTag.SHORT_CONST)
-                    parse(TokenTag.SHORT_CONST);
-                else if (sym.getTag() == TokenTag.INT_CONST)
-                    parse(TokenTag.INT_CONST);
-                else if (sym.getTag() == TokenTag.LONG_CONST)
-                    parse(TokenTag.LONG_CONST);
-                else
-                    throw new RuntimeException("Wrong number at " + sym + " int number expected");
+                parseIntConst(numericType);
 
                 Number value = (Number) number.getValue();
                 if (value.byteValue() < 1 || value.byteValue() > 53)
@@ -386,19 +423,9 @@ public class Parser {
                 dateTimeType.addSymbol(sym);
                 parse(TokenTag.LPAREN);
 
-                dateTimeType.addSymbol(sym);
                 Token number = sym;
 
-                if (sym.getTag() == TokenTag.BYTE_CONST)
-                    parse(TokenTag.BYTE_CONST);
-                else if (sym.getTag() == TokenTag.SHORT_CONST)
-                    parse(TokenTag.SHORT_CONST);
-                else if (sym.getTag() == TokenTag.INT_CONST)
-                    parse(TokenTag.INT_CONST);
-                else if (sym.getTag() == TokenTag.LONG_CONST)
-                    parse(TokenTag.LONG_CONST);
-                else
-                    throw new RuntimeException("Wrong number at " + sym + " int number expected");
+                parseIntConst(dateTimeType);
 
                 Number value = (Number) number.getValue();
                 if (value.byteValue() < 0 || value.byteValue() >= 6)
@@ -417,19 +444,9 @@ public class Parser {
                 dateTimeType.addSymbol(sym);
                 parse(TokenTag.LPAREN);
 
-                dateTimeType.addSymbol(sym);
                 Token number = sym;
 
-                if (sym.getTag() == TokenTag.BYTE_CONST)
-                    parse(TokenTag.BYTE_CONST);
-                else if (sym.getTag() == TokenTag.SHORT_CONST)
-                    parse(TokenTag.SHORT_CONST);
-                else if (sym.getTag() == TokenTag.INT_CONST)
-                    parse(TokenTag.INT_CONST);
-                else if (sym.getTag() == TokenTag.LONG_CONST)
-                    parse(TokenTag.LONG_CONST);
-                else
-                    throw new RuntimeException("Wrong number at " + sym + " int number expected");
+                parseIntConst(dateTimeType);
 
                 Number value = (Number) number.getValue();
                 if (value.byteValue() < 0 || value.byteValue() >= 6)
