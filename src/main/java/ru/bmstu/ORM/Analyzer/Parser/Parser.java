@@ -587,13 +587,11 @@ public class Parser {
                 constraintElem.addSymbol(colId1);
                 parseColId(colId1);
 
-                ColIdVar colIdVar = colId1;
-
                 while (sym.getTag() == TokenTag.COMMA) {
                     constraintElem.addSymbol(sym);
                     parse(TokenTag.COMMA);
 
-                    colIdVar = new ColIdVar();
+                    ColIdVar colIdVar = new ColIdVar();
                     constraintElem.addSymbol(colIdVar);
                     parseColId(colIdVar);
                 }
@@ -872,6 +870,25 @@ public class Parser {
         }
     }
 
+    private void parseNumber(Var var) throws CloneNotSupportedException {
+        var.addSymbol(var);
+
+        if (sym.getTag() == TokenTag.BYTE_CONST)
+            parse(TokenTag.BYTE_CONST);
+        else if (sym.getTag() == TokenTag.SHORT_CONST)
+            parse(TokenTag.SHORT_CONST);
+        else if (sym.getTag() == TokenTag.INT_CONST)
+            parse(TokenTag.INT_CONST);
+        else if (sym.getTag() == TokenTag.LONG_CONST)
+            parse(TokenTag.LONG_CONST);
+        else if (sym.getTag() == TokenTag.FLOAT_CONST)
+            parse(TokenTag.FLOAT_CONST);
+        else if (sym.getTag() == TokenTag.DOUBLE_CONST)
+            parse(TokenTag.DOUBLE_CONST);
+        else
+            throw new RuntimeException("Number expected, got " + sym);
+    }
+
     //ArithmExprNoVarFactor::= NumericValue | '-' ArithmExprNoVarFactor | '(' ArithmExprNoVar ')'
     private void parseArithmExprNoVarFactor(ArithmExprNoVarFactorVar arithmExprNoVarFactor) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.BYTE_CONST
@@ -881,21 +898,9 @@ public class Parser {
                 || sym.getTag() == TokenTag.FLOAT_CONST
                 || sym.getTag() == TokenTag.DOUBLE_CONST) {
 
-            arithmExprNoVarFactor.addSymbol(sym);
             arithmExprNoVarFactor.setCoords(sym.getCoords());
 
-            if (sym.getTag() == TokenTag.BYTE_CONST)
-                parse(TokenTag.BYTE_CONST);
-            else if (sym.getTag() == TokenTag.SHORT_CONST)
-                parse(TokenTag.SHORT_CONST);
-            else if (sym.getTag() == TokenTag.INT_CONST)
-                parse(TokenTag.INT_CONST);
-            else if (sym.getTag() == TokenTag.LONG_CONST)
-                parse(TokenTag.LONG_CONST);
-            else if (sym.getTag() == TokenTag.FLOAT_CONST)
-                parse(TokenTag.FLOAT_CONST);
-            else
-                parse(TokenTag.DOUBLE_CONST);
+            parseNumber(arithmExprNoVarFactor);
         } else if (sym.getTag() == TokenTag.SUB) {
             arithmExprNoVarFactor.addSymbol(sym);
             arithmExprNoVarFactor.setStart(sym.getStart());
@@ -1188,21 +1193,9 @@ public class Parser {
                 || sym.getTag() == TokenTag.FLOAT_CONST
                 || sym.getTag() == TokenTag.DOUBLE_CONST) {
 
-            arithmExprFactor.addSymbol(sym);
             arithmExprFactor.setCoords(sym.getCoords());
 
-            if (sym.getTag() == TokenTag.BYTE_CONST)
-                parse(TokenTag.BYTE_CONST);
-            else if (sym.getTag() == TokenTag.SHORT_CONST)
-                parse(TokenTag.SHORT_CONST);
-            else if (sym.getTag() == TokenTag.INT_CONST)
-                parse(TokenTag.INT_CONST);
-            else if (sym.getTag() == TokenTag.LONG_CONST)
-                parse(TokenTag.LONG_CONST);
-            else if (sym.getTag() == TokenTag.FLOAT_CONST)
-                parse(TokenTag.FLOAT_CONST);
-            else
-                parse(TokenTag.DOUBLE_CONST);
+            parseNumber(arithmExprFactor);
         } else if (sym.getTag() == TokenTag.SUB) {
             arithmExprFactor.addSymbol(sym);
             arithmExprFactor.setStart(sym.getStart());
