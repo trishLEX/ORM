@@ -1,4 +1,14 @@
-CREATE TABLE table1 (
-a int,
-b float
+CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Shop
+(
+  shopCode INT PRIMARY KEY NOT NULL,
+  shopName VARCHAR(25) UNIQUE NOT NULL,
+  isOutlet BOOLEAN DEFAULT 5 CHECK (isOutlet IS NOT NULL) NOT NULL,
+  address  VARCHAR(25) NOT NULL,
+  city int[][] NOT NULL,
+  isClosed REAL NOT NULL DEFAULT FALSE,
+  opened DATE DEFAULT '02-12-1997',
+
+  area FLOAT(8) NOT NULL,
+  countOfVisitorsToday INT NOT NULL CHECK (countOfVisitorsToday >= 0),
+  FOREIGN KEY (area) REFERENCES ShopDB.shopschema.Employee (employeeCode)
 );

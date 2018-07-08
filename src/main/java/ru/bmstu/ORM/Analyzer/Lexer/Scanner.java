@@ -43,7 +43,7 @@ public class Scanner {
                            if (cur.isWhiteSpace() || cur.isSpecial())
                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.AND);
                            else
-                               return getIdent(start, value.toString());
+                               return getIdent(start, value);
                        }
                    } else if (cur.getChar() == 'c') {
                        value.append("c");
@@ -63,10 +63,40 @@ public class Scanner {
                                        if (cur.isWhiteSpace() || cur.isSpecial())
                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.ACTION);
                                        else
-                                           return getIdent(start, value.toString());
+                                           return getIdent(start, value);
                                    }
                                }
                            }
+                       }
+                   } else if (cur.getChar() == 'f') {
+                       value.append("f");
+                       cur.nextCp();
+                       if (cur.getChar() == 't') {
+                           value.append("t");
+                           cur.nextCp();
+                           if (cur.getChar() == 'e') {
+                               value.append("e");
+                               cur.nextCp();
+                               if (cur.getChar() == 'r') {
+                                   value.append('r');
+                                   cur.nextCp();
+                                   if (cur.isWhiteSpace() || cur.isSpecial())
+                                       return new KeywordToken(start, (Position) cur.clone(), TokenTag.AFTER);
+                                   else
+                                       return getIdent(start, value);
+                               }
+                           }
+                       }
+                   } else if (cur.getChar() == 'l') {
+                       value.append("l");
+                       cur.nextCp();
+                       if (cur.getChar() == 'l') {
+                           value.append("l");
+                           cur.nextCp();
+                           if (cur.isWhiteSpace() || cur.isSpecial())
+                               return new KeywordToken(start, (Position) cur.clone(), TokenTag.ALL);
+                           else
+                               return getIdent(start, value);
                        }
                    } else if (cur.getChar() == 'r') {
                        value.append("r");
@@ -83,13 +113,38 @@ public class Scanner {
                                    if (cur.isWhiteSpace() || cur.isSpecial())
                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.ARRAY);
                                    else
-                                       return getIdent(start, value.toString());
+                                       return getIdent(start, value);
                                }
                            }
                        }
+                   } else if (cur.getChar() == 's') {
+                       value.append("s");
+                       cur.nextCp();
+                       if (cur.getChar() == 'c') {
+                           value.append("c");
+                           cur.nextCp();
+                           if (cur.isWhiteSpace() || cur.isSpecial())
+                               return new KeywordToken(start, (Position) cur.clone(), TokenTag.ASC);
+                           else
+                               return getIdent(start, value);
+                       } else if (cur.isWhiteSpace() || cur.isSpecial())
+                           return new KeywordToken(start, (Position) cur.clone(), TokenTag.AS);
+                       else
+                           return getIdent(start, value);
+                   } else if (cur.getChar() == 'v') {
+                       value.append("v");
+                       cur.nextCp();
+                       if (cur.getChar() == 'g') {
+                           value.append("g");
+                           cur.nextCp();
+                           if (cur.isWhiteSpace() || cur.isSpecial())
+                               return new KeywordToken(start, (Position) cur.clone(), TokenTag.AVG);
+                           else
+                               return getIdent(start, value);
+                       }
                    }
 
-                   return getIdent(start, value.toString());
+                   return getIdent(start, value);
 
                 case 'b':
                     value = new StringBuilder("b");
@@ -97,7 +152,41 @@ public class Scanner {
                     if (cur.getChar() == 'e') {
                         value.append("e");
                         cur.nextCp();
-                        if (cur.getChar() == 't') {
+                        if (cur.getChar() == 'f') {
+                            value.append("f");
+                            cur.nextCp();
+                            if (cur.getChar() == 'o') {
+                                value.append("o");
+                                cur.nextCp();
+                                if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'e') {
+                                        value.append("e");
+                                        cur.nextCp();
+                                        if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.BEFORE);
+                                        else
+                                            return getIdent(start, value);
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 'g') {
+                            value.append("g");
+                            cur.nextCp();
+                            if (cur.getChar() == 'i') {
+                                value.append("i");
+                                cur.nextCp();
+                                if (cur.getChar() == 'n') {
+                                    value.append("n");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.BEGIN);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
+                        } else if (cur.getChar() == 't') {
                             value.append("t");
                             cur.nextCp();
                             if (cur.getChar() == 'w') {
@@ -115,7 +204,7 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.BETWEEN);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
                                         }
                                     }
                                 }
@@ -139,7 +228,7 @@ public class Scanner {
                                         if (cur.isWhiteSpace() || cur.isSpecial())
                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.BIGINT);
                                         else
-                                            return getIdent(start, value.toString());
+                                            return getIdent(start, value);
                                     }
                                 }
                             }
@@ -165,15 +254,22 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.BOOLEAN);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
                                         }
                                     }
                                 }
                             }
                         }
+                    } else if (cur.getChar() == 'y') {
+                        value.append("y");
+                        cur.nextCp();
+                        if (cur.isWhiteSpace() || cur.isSpecial())
+                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.BY);
+                        else
+                            return getIdent(start, value);
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'c':
                     value = new StringBuilder("c");
@@ -199,7 +295,7 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.CASCADE);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
                                         }
                                     }
                                 }
@@ -232,7 +328,7 @@ public class Scanner {
                                                     if (cur.isWhiteSpace() || cur.isSpecial())
                                                         return new KeywordToken(start, (Position) cur.clone(), TokenTag.CHARACTER);
                                                     else
-                                                        return getIdent(start, value.toString());
+                                                        return getIdent(start, value);
                                                 }
                                             }
                                         }
@@ -240,7 +336,7 @@ public class Scanner {
                                 } else if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.CHAR);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
                             }
                         } else if (cur.getChar() == 'e') {
                             value.append("e");
@@ -254,7 +350,7 @@ public class Scanner {
                                     if (cur.isWhiteSpace() || cur.isSpecial())
                                         return new KeywordToken(start, (Position) cur.clone(), TokenTag.CHECK);
                                     else
-                                        return getIdent(start, value.toString());
+                                        return getIdent(start, value);
                                 }
                             }
                         }
@@ -264,7 +360,30 @@ public class Scanner {
                         if (cur.getChar() == 'n') {
                             value.append("n");
                             cur.nextCp();
-                            if (cur.getChar() == 's') {
+                            if (cur.getChar() == 't') {
+                                value.append("t");
+                                cur.nextCp();
+                                if (cur.getChar() == 'i') {
+                                    value.append("i");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'n') {
+                                        value.append("n");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'u') {
+                                            value.append("u");
+                                            cur.nextCp();
+                                            if (cur.getChar() == 'e') {
+                                                value.append("e");
+                                                cur.nextCp();
+                                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.CONTINUE);
+                                                else
+                                                    return getIdent(start, value);
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (cur.getChar() == 's') {
                                 value.append("s");
                                 cur.nextCp();
                                 if (cur.getChar() == 't') {
@@ -288,12 +407,27 @@ public class Scanner {
                                                         if (cur.isWhiteSpace() || cur.isSpecial()) {
                                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.CONSTRAINT);
                                                         } else
-                                                            return getIdent(start, value.toString());
+                                                            return getIdent(start, value);
                                                     }
                                                 }
                                             }
                                         }
                                     }
+                                }
+                            }
+                        } else if (cur.getChar() == 'u') {
+                            value.append("u");
+                            cur.nextCp();
+                            if (cur.getChar() == 'n') {
+                                value.append("n");
+                                cur.nextCp();
+                                if (cur.getChar() == 't') {
+                                    value.append("t");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.COUNT);
+                                    else
+                                        return getIdent(start, value);
                                 }
                             }
                         }
@@ -315,14 +449,29 @@ public class Scanner {
                                         if (cur.isWhiteSpace() || cur.isSpecial())
                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.CREATE);
                                         else
-                                            return getIdent(start, value.toString());
+                                            return getIdent(start, value);
                                     }
+                                }
+                            }
+                        } else if (cur.getChar() == 'o') {
+                            value.append("o");
+                            cur.nextCp();
+                            if (cur.getChar() == 's') {
+                                value.append("s");
+                                cur.nextCp();
+                                if (cur.getChar() == 's') {
+                                    value.append("s");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.CROSS);
+                                    else
+                                        return getIdent(start, value);
                                 }
                             }
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'd':
                     value = new StringBuilder("d");
@@ -339,7 +488,7 @@ public class Scanner {
                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.DATE);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
                             }
                         }
                     } else if (cur.getChar() == 'e') {
@@ -363,7 +512,26 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.DECIMAL);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                }
+                            } else if (cur.getChar() == 'l') {
+                                value.append("l");
+                                cur.nextCp();
+                                if (cur.getChar() == 'a') {
+                                    value.append("a");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'r') {
+                                        value.append("r");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'e') {
+                                            value.append("e");
+                                            cur.nextCp();
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.DECLARE);
+                                            else
+                                                return getIdent(start, value);
                                         }
                                     }
                                 }
@@ -386,7 +554,7 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.DEFAULT);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
                                         }
                                     }
                                 }
@@ -406,7 +574,49 @@ public class Scanner {
                                         if (cur.isWhiteSpace() || cur.isSpecial())
                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.DELETE);
                                         else
-                                            return getIdent(start, value.toString());
+                                            return getIdent(start, value);
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 's') {
+                            value.append("s");
+                            cur.nextCp();
+                            if (cur.getChar() == 'c') {
+                                value.append("c");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.DESC);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        }
+                    } else if (cur.getChar() == 'i') {
+                        value.append("i");
+                        cur.nextCp();
+                        if (cur.getChar() == 's') {
+                            value.append("s");
+                            cur.nextCp();
+                            if (cur.getChar() == 't') {
+                                value.append("t");
+                                cur.nextCp();
+                                if (cur.getChar() == 'i') {
+                                    value.append("i");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'n') {
+                                        value.append("n");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'c') {
+                                            value.append("c");
+                                            cur.nextCp();
+                                            if (cur.getChar() == 't') {
+                                                value.append("t");
+                                                cur.nextCp();
+                                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.DISTINCT);
+                                                else
+                                                    return getIdent(start, value);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -429,22 +639,94 @@ public class Scanner {
                                         if (cur.isWhiteSpace() || cur.isSpecial())
                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.DOUBLE);
                                         else
-                                            return getIdent(start, value.toString());
+                                            return getIdent(start, value);
                                     }
                                 }
                             }
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'e':
                     value = new StringBuilder("e");
                     cur.nextCp();
-                    if (cur.getChar() == 'x') {
+                    if (cur.getChar() == 'a') {
+                        value.append("a");
+                        cur.nextCp();
+                        if (cur.getChar() == 'c') {
+                            value.append("c");
+                            cur.nextCp();
+                            if (cur.getChar() == 'h') {
+                                value.append("h");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.EACH);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        }
+                    } else if (cur.getChar() == 'x') {
                         value.append("x");
                         cur.nextCp();
-                        if (cur.getChar() == 'i') {
+                        if (cur.getChar() == 'c') {
+                            value.append("c");
+                            cur.nextCp();
+                            if (cur.getChar() == 'e') {
+                                value.append("e");
+                                cur.nextCp();
+                                if (cur.getChar() == 'p') {
+                                    value.append("p");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 't') {
+                                        value.append("t");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'i') {
+                                            value.append("i");
+                                            cur.nextCp();
+                                            if (cur.getChar() == 'o') {
+                                                value.append("o");
+                                                cur.nextCp();
+                                                if (cur.getChar() == 'n') {
+                                                    value.append("n");
+                                                    cur.nextCp();
+                                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.EXCEPTION);
+                                                    else
+                                                        return getIdent(start, value);
+                                                }
+                                            }
+                                        } else if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.EXCEPT);
+                                        else
+                                            return getIdent(start, value);
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 'e') {
+                            value.append("e");
+                            cur.nextCp();
+                            if (cur.getChar() == 'c') {
+                                value.append("c");
+                                cur.nextCp();
+                                if (cur.getChar() == 'u') {
+                                    value.append("u");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 't') {
+                                        value.append("t");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'e') {
+                                            value.append("e");
+                                            cur.nextCp();
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.EXECUTE);
+                                            else
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 'i') {
                             value.append("i");
                             cur.nextCp();
                             if (cur.getChar() == 's') {
@@ -459,9 +741,16 @@ public class Scanner {
                                         if (cur.isWhiteSpace() || cur.isSpecial())
                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.EXISTS);
                                         else
-                                            return getIdent(start, value.toString());
+                                            return getIdent(start, value);
                                     }
                                 }
+                            } else if (cur.getChar() == 't') {
+                                value.append("t");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.EXIT);
+                                else
+                                    return getIdent(start, value);
                             }
                         }
                     } else if (cur.getChar() == 'l') {
@@ -476,12 +765,34 @@ public class Scanner {
                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.ELSE);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
+                            } else if (cur.getChar() == 'i') {
+                                value.append("i");
+                                cur.nextCp();
+                                if (cur.getChar() == 'f') {
+                                    value.append("f");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.ELSIF);
+                                    else
+                                        return getIdent(start, value);
+                                }
                             }
+                        }
+                    } else if (cur.getChar() == 'n') {
+                        value.append("n");
+                        cur.nextCp();
+                        if (cur.getChar() == 'd') {
+                            value.append("d");
+                            cur.nextCp();
+                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.END);
+                            else
+                                return getIdent(start, value);
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'f':
                     value = new StringBuilder("f");
@@ -501,7 +812,7 @@ public class Scanner {
                                     if (cur.isWhiteSpace() || cur.isSpecial())
                                         return new KeywordToken(start, (Position) cur.clone(), TokenTag.FALSE);
                                     else
-                                        return getIdent(start, value.toString());
+                                        return getIdent(start, value);
                                 }
                             }
                         }
@@ -520,7 +831,7 @@ public class Scanner {
                                     if (cur.isWhiteSpace() || cur.isSpecial())
                                         return new KeywordToken(start, (Position) cur.clone(), TokenTag.FLOAT);
                                     else
-                                        return getIdent(start, value.toString());
+                                        return getIdent(start, value);
                                 }
                             }
                         }
@@ -545,7 +856,64 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.FOREIGN);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (cur.getChar() == 'r') {
+                        value.append("r");
+                        cur.nextCp();
+                        if (cur.getChar() == 'o') {
+                            value.append("o");
+                            cur.nextCp();
+                            if (cur.getChar() == 'm') {
+                                value.append("m");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.FROM);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        }
+                    } else if (cur.getChar() == 'u') {
+                        value.append("u");
+                        cur.nextCp();
+                        if (cur.getChar() == 'l') {
+                            value.append("l");
+                            cur.nextCp();
+                            if (cur.getChar() == 'l') {
+                                value.append("l");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.FULL);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        } else if (cur.getChar() == 'n') {
+                            value.append("n");
+                            cur.nextCp();
+                            if (cur.getChar() == 'c') {
+                                value.append("c");
+                                cur.nextCp();
+                                if (cur.getChar() == 't') {
+                                    value.append("t");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'i') {
+                                        value.append("i");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'o') {
+                                            value.append("o");
+                                            cur.nextCp();
+                                            if (cur.getChar() == 'n') {
+                                                value.append("n");
+                                                cur.nextCp();
+                                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.FUNCTION);
+                                                else
+                                                    return getIdent(start, value);
+                                            }
                                         }
                                     }
                                 }
@@ -553,7 +921,63 @@ public class Scanner {
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
+
+                case 'g':
+                    value = new StringBuilder("g");
+                    cur.nextCp();
+                    if (cur.getChar() == 'r') {
+                        value.append("r");
+                        cur.nextCp();
+                        if (cur.getChar() == 'o') {
+                            value.append('o');
+                            cur.nextCp();
+                            if (cur.getChar() == 'u') {
+                                value.append("u");
+                                cur.nextCp();
+                                if (cur.getChar() == 'p') {
+                                    value.append("p");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.GROUP);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
+                        }
+                    }
+
+                    return getIdent(start, value);
+
+                case 'h':
+                    value = new StringBuilder("h");
+                    cur.nextCp();
+                    if (cur.getChar() == 'a') {
+                        value.append("a");
+                        cur.nextCp();
+                        if (cur.getChar() == 'v') {
+                            value.append("v");
+                            cur.nextCp();
+                            if (cur.getChar() == 'i') {
+                                value.append("i");
+                                cur.nextCp();
+                                if (cur.getChar() == 'n') {
+                                    value.append("n");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'g') {
+                                        value.append("g");
+                                        cur.nextCp();
+                                        if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.HAVING);
+                                        else
+                                            return getIdent(start, value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    return getIdent(start, value);
 
                 case 'i':
                     value = new StringBuilder("i");
@@ -564,7 +988,7 @@ public class Scanner {
                         if (cur.isWhiteSpace() || cur.isSpecial())
                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.IF);
                         else
-                            return getIdent(start, value.toString());
+                            return getIdent(start, value);
                     } else if (cur.getChar() == 'n') {
                         value.append("n");
                         cur.nextCp();
@@ -589,9 +1013,28 @@ public class Scanner {
                                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.INHERITS);
                                                 else
-                                                    return getIdent(start, value.toString());
+                                                    return getIdent(start, value);
                                             }
                                         }
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 's') {
+                            value.append("s");
+                            cur.nextCp();
+                            if (cur.getChar() == 'e') {
+                                value.append("e");
+                                cur.nextCp();
+                                if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 't') {
+                                        value.append("t");
+                                        cur.nextCp();
+                                        if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.INSERT);
+                                        else
+                                            return getIdent(start, value);
                                     }
                                 }
                             }
@@ -613,25 +1056,118 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.INTEGER);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                } else if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 's') {
+                                        value.append("s");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'e') {
+                                            value.append("e");
+                                            cur.nextCp();
+                                            if (cur.getChar() == 'c') {
+                                                value.append("c");
+                                                cur.nextCp();
+                                                if (cur.getChar() == 't') {
+                                                    value.append("t");
+                                                    cur.nextCp();
+                                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.INTERSECT);
+                                                    else
+                                                        return getIdent(start, value);
+                                                }
+                                            }
                                         }
                                     }
                                 }
+                            } else if (cur.getChar() == 'o') {
+                                value.append("o");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.INTO);
+                                else
+                                    return getIdent(start, value);
                             } else if (cur.isWhiteSpace() || cur.isSpecial())
                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.INT);
                             else
-                                return getIdent(start, value.toString());
-                        }
+                                return getIdent(start, value);
+                        } else if (cur.getChar() == 's') {
+                            value.append("s");
+                            cur.nextCp();
+                            if (cur.getChar() == 't') {
+                                value.append("t");
+                                cur.nextCp();
+                                if (cur.getChar() == 'e') {
+                                    value.append("e");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'a') {
+                                        value.append("a");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'd') {
+                                            value.append("d");
+                                            cur.nextCp();
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.INSTEAD);
+                                            else
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 'o') {
+                            value.append("o");
+                            cur.nextCp();
+                            if (cur.getChar() == 'u') {
+                                value.append("u");
+                                cur.nextCp();
+                                if (cur.getChar() == 't') {
+                                    value.append("t");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.INOUT);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
+                        } else if (cur.isWhiteSpace() || cur.isSpecial())
+                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.IN);
+                        else
+                            return getIdent(start, value);
                     } else if (cur.getChar() == 's') {
                         value.append("s");
                         cur.nextCp();
                         if (cur.isWhiteSpace() || cur.isSpecial())
                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.IS);
                         else
-                            return getIdent(start, value.toString());
+                            return getIdent(start, value);
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
+
+                case 'j':
+                    value = new StringBuilder("j");
+                    cur.nextCp();
+                    if (cur.getChar() == 'o') {
+                        value.append("o");
+                        cur.nextCp();
+                        if (cur.getChar() == 'i') {
+                            value.append("i");
+                            cur.nextCp();
+                            if (cur.getChar() == 'n') {
+                                value.append("n");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.JOIN);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        }
+                    }
+
+                    return getIdent(start, value);
 
                 case 'k':
                     value = new StringBuilder("k");
@@ -645,16 +1181,62 @@ public class Scanner {
                             if (cur.isWhiteSpace() || cur.isSpecial())
                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.KEY);
                             else
-                                return getIdent(start, value.toString());
+                                return getIdent(start, value);
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'l':
                     value = new StringBuilder("l");
                     cur.nextCp();
-                    if (cur.getChar() == 'i') {
+                    if (cur.getChar() == 'a') {
+                        value.append("a");
+                        cur.nextCp();
+                        if (cur.getChar() == 'n') {
+                            value.append("n");
+                            cur.nextCp();
+                            if (cur.getChar() == 'g') {
+                                value.append("g");
+                                cur.nextCp();
+                                if (cur.getChar() == 'u') {
+                                    value.append("u");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'a') {
+                                        value.append("a");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'g') {
+                                            value.append("g");
+                                            cur.nextCp();
+                                            if (cur.getChar() == 'e') {
+                                                value.append("e");
+                                                cur.nextCp();
+                                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.LANGUAGE);
+                                                else
+                                                    return getIdent(start, value);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (cur.getChar() == 'e') {
+                        value.append("e");
+                        cur.nextCp();
+                        if (cur.getChar() == 'f') {
+                            value.append("f");
+                            cur.nextCp();
+                            if (cur.getChar() == 't') {
+                                value.append("t");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.LEFT);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        }
+                    } else if (cur.getChar() == 'i') {
                         value.append("i");
                         cur.nextCp();
                         if (cur.getChar() == 'k') {
@@ -666,12 +1248,56 @@ public class Scanner {
                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.LIKE);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
+                            }
+                        }
+                    } else if (cur.getChar() == 'o') {
+                        value.append("o");
+                        cur.nextCp();
+                        if (cur.getChar() == 'o') {
+                            value.append("o");
+                            cur.nextCp();
+                            if (cur.getChar() == 'p') {
+                                value.append("p");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.LOOP);
+                                else
+                                    return getIdent(start, value);
                             }
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
+
+                case 'm':
+                    value = new StringBuilder("m");
+                    cur.nextCp();
+                    if (cur.getChar() == 'a') {
+                        value.append("a");
+                        cur.nextCp();
+                        if (cur.getChar() == 'x') {
+                            value.append("x");
+                            cur.nextCp();
+                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.MAX);
+                            else
+                                return getIdent(start, value);
+                        }
+                    } else if (cur.getChar() == 'i') {
+                        value.append("i");
+                        cur.nextCp();
+                        if (cur.getChar() == 'n') {
+                            value.append("n");
+                            cur.nextCp();
+                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.MIN);
+                            else
+                                return getIdent(start, value);
+                        }
+                    }
+
+                    return getIdent(start, value);
 
                 case 'n':
                     value = new StringBuilder("n");
@@ -682,14 +1308,29 @@ public class Scanner {
                         if (cur.getChar() == 't') {
                             value.append("t");
                             cur.nextCp();
-                            if (cur.isWhiteSpace() || cur.isSpecial())
+                            if (cur.getChar() == 'i') {
+                                value.append("i");
+                                cur.nextCp();
+                                if (cur.getChar() == 'c') {
+                                    value.append("c");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'e') {
+                                        value.append("e");
+                                        cur.nextCp();
+                                        if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.NOTICE);
+                                        else
+                                            return getIdent(start, value);
+                                    }
+                                }
+                            } else if (cur.isWhiteSpace() || cur.isSpecial())
                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.NOT);
                             else
-                                return getIdent(start, value.toString());
+                                return getIdent(start, value);
                         } else if (cur.isWhiteSpace() || cur.isSpecial())
                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.NO);
                         else
-                            return getIdent(start, value.toString());
+                            return getIdent(start, value);
                     } else if (cur.getChar() == 'u') {
                         value.append('u');
                         cur.nextCp();
@@ -702,7 +1343,7 @@ public class Scanner {
                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.NULL);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
                             }
                         } else if (cur.getChar() == 'm') {
                             value.append("m");
@@ -722,7 +1363,7 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.NUMERIC);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
                                         }
                                     }
                                 }
@@ -730,7 +1371,7 @@ public class Scanner {
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'o':
                     value = new StringBuilder("o");
@@ -738,25 +1379,100 @@ public class Scanner {
                     if (cur.getChar() == 'n') {
                         value.append("n");
                         cur.nextCp();
-                        if (cur.isWhiteSpace() || cur.isSpecial())
+                        if (cur.getChar() == 'l') {
+                            value.append("l");
+                            cur.nextCp();
+                            if (cur.getChar() == 'y') {
+                                value.append("y");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.ONLY);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        } else if (cur.isWhiteSpace() || cur.isSpecial())
                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.ON);
                         else
-                            return getIdent(start, value.toString());
+                            return getIdent(start, value);
                     } else if (cur.getChar() == 'r') {
                         value.append("r");
                         cur.nextCp();
-                        if (cur.isWhiteSpace() || cur.isSpecial())
+                        if (cur.getChar() == 'd') {
+                            value.append("d");
+                            cur.nextCp();
+                            if (cur.getChar() == 'e') {
+                                value.append("e");
+                                cur.nextCp();
+                                if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.ORDER);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
+                        } else if (cur.isWhiteSpace() || cur.isSpecial())
                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.OR);
                         else
-                            return getIdent(start, value.toString());
+                            return getIdent(start, value);
+                    } else if (cur.getChar() == 'u') {
+                        value.append("u");
+                        cur.nextCp();
+                        if (cur.getChar() == 't') {
+                            value.append("t");
+                            cur.nextCp();
+                            if (cur.getChar() == 'e') {
+                                value.append("e");
+                                cur.nextCp();
+                                if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.OUTER);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            } else if (cur.isWhiteSpace() || cur.isSpecial())
+                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.OUT);
+                            else
+                                return getIdent(start, value);
+                        }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'p':
                     value = new StringBuilder("p");
                     cur.nextCp();
-                    if (cur.getChar() == 'r') {
+                    if (cur.getChar() == 'l') {
+                        value.append("l");
+                        cur.nextCp();
+                        if (cur.getChar() == 'p') {
+                            value.append("p");
+                            cur.nextCp();
+                            if (cur.getChar() == 'g') {
+                                value.append("g");
+                                cur.nextCp();
+                                if (cur.getChar() == 's') {
+                                    value.append("s");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'q') {
+                                        value.append("q");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'l') {
+                                            value.append("l");
+                                            cur.nextCp();
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.PLPGSQL);
+                                            else
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (cur.getChar() == 'r') {
                         value.append("r");
                         cur.nextCp();
                         if (cur.getChar() == 'e') {
@@ -783,7 +1499,7 @@ public class Scanner {
                                                     if (cur.isWhiteSpace() || cur.isSpecial())
                                                         return new KeywordToken(start, (Position) cur.clone(), TokenTag.PRECISION);
                                                     else
-                                                        return getIdent(start, value.toString());
+                                                        return getIdent(start, value);
                                                 }
                                             }
                                         }
@@ -808,7 +1524,38 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.PRIMARY);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 'o') {
+                            value.append("o");
+                            cur.nextCp();
+                            if (cur.getChar() == 'c') {
+                                value.append("c");
+                                cur.nextCp();
+                                if (cur.getChar() == 'e') {
+                                    value.append("e");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'd') {
+                                        value.append("d");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'u') {
+                                            value.append("u");
+                                            cur.nextCp();
+                                            if (cur.getChar() == 'r') {
+                                                value.append("r");
+                                                cur.nextCp();
+                                                if (cur.getChar() == 'e') {
+                                                    value.append("e");
+                                                    cur.nextCp();
+                                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.PROCEDURE);
+                                                    else
+                                                        return getIdent(start, value);
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -816,12 +1563,57 @@ public class Scanner {
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
+
+                case 'q':
+                    value = new StringBuilder("q");
+                    cur.nextCp();
+                    if (cur.getChar() == 'u') {
+                        value.append("u");
+                        cur.nextCp();
+                        if (cur.getChar() == 'e') {
+                            value.append("e");
+                            cur.nextCp();
+                            if (cur.getChar() == 'r') {
+                                value.append("r");
+                                cur.nextCp();
+                                if (cur.getChar() == 'y') {
+                                    value.append("y");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.QUERY);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
+                        }
+                    }
+
+                    return getIdent(start, value);
 
                 case 'r':
                     value = new StringBuilder("r");
                     cur.nextCp();
-                    if (cur.getChar() == 'e') {
+                    if (cur.getChar() == 'a') {
+                        value.append("a");
+                        cur.nextCp();
+                        if (cur.getChar() == 'i') {
+                            value.append("i");
+                            cur.nextCp();
+                            if (cur.getChar() == 's') {
+                                value.append("s");
+                                cur.nextCp();
+                                if (cur.getChar() == 'e') {
+                                    value.append("e");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.RAISE);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
+                        }
+                    } else if (cur.getChar() == 'e') {
                         value.append("e");
                         cur.nextCp();
                         if (cur.getChar() == 'a') {
@@ -833,7 +1625,26 @@ public class Scanner {
                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.REAL);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
+                            }
+                        } else if (cur.getChar() == 'c') {
+                            value.append("c");
+                            cur.nextCp();
+                            if (cur.getChar() == 'o') {
+                                value.append("o");
+                                cur.nextCp();
+                                if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'd') {
+                                        value.append("d");
+                                        cur.nextCp();
+                                        if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.RECORD);
+                                        else
+                                            return getIdent(start, value);
+                                    }
+                                }
                             }
                         } else if (cur.getChar() == 'f') {
                             value.append("f");
@@ -862,10 +1673,33 @@ public class Scanner {
                                                         if (cur.isWhiteSpace() || cur.isSpecial())
                                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.REFERENCES);
                                                         else
-                                                            return getIdent(start, value.toString());
+                                                            return getIdent(start, value);
                                                     }
                                                 }
                                             }
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 'p') {
+                            value.append("p");
+                            cur.nextCp();
+                            if (cur.getChar() == 'l') {
+                                value.append("l");
+                                cur.nextCp();
+                                if (cur.getChar() == 'a') {
+                                    value.append('a');
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'c') {
+                                        value.append("c");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'e') {
+                                            value.append("e");
+                                            cur.nextCp();
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.REPLACE);
+                                            else
+                                                return getIdent(start, value);
                                         }
                                     }
                                 }
@@ -891,7 +1725,7 @@ public class Scanner {
                                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.RESTRICT);
                                                 else
-                                                    return getIdent(start, value.toString());
+                                                    return getIdent(start, value);
                                             }
                                         }
                                     }
@@ -900,7 +1734,7 @@ public class Scanner {
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 's':
                     value = new StringBuilder("s");
@@ -914,7 +1748,7 @@ public class Scanner {
                             if (cur.isWhiteSpace() || cur.isSpecial())
                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.SET);
                             else
-                                return getIdent(start, value.toString());
+                                return getIdent(start, value);
                         }
                     } else if (cur.getChar() == 'm') {
                         value.append("m");
@@ -940,7 +1774,7 @@ public class Scanner {
                                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.SMALLINT);
                                                 else
-                                                    return getIdent(start, value.toString());
+                                                    return getIdent(start, value);
                                             }
                                         }
                                     }
@@ -949,7 +1783,7 @@ public class Scanner {
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 't':
                     value = new StringBuilder("t");
@@ -969,7 +1803,7 @@ public class Scanner {
                                     if (cur.isWhiteSpace() || cur.isSpecial())
                                         return new KeywordToken(start, (Position) cur.clone(), TokenTag.TABLE);
                                     else
-                                        return getIdent(start, value.toString());
+                                        return getIdent(start, value);
                                 }
                             }
                         }
@@ -985,7 +1819,7 @@ public class Scanner {
                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.THEN);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
                             }
                         }
                     } else if (cur.getChar() == 'i') {
@@ -1015,7 +1849,7 @@ public class Scanner {
                                                     if (cur.isWhiteSpace() || cur.isSpecial())
                                                         return new KeywordToken(start, (Position) cur.clone(), TokenTag.TIMESTAMP);
                                                     else
-                                                        return getIdent(start, value.toString());
+                                                        return getIdent(start, value);
                                                 }
                                             }
                                         }
@@ -1023,7 +1857,7 @@ public class Scanner {
                                 } else if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.TIME);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
                             }
                         }
                     } else if (cur.getChar() == 'r') {
@@ -1038,12 +1872,12 @@ public class Scanner {
                                 if (cur.isWhiteSpace() || cur.isSpecial())
                                     return new KeywordToken(start, (Position) cur.clone(), TokenTag.TRUE);
                                 else
-                                    return getIdent(start, value.toString());
+                                    return getIdent(start, value);
                             }
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'u':
                     value = new StringBuilder("u");
@@ -1066,7 +1900,7 @@ public class Scanner {
                                         if (cur.isWhiteSpace() || cur.isSpecial())
                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.UNIQUE);
                                         else
-                                            return getIdent(start, value.toString());
+                                            return getIdent(start, value);
                                     }
                                 }
                             }
@@ -1089,14 +1923,14 @@ public class Scanner {
                                         if (cur.isWhiteSpace() || cur.isSpecial())
                                             return new KeywordToken(start, (Position) cur.clone(), TokenTag.UPDATE);
                                         else
-                                            return getIdent(start, value.toString());
+                                            return getIdent(start, value);
                                     }
                                 }
                             }
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case 'v':
                     value = new StringBuilder("v");
@@ -1122,7 +1956,7 @@ public class Scanner {
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.VARCHAR);
                                             else
-                                                return getIdent(start, value.toString());
+                                                return getIdent(start, value);
                                         }
                                     }
                                 }
@@ -1130,7 +1964,7 @@ public class Scanner {
                         }
                     }
 
-                    return getIdent(start, value.toString());
+                    return getIdent(start, value);
 
                 case '(':
                     cur.nextCp();
@@ -1249,7 +2083,7 @@ public class Scanner {
 
                 default:
                    if (cur.isLetter())
-                       return getIdent(start, "");
+                       return getIdent(start, new StringBuilder());
                    else if (cur.isDigit()) {
                        Token number = getNumber(start);
                        if (number != null)
@@ -1266,16 +2100,13 @@ public class Scanner {
         return new EOFToken(cur);
     }
 
-    private IdentToken getIdent(Position start, String value) throws CloneNotSupportedException {
-        StringBuilder valueBuilder = new StringBuilder(value);
+    private IdentToken getIdent(Position start, StringBuilder value) throws CloneNotSupportedException {
         while (cur.isLetterOrDigit()) {
-            valueBuilder.append(cur.getChar());
+            value.append(cur.getChar());
             cur.nextCp();
         }
 
-        value = valueBuilder.toString();
-
-        return new IdentToken(start, (Position) cur.clone(), value);
+        return new IdentToken(start, (Position) cur.clone(), value.toString());
     }
 
     private NumberToken getNumber(Position start) throws CloneNotSupportedException {
