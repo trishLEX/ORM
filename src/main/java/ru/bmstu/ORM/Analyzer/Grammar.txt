@@ -1,7 +1,11 @@
 //Синтаксическое описание
-S                    ::= (CreateTableStmt ';')+
+S                    ::= (CREATE CreateTableFunctionTrigger)*
 
-CreateTableStmt      ::= CREATE TABLE (IF NOT EXISTS)?
+CreateTableFunctionTrigger ::= (CreateTableStmt ';')
+                           |   (CreateFunctionStmt ';')
+                           |   (CreateTriggerStmt ';')
+
+CreateTableStmt      ::= TABLE (IF NOT EXISTS)?
                          QualifiedName '(' (TableElement (',' TableElement)*)? ')' Inherit?
 
 QualifiedName        ::= ColId ('.'ColId)*
@@ -14,8 +18,10 @@ TableElement         ::= ColumnDef | TableConstraint
 
 ColumnDef            ::= ColId Typename ColConstraint*
 
-Typename             ::= SimpleTypename ( '[' intConst? ']' )*    //intConst ни на что не влияет
-                     |   SimpleTypename ARRAY ('[' intConst ']')?
+Typename             ::= SimpleTypename ArrayType?
+
+ArrayType            ::= ( '[' intConst? ']' )+    //intConst ни на что не влияет
+                     |   ARRAY ('[' intConst ']')?
 
 SimpleTypename       ::= NumericType
                      |   CharacterType
@@ -59,8 +65,8 @@ ColConstraintElem    ::= NOT NULL
                      |   UNIQUE
                      |   PRIMARY KEY
                      |   CHECK '(' BoolExpr ')'    //HERE NEED TO CHECK APPLICATION OF OPs
-                     |   DEFAULT ExprNoVars        //ARITHMETIC, BOOL ONLY EXPR OR VALUE TILL
-                     |   REFERENCES qualified_name ( '(' ColId (',' ColId)* ')' )? KeyActions?
+                     |   DEFAULT ConstExpr         //ARITHMETIC, BOOL ONLY EXPR OR VALUE TILL
+                     |   REFERENCES QualifiedName ( '(' ColId (',' ColId)* ')' )? KeyActions?
 
 KeyActions           ::= ON UPDATE KeyAction (ON DELETE KeyAction)?
                      |   ON DELETE KeyAction (ON UPDATE KeyAction)?
@@ -71,48 +77,74 @@ KeyAction            ::= NO ACTION
                      |   SET NULL
                      |   SET DEFAULT
 
-ExprNoVars           ::= ArithmExprNoVar | TRUE | FALSE | CharacterValue | DateValue
+Expr                 ::= ColExpr | CharacterValue | DateValue
 
-ArithmExprNoVar      ::= ArithmExprNoVarTerm ( {'+' | '-'} ArithmExprNoVarTerm )*
-ArithmExprNoVarTerm  ::= ArithmExprNoVarFactor ( {'*' | '/'} ArithmExprNoVarFactor )*
-ArithmExprNoVarFactor::= NumericValue
-                     |   '-' ArithmExprNoVarFactor
-                     |   '(' ArithmExprNoVar ')'
-
-Expr                 ::= ArithmExpr | BoolExpr | TRUE | FALSE | CharacterValue | DateValue
-
-BoolExpr             ::= BoolExprTerm (OR BoolExprTerm)*
-BoolExprTerm         ::= BoolExprFactor (AND BoolExprFactor)*
-BoolExprFactor       ::= BoolConst | NOT BoolExprFactor  | '(' BoolExpr ')'
-BoolConst            ::= TRUE | FALSE | NULL | BoolStmt
-
-BoolStmt             ::= ArithmExpr '<'  ArithmExpr
-                     |   ArithmExpr '<=' ArithmExpr
-                     |   ArithmExpr '>'  ArithmExpr
-                     |   ArithmExpr '>=' ArithmExpr
-                     |   ArithmExpr '='  ArithmExpr
-                     |   ArithmExpr '!=' ArithmExpr
-                     |   ArithmExpr IS NULL
-                     |   ArithmExpr IS NOT NULL
-                     |   ArithmExpr IS TRUE
-                     |   ArithmExpr IS NOT TRUE
-                     |   ArithmExpr IS FALSE
-                     |   ArithmExpr IS NOT FALSE
-                     |   ArithmExpr BETWEEN ArithmExpr AND ArithmExpr     // ARITHMETIC OR DATE ONLY TILL
-                     |   ArithmExpr NOT BETWEEN ArithmExpr AND ArithmExpr // ARITHMETIC OR DATE ONLY TILL
-                   //|   ColId LIKE StringValue                           // ONLY FOR STRING TYPE OF ColId
-                   //|   ColId NOT LIKE StringValue                       // ONLY FOR STRING TYPE OF ColId
-                   //|   StringValue LIKE ColId                           // ONLY FOR STRING TYPE OF ColId
-                   //|   StringValue NOT LIKE ColId                       // ONLY FOR STRING TYPE OF ColId
-
-
+ColExpr              ::= ColExprTerm ({'+' | '-' | OR} ColExprTerm)*
+ColExprTerm          ::= ColExprFactor ({'*' | '/' | AND} ColExprFactor)*
+ColExprFactor        ::= ColId             RHS?
+                     |   '-' ColExprFactor ArithmRHS?
+                     |   '(' ColExpr ')'   RHS?
+                     |   NOT ColExprFactor BoolRHS?
+                     |   NumericValue      ArithmRHS?
+                     |   BoolConst         BoolRHS?
+                     
 ArithmExpr           ::= ArithmExprTerm ( {'+' | '-'} ArithmExprTerm )*
 ArithmExprTerm       ::= ArithmExprFactor ( {'*' | '/'} ArithmExprFactor )*
 ArithmExprFactor     ::= ColId //MUST BE NUMERIC TYPE
                      |   NumericValue
                      |   '-' ArithmExprFactor
                      |   '(' ArithmExpr ')'
+                     
+BoolExpr             ::= BoolExprTerm (OR BoolExprTerm)*
+BoolExprTerm         ::= BoolExprFactor (AND BoolExprFactor)*
+BoolExprFactor       ::= BoolConst BoolRHS? 
+                     |   NOT BoolExprFactor BoolRHS? 
+                     |   '(' BoolExpr ')' BoolRHS?
+                     |   ArithmExpr ArithmRHS?
 
+BoolConst            ::= TRUE | FALSE | NULL
+
+//BoolStmt             ::= Expr RHS
+                   //|   ColId LIKE StringValue                           // ONLY FOR STRING TYPE OF ColId
+                   //|   ColId NOT LIKE StringValue                       // ONLY FOR STRING TYPE OF ColId
+                   //|   StringValue LIKE ColId                           // ONLY FOR STRING TYPE OF ColId
+                   //|   StringValue NOT LIKE ColId                       // ONLY FOR STRING TYPE OF ColId
+
+RHS                 ::= ArithmRHS | BoolRHS
+
+ArithmRHS           ::= '<'  ArithmExpr
+                    |   '<=' ArithmExpr
+                    |   '>'  ArithmExpr
+                    |   '>=' ArithmExpr
+                    |   '='  ArithmExpr
+                    |   '!=' ArithmExpr
+                    |   BETWEEN ArithmExpr AND ArithmExpr     // ARITHMETIC ONLY TILL
+                    |   NOT BETWEEN ArithmExpr AND ArithmExpr // ARITHMETIC ONLY TILL
+
+BoolRHS             ::= IS BoolConst                     
+
+//TODO maybe make simple NumberValue instead of ArithmConstExpr
+ConstExpr           ::= ArithmConstExpr | NOT? BoolConst | CharacterValue | DateValue | '(' ConstExpr ')'
+
+ArithmConstExpr      ::= ArithmExprNoVarTerm ( {'+' | '-'} ArithmExprNoVarTerm )*
+ArithmConstExprTerm  ::= ArithmExprNoVarFactor ( {'*' | '/'} ArithmExprNoVarFactor )*
+ArithmConstExprFactor::= NumericValue
+                     |   '-' ArithmExprNoVarFactor
+                      
+BoolConstExpr       ::= BoolConstExprTerm (OR BoolConstExprTerm)*
+BoolConstExprTerm   ::= BoolConstExprFactor (AND BoolConstExprFactor)*
+BoolConstExprFactor ::= BoolConst BoolRHS? 
+                    | NOT BoolConstExprFactor BoolRHS?
+                    | ArithmConstExpr ArithmRHS
+                                      
+ArithmRHS           ::= '<'  ArithmConstExpr
+                    |   '<=' ArithmConstExpr
+                    |   '>'  ArithmConstExpr
+                    |   '>=' ArithmConstExpr
+                    |   '='  ArithmConstExpr
+                    |   '!=' ArithmConstExpr
+                    |   BETWEEN ArithmConstExpr AND ArithmConstExpr     // ARITHMETIC ONLY TILL
+                    |   NOT BETWEEN ArithmConstExpr AND ArithmConstExpr // ARITHMETIC ONLY TILL
 
 ColNameKeyword::=
 			  BETWEEN
@@ -458,197 +490,202 @@ UnreservedKeyword::=
 			| YES_P
 			| ZONE
 
-SelectStmt                  ::= simple_select
-                            | select_with_parens
+SelectStmt                  ::= simpleSelectClause
+                            |   selectWithParens
 
-simple_clause               ::= SELECT ALL? target_list?
-                                FROM from_list where_clause?
-                                group_clause? having_clause?
-                            |  SELECT distinct_clause target_list?
-                               FROM from_list where_clause?
-                               group_clause? having_clause?
-                            |  select_clause UNION all_or_distinct? select_clause
-                            |  select_clause INTERSECT all_or_distinct? select_clause
-                            |  select_clause EXCEPT all_or_distinct? select_clause
+simpleSelectClause          ::=  SELECT ALL? targetList?
+                                FROM fromList whereClause?
+                                groupClause? havingClause?
+                            |   SELECT distinctClause targetList?
+                                FROM fromList whereClause?
+                                groupClause? havingClause?
+                            |   select_clause UNION allOrDistinct? SelectStmt
+                            |   select_clause INTERSECT allOrDistinct? SelectStmt
+                            |   select_clause EXCEPT allOrDistinct? SelectStmt
 
-select_with_parens          ::= '(' select_no_parens ')'
-                            | '(' select_with_parens ')'
+selectWithParens            ::= '(' select_no_parens ')'
+                            |   '(' selectWithParens ')'
 
-select_no_parens            ::= simple_select
-                            | select_clause sort_clause
+selectNoParens              ::= simpleSelectClause
+                            |   SelectStmt sortClause
 
-sort_clause                 ::= ORDER BY sortby_list
+sortClause                  ::= ORDER BY sortByElemList
 
-sortby_list                 ::= sortby (',' sortby)*
+sortByElemList              ::= sortByElem (',' sortByElem)*
 
-sortby                      ::= col_ref asc_desc?
+sortByElem                  ::= colRef ascDesc?
 
-col_ref                     ::= intConst //>=0 номер столбца
-                            | ColId
+colRef                      ::= intConst //>=0 номер столбца
+                            |   ColId
 
-asc_desc                    ::= ASC | DESC //ASC ON DEFAULT
+ascDesc                     ::= ASC | DESC //ASC ON DEFAULT
 
-target_list                 ::= target_el (',' target_el)*
-target_el                   ::= target_expr AS IDENT
-                            | target_expr IDENT
-                            | target_expr
-                            | '*'
+targetList                  ::= targetEl (',' targetEl)*
 
-target_expr                 ::= ColId                //если есть аггрегатные функции, то должен содержаться или в них или в GROUP BY
-                            | AVG   '(' ColId ')'
-                            | SUM   '(' ColId ')'
-                            | COUNT '(' ColId ')'
-                            | MIN   '(' ColId ')'
-                            | MAX   '(' ColId ')'
+targetEl                    ::= targetExpr AS IDENT
+                            |   targetExpr IDENT
+                            |   targetExpr
+                            |   '*'
 
-from_list                   ::= table_ref (',' table_ref)*
+targetExpr                  ::= ColId                //если есть аггрегатные функции, то должен содержаться или в них или в GROUP BY
+                            |   AVG   '(' ColId ')'
+                            |   SUM   '(' ColId ')'
+                            |   COUNT '(' ColId ')'
+                            |   MIN   '(' ColId ')'
+                            |   MAX   '(' ColId ')'
 
-where_clause                ::= WHERE bool_expr
+fromList                    ::= tableRef (',' tableRef)*
 
-group_clause                ::= GROUP BY col_ref (',' col_ref)*
+whereClause                 ::= WHERE boolExpr
 
-having_clause               ::= HAVING bool_expr
+groupClause                 ::= GROUP BY colRef (',' colRef)*
 
-distinct_clause             ::= DISTINCT (ON '(' expr_list ')')?
+havingClause                ::= HAVING boolExpr
 
-all_or_distinct             ::= ALL| DISTINCT
+distinctClause              ::= DISTINCT (ON '(' colRefList ')')?
 
-expr_list                   ::= col_ref (',' col_ref)*
+allOrDistinct               ::= ALL| DISTINCT
 
-table_ref                   ::= relation_expr alias_clause?
-                            | select_with_parens alias_clause?
-                            | joined_table alias_clause?
+colRefList                  ::= colRef (',' colRef)*
 
-relation_expr               ::= qualified_name '*'?
-                            | ONLY qualified_name
-                            | ONLY '(' qualified_name ')'
+tableRef                    ::= relationExpr aliasClause?
+                            |   selectWithParens aliasClause?
+                            |   joinedTable aliasClause?
 
-alias_clause                ::= AS ColId
-                            | ColId
+relationExpr                ::= QualifiedName '*'?
+                            |   ONLY QualifiedName
+                            |   ONLY '(' QualifiedName ')'
 
-joined_table                ::= '(' joined_table ')'
-                            | table_ref CROSS JOIN table_ref
-                            | table_ref join_type JOIN table_ref join_qual
-                            | table_ref JOIN table_ref join_qual
+aliasClause                 ::= AS ColId
+                            |   ColId
 
-join_type                   ::= FULL OUTER?
-                            | LEFT OUTER?
-                            | RIGHT OUTER?
-                            | INNER
+joinedTable                 ::= '(' joinedTable ')'
+                            |   tableRef CROSS JOIN tableRef
+                            |   tableRef joinType JOIN tableRef joinQual
+                            |   tableRef JOIN tableRef joinQual
 
-join_qual                   ::= USING '(' ColId (',' ColId)* ')'
-                            | ON bool_expr
+joinType                    ::= FULL OUTER?
+                            |   LEFT OUTER?
+                            |   RIGHT OUTER?
+                            |   INNER
+
+joinQual                    ::= USING '(' ColId (',' ColId)* ')'
+                            |   ON boolExpr
 
 
-InsertStmt                  ::= INSERT INTO insert_target insert_rest
+InsertStmt                  ::= INSERT INTO insertTarget insertRest
 
-insert_target               ::= qualified_name (AS ColId)?
+insertTarget                ::= QualifiedName (AS ColId)?
 
-insert_rest                 ::= SelectStmt
-                            | '(' insert_column_list ')' SelectStmt
-                            | DEFAULT VALUES
+insertRest                  ::= SelectStmt
+                            |   '(' insertColumnList ')' SelectStmt
+                            |   DEFAULT VALUES
 
-insert_column_list          ::= qualified_name (',' qualified_name)
+insertColumnList            ::= QualifiedName (',' QualifiedName)
 
-UpdateStmt                  ::= UPDATE relation_expr_opt_alias SET set_clause_list from_clause where_clause
+UpdateStmt                  ::= UPDATE relationExprOptAlias SET setClauseList FROM fromList whereClause
 
-set_clause_list             ::= set_clause (',' set_clause)*
+setClauseList               ::= setClause (',' setClause)*
 
-//TODO сделать Expr
-set_clause                  ::= set_target '=' Expr
-                            | set_target '=' DEFAULT
-                          //| set_target '=' SelectStmt              //UNSUPPORTED SelectStmt должен возвращать 1 строку
-                            | '(' set_target_list ')' '=' Expr
-                            | '(' set_target_list ')' '=' DEFAULT
-                          //| '(' set_target_list ')' '=' SelectStmt //UNSUPPORTED SelectStmt должен возвращать 1 строку
 
-set_target_list             ::= qualified_name (',' qualified_name)*
+setClause                   ::= QualifiedName '=' Expr
+                            |   QualifiedName '=' DEFAULT
+                            |   QualifiedName '=' SelectStmt          //UNSUPPORTED SelectStmt должен возвращать 1 строку (try_catch)
+                            |   '(' setTargetList ')' '=' Expr
+                            |   '(' setTargetList ')' '=' DEFAULT
+                            |   '(' setTargetList ')' '=' SelectStmt //UNSUPPORTED SelectStmt должен возвращать 1 строку
 
-DeleteStmt                  ::= DELETE FROM relation_expr_opt_alias where_clause
+setTargetList              ::= QualifiedName (',' QualifiedName)*
 
-relation_expr_opt_alias     ::= relation_expr
-                            | relation_expr ColId
-                            | relation_expr AS ColId
+DeleteStmt                  ::= DELETE FROM relationExprOptAlias whereClause
 
-CreateFunctionStmt          ::= CREATE (OR REPLACE)? FUNCTION qualified_name func_args_with_defaults
-                                RETURNS Typename createfunc_opt_list
-                            | CREATE (OR REPLACE)? FUNCTION qualified_name func_args_with_defaults
-                              RETURNS TABLE '(' table_func_column_list ')' createfunc_opt_list
-                            | CREATE (OR REPLACE)? FUNCTION qualified_name '(' ')'
-                              RETURNS TRIGGER createfunc_opt_list //В семантическом анализе, если имя NEW.smth валдировать это
+relationExprOptAlias        ::= relationExpr
+                            |   relationExpr ColId
+                            |   relationExpr AS ColId
 
-CreateTriggerStmt           ::= CREATE TRIGGER qualified_name trig_time trig_action (OR trig_action)* ON qualified_name
-                                FOR EACH ROW EXECUTE PROCEDURE qualified_name '(' ')' ';'
+CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName funcArgsWithDefaults
+                                RETURNS Typename createFuncOptList
+                            |   (OR REPLACE)? FUNCTION QualifiedName funcArgsWithDefaults
+                                RETURNS TABLE '(' TableFuncColumnList ')' createFuncOptList
+                            |   (OR REPLACE)? FUNCTION QualifiedName '(' ')'
+                                RETURNS TRIGGER createFuncOptList //В семантическом анализе, если имя NEW.smth валдировать это
 
-trig_time                   ::= BEFORE
-                            | AFTER
-                            | INSTEAD OF
+CreateTriggerStmt           ::= TRIGGER QualifiedName trigTime trigAction (OR trigAction)* ON QualifiedName
+                                FOR EACH ROW EXECUTE PROCEDURE QualifiedName '(' ')' ';'
+                                
+TableFuncColumnList         ::= TableFuncColumn (',' TableFuncColumn)*
 
-trig_action                 ::= INSERT
-                            | UPDATE
-                            | DELETE
+TableFuncColumn             ::= IDENT Typename
 
-func_args_with_defaults     ::= '(' func_args_with_defaults_list? ')'
+trigTime                    ::= BEFORE
+                            |   AFTER
+                            |   INSTEAD OF
 
-func_args_with_defaults_list::= func_arg_with_default (',' func_arg_with_default)*
+trigAction                  ::= INSERT
+                            |   UPDATE
+                            |   DELETE
 
-func_arg_with_default       ::= func_arg
-                            | func_arg DEFAULT a_expr
-                            | func_arg '=' a_expr
+funcArgsWithDefaults        ::= '(' funcArgsWithDefaultsList? ')'
 
-func_arg                    ::= arg_class IDENT Typename
-                            | IDENT arg_class Typename
-                            | IDENT Typename
-                            | arg_class Typename
-                            | Typename
+funcArgsWithDefaultsList    ::= funcArgWithDefault (',' funcArgWithDefault)*
 
-arg_class                   ::= IN
-                            | OUT
-                            | INOUT
-                            | IN OUT
+funcArgWithDefault          ::= funcArg
+                            |   funcArg DEFAULT exprNoVar
+                            |   funcArg '=' exprNoVar
 
-createfunc_opt_list         ::= AS '$$' func_as '$$' LANGUAGE plpgsql
-                            | LANGUAGE plpgsql AS '$$' func_as '$$'
+funcArg                     ::= argClass IDENT Typename
+                            |   IDENT argClass Typename
+                            |   IDENT Typename
+                            |   argClass Typename
+                            |   Typename
 
-func_as                     ::= declare_block? BEGIN func_body* END ';'
+argClass                    ::= IN
+                            |   OUT
+                            |   INOUT
+                            |   IN OUT
 
-declare_block               ::= DECLARE var_decl+
+createFuncOptList           ::= AS '$$' funcAs '$$' LANGUAGE plpgsql
+                            |   LANGUAGE plpgsql AS '$$' funcAs '$$'
 
-var_decl                    ::= qualified_name Typename (':=' ExprNoVars)? ';'
+funcAs                      ::= declareBlock? BEGIN funcBody* END ';'
 
-func_body                   ::= func_as
-                            | var_assign
-                            | return_stmt
-                            | if_stmt
-                            | loop_stmt
-                            | NULL ';'
-                            | raise_stmt
-                            | InsertStmt ';'
-                            | UpdateStmt ';'
-                            | DeleteStmt ';'
-                            | SelectStmt ';'
+declareBlock                ::= DECLARE varDecl+
 
-var_assign                  ::= qualified_name ':=' Expr ';'
+varDecl                     ::= QualifiedName Typename (':=' ConstExpr)? ';'
 
-raise_stmt                  ::= RAISE NOTICE string_const ';'
-                            | RAISE EXCEPTION? string_const ';'
+funcBody                    ::= funcAs
+                            |   varAssign
+                            |   returnStmt
+                            |   ifStmt
+                            |   loopStmt
+                            |   NULL ';'
+                            |   raiseStmt
+                            |   InsertStmt ';'
+                            |   UpdateStmt ';'
+                            |   DeleteStmt ';'
+                            |   SelectStmt ';'
 
-return_stmt                 ::= RETURN Expr ';'
-                            | RETURN QUERY SelectStmt ';'
+varAssign                   ::= QualifiedName ':=' Expr ';'
 
-if_stmt                     ::= IF bool_expr THEN if_as (ELSIF bool_expr THEN if_as)? (ELSE if_as)? END IF ';'
+raiseStmt                   ::= RAISE NOTICE CharacterValue ';'
+                            |   RAISE EXCEPTION? CharacterValue ';'
 
-if_as                       ::= declare_block? BEGIN func_body* END ';'
-                            | declare_block? func_body? ';'
+returnStmt                  ::= RETURN Expr ';'
+                            |   RETURN QUERY SelectStmt ';'
 
-loop_stmt                   ::= (WHILE bool_expr)? LOOP cycle_as END LOOP ';'
-                            | FOR IDENT IN REVERSE? arithm_expr '..' arithm_expr (BY arithm_expr)? LOOP cycle_as END LOOP ';'
-                            | FOR loop_target IN SelectStmt cycle_as END LOOP ';'  //loop_target should be of type RECORD
+ifStmt                      ::= IF boolExpr THEN ifAs (ELSIF boolExpr THEN ifAs)? (ELSE ifAs)? END IF ';'
 
-cycle_as                    ::= declare_block? BEGIN cycle_body* END ';'
-                            | declare_block? cycle_body? ';'
+ifAs                        ::= declareBlock? BEGIN funcBody* END ';'
+                            |   declareBlock? funcBody? ';'
 
-cycle_body                  ::= func_body
-                            | EXIT (WHEN bool_expr)? ';'
-                            | CONTINUE (WHEN bool_expr)? ';'
+loopStmt                    ::= (WHILE boolExpr)? LOOP cycleAs END LOOP ';'
+                            |   FOR IDENT IN REVERSE? arithmExpr '..' arithmExpr (BY arithmExpr)? LOOP cycleAs END LOOP ';'
+                            |   FOR QualifiedName IN SelectStmt cycleAs END LOOP ';'  //QualifiedName should be of type RECORD
+
+cycleAs                     ::= declareBlock? BEGIN cycleBody* END ';'
+                            |   declareBlock? cycleBody? ';'
+
+cycleBody                   ::= funcBody
+                            |   EXIT (WHEN boolExpr)? ';'
+                            |   CONTINUE (WHEN boolExpr)? ';'
 

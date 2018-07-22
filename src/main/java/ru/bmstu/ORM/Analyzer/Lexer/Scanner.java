@@ -1731,6 +1731,85 @@ public class Scanner {
                                     }
                                 }
                             }
+                        } else if (cur.getChar() == 't') {
+                            value.append("s");
+                            cur.nextCp();
+                            if (cur.getChar() == 'u') {
+                                value.append("u");
+                                cur.nextCp();
+                                if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.getChar();
+                                    if (cur.getChar() == 'n') {
+                                        value.append("n");
+                                        cur.getChar();
+                                        if (cur.getChar() == 's') {
+                                            value.append("s");
+                                            cur.getChar();
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.RETURNS);
+                                            else
+                                                return getIdent(start, value);
+                                        } else if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.RETURN);
+                                        else
+                                            return getIdent(start, value);
+                                    }
+                                }
+                            }
+                        } else if (cur.getChar() == 'v') {
+                            value.append("v");
+                            cur.nextCp();
+                            if (cur.getChar() == 'e') {
+                                value.append("e");
+                                cur.nextCp();
+                                if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 's') {
+                                        value.append("s");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'e') {
+                                            value.append("e");
+                                            cur.nextCp();
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.REVERSE);
+                                            else
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (cur.getChar() == 'i') {
+                        value.append("i");
+                        cur.nextCp();
+                        if (cur.getChar() == 'g') {
+                            value.append("g");
+                            cur.nextCp();
+                            if (cur.getChar() == 'h') {
+                                value.append("h");
+                                cur.nextCp();
+                                if (cur.getChar() == 't') {
+                                    value.append("t");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.RIGHT);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
+                        }
+                    } else if (cur.getChar() == 'o') {
+                        value.append("o");
+                        cur.nextCp();
+                        if (cur.getChar() == 'w') {
+                            value.append("w");
+                            cur.nextCp();
+                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.ROW);
+                            else
+                                return getIdent(start, value);
                         }
                     }
 
@@ -1749,6 +1828,25 @@ public class Scanner {
                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.SET);
                             else
                                 return getIdent(start, value);
+                        } else if (cur.getChar() == 'l') {
+                            value.append("l");
+                            cur.nextCp();
+                            if (cur.getChar() == 'e') {
+                                value.append("e");
+                                cur.nextCp();
+                                if (cur.getChar() == 'c') {
+                                    value.append("c");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 't') {
+                                        value.append("t");
+                                        cur.nextCp();
+                                        if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.SELECT);
+                                        else
+                                            return getIdent(start, value);
+                                    }
+                                }
+                            }
                         }
                     } else if (cur.getChar() == 'm') {
                         value.append("m");
@@ -1780,6 +1878,17 @@ public class Scanner {
                                     }
                                 }
                             }
+                        }
+                    } else if (cur.getChar() == 'u') {
+                        value.append("u");
+                        cur.nextCp();
+                        if (cur.getChar() == 'm') {
+                            value.append("m");
+                            cur.nextCp();
+                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.SUM);
+                            else
+                                return getIdent(start, value);
                         }
                     }
 
@@ -1874,6 +1983,29 @@ public class Scanner {
                                 else
                                     return getIdent(start, value);
                             }
+                        } else if (cur.getChar() == 'i') {
+                            value.append("i");
+                            cur.nextCp();
+                            if (cur.getChar() == 'g') {
+                                value.append("g");
+                                cur.nextCp();
+                                if (cur.getChar() == 'g') {
+                                    value.append("g");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 'e') {
+                                        value.append("e");
+                                        cur.nextCp();
+                                        if (cur.getChar() == 'r') {
+                                            value.append("r");
+                                            cur.nextCp();
+                                            if (cur.isWhiteSpace() || cur.isSpecial())
+                                                return new KeywordToken(start, (Position) cur.clone(), TokenTag.TRIGGER);
+                                            else
+                                                return getIdent(start, value);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -1888,7 +2020,18 @@ public class Scanner {
                         if (cur.getChar() == 'i') {
                             value.append("i");
                             cur.nextCp();
-                            if (cur.getChar() == 'q') {
+                            if (cur.getChar() == 'o') {
+                                value.append("o");
+                                cur.nextCp();
+                                if (cur.getChar() == 'n') {
+                                    value.append("n");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.UNION);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            } else if (cur.getChar() == 'q') {
                                 value.append("q");
                                 cur.nextCp();
                                 if (cur.getChar() == 'u') {
@@ -1928,6 +2071,25 @@ public class Scanner {
                                 }
                             }
                         }
+                    } else if (cur.getChar() == 's') {
+                        value.append("s");
+                        cur.nextCp();
+                        if (cur.getChar() == 'i') {
+                            value.append("i");
+                            cur.nextCp();
+                            if (cur.getChar() == 'n') {
+                                value.append("n");
+                                cur.nextCp();
+                                if (cur.getChar() == 'g') {
+                                    value.append("g");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.USING);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
+                        }
                     }
 
                     return getIdent(start, value);
@@ -1959,6 +2121,74 @@ public class Scanner {
                                                 return getIdent(start, value);
                                         }
                                     }
+                                }
+                            }
+                        } else if (cur.getChar() == 'l') {
+                            value.append("l");
+                            cur.nextCp();
+                            if (cur.getChar() == 'u') {
+                                value.append("u");
+                                cur.nextCp();
+                                if (cur.getChar() == 'e') {
+                                    value.append("e");
+                                    cur.nextCp();
+                                    if (cur.getChar() == 's') {
+                                        value.append("s");
+                                        cur.nextCp();
+                                        if (cur.isWhiteSpace() || cur.isSpecial())
+                                            return new KeywordToken(start, (Position) cur.clone(), TokenTag.VALUES);
+                                        else
+                                            return getIdent(start, value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    return getIdent(start, value);
+
+                case 'w':
+                    value = new StringBuilder("w");
+                    cur.nextCp();
+
+                    if (cur.getChar() == 'h') {
+                        value.append("h");
+                        cur.nextCp();
+                        if (cur.getChar() == 'e') {
+                            value.append("e");
+                            cur.nextCp();
+                            if (cur.getChar() == 'r') {
+                                value.append("r");
+                                cur.nextCp();
+                                if (cur.getChar() == 'e') {
+                                    value.append("e");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.WHERE);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            } else if (cur.getChar() == 'n') {
+                                value.append("n");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.WHEN);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        } else if (cur.getChar() == 'i') {
+                            value.append("i");
+                            cur.nextCp();
+                            if (cur.getChar() == 'l') {
+                                value.append("l");
+                                cur.nextCp();
+                                if (cur.getChar() == 'e') {
+                                    value.append("e");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.WHILE);
+                                    else
+                                        return getIdent(start, value);
                                 }
                             }
                         }
