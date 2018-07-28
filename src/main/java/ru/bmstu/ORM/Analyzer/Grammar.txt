@@ -100,7 +100,8 @@ BoolExprTerm         ::= BoolExprFactor (AND BoolExprFactor)*
 BoolExprFactor       ::= BoolConst BoolRHS? 
                      |   NOT BoolExprFactor BoolRHS? 
                      |   '(' BoolExpr ')' BoolRHS?
-                     |   ArithmExpr ArithmRHS?
+                     |   ColId RHS?                 //Check Type of Col here
+                     |   ArithmConstExpr ArithmRHS
 
 BoolConst            ::= TRUE | FALSE | NULL
 
@@ -119,9 +120,8 @@ ArithmRHS           ::= '<'  ArithmExpr
                     |   '='  ArithmExpr
                     |   '!=' ArithmExpr
                     |   BETWEEN ArithmExpr AND ArithmExpr     // ARITHMETIC ONLY TILL
-                    |   NOT BETWEEN ArithmExpr AND ArithmExpr // ARITHMETIC ONLY TILL
 
-BoolRHS             ::= IS BoolConst                     
+BoolRHS             ::= IS NOT? BoolConst
 
 //TODO maybe make simple NumberValue instead of ArithmConstExpr
 ConstExpr           ::= ArithmConstExpr | NOT? BoolConst | CharacterValue | DateValue | '(' ConstExpr ')'

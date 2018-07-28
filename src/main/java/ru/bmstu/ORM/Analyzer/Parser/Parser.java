@@ -54,12 +54,12 @@ public class Parser {
 
         } else if (sym.getTag() == TokenTag.FUNCTION || sym.getTag() == TokenTag.OR) {
             CreateFunctionStmtVar createFunctionStmt = new CreateFunctionStmtVar();
-            parseCreateFunctionStmt(createFunctionStmt);
+            //parseCreateFunctionStmt(createFunctionStmt);
             createTableFunctionTrigger.addSymbol(createFunctionStmt);
             createTableFunctionTrigger.setStart(createFunctionStmt.getStart());
         } else if (sym.getTag() == TokenTag.TRIGGER) {
             CreateTriggerStmtVar createTriggerStmt = new CreateTriggerStmtVar();
-            parseCreateTriggerStmt(createTriggerStmt);
+            //parseCreateTriggerStmt(createTriggerStmt);
             createTableFunctionTrigger.addSymbol(createTriggerStmt);
             createTableFunctionTrigger.setStart(createTriggerStmt.getStart());
         } else {
@@ -1062,7 +1062,6 @@ public class Parser {
     //                    |   '='  ArithmConstExpr
     //                    |   '!=' ArithmConstExpr
     //                    |   BETWEEN ArithmConstExpr AND ArithmConstExpr     // ARITHMETIC ONLY TILL
-    //                    |   NOT BETWEEN ArithmConstExpr AND ArithmConstExpr // ARITHMETIC ONLY TILL
     private void parseArithmRHS(ArithmRHSVar arithmRHS) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.LESS) {
             arithmRHS.addSymbol(sym);
@@ -1134,33 +1133,21 @@ public class Parser {
             arithmRHS.addSymbol(arithmConstExprVar);
             parseArithmConstExpr(arithmConstExprVar);
             arithmRHS.setFollow(arithmConstExprVar.getFollow());
-        } else if (sym.getTag() == TokenTag.NOT) {
-            arithmRHS.addSymbol(sym);
-            arithmRHS.setStart(sym.getStart());
-            parse(TokenTag.NOT);
-
-            arithmRHS.addSymbol(sym);
-            parse(TokenTag.BETWEEN);
-
-            ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExpr);
-            parseArithmConstExpr(arithmConstExpr);
-
-            arithmRHS.addSymbol(sym);
-            parse(TokenTag.AND);
-
-            ArithmConstExprVar arithmConstExprVar = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExprVar);
-            parseArithmConstExpr(arithmConstExprVar);
-            arithmRHS.setFollow(arithmConstExprVar.getFollow());
+        } else {
+            throw new RuntimeException("Compare operators or BETWEEN expected, got " + sym);
         }
     }
 
-    //BoolRHS             ::= IS BoolConst
+    //BoolRHS             ::= IS NOT? BoolConst
     private void parseBoolRHS(BoolRHSVar boolRHS) throws CloneNotSupportedException {
         boolRHS.addSymbol(sym);
         boolRHS.setStart(sym.getStart());
         parse(TokenTag.IS);
+
+        if (sym.getTag() == TokenTag.NOT) {
+            boolRHS.addSymbol(sym);
+            parse(TokenTag.NOT);
+        }
 
         BoolConstVar boolConst = new BoolConstVar();
         boolRHS.addSymbol(boolConst);
@@ -1204,7 +1191,11 @@ public class Parser {
         }
     }
 
-    //BoolExprFactor       ::= BoolConst | NOT BoolExprFactor  | '(' BoolExpr ')'
+    //BoolExprFactor       ::= BoolConst BoolRHS?
+    //                     |   NOT BoolExprFactor BoolRHS?
+    //                     |   '(' BoolExpr ')' BoolRHS?
+    //                     |   ColId RHS?                 //Check Type of Col here
+    //                     |   ArithmConstExpr ArithmRHS
     private void parseBoolExprFactor(BoolExprFactorVar boolExprFactor) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.NOT) {
             boolExprFactor.addSymbol(sym);
@@ -1227,15 +1218,76 @@ public class Parser {
             boolExprFactor.addSymbol(sym);
             boolExprFactor.setFollow(sym.getFollow());
             parse(TokenTag.RPAREN);
-        } else {
+        //TODO FIRST(ColId)
+        } else if (sym.getTag() == TokenTag.IDENTIFIER) {
+            ColIdVar colId = new ColIdVar();
+            boolExprFactor.addSymbol(colId);
+            parseColId(colId);
+            boolExprFactor.setCoords(colId.getCoords());
+
+            if (sym.getTag() == TokenTag.IS
+                    || sym.getTag() == TokenTag.LESS
+                    || sym.getTag() == TokenTag.LESSEQ
+                    || sym.getTag() == TokenTag.GREATER
+                    || sym.getTag() == TokenTag.GREATEREQ
+                    || sym.getTag() == TokenTag.EQUAL
+                    || sym.getTag() == TokenTag.NOTEQUAL
+                    || sym.getTag() == TokenTag.BETWEEN) {
+                RHSVar rhs = new RHSVar();
+                boolExprFactor.addSymbol(rhs);
+                parseRHS(rhs);
+                boolExprFactor.setFollow(rhs.getFollow());
+            }
+        } else if (sym.getTag() == TokenTag.TRUE
+                || sym.getTag() == TokenTag.FALSE
+                || sym.getTag() == TokenTag.NULL){
             BoolConstVar boolConst = new BoolConstVar();
             boolExprFactor.addSymbol(boolConst);
             parseBoolConst(boolConst);
             boolExprFactor.setCoords(boolConst.getCoords());
+
+            if (sym.getTag() == TokenTag.IS) {
+                BoolRHSVar boolRHS = new BoolRHSVar();
+                boolExprFactor.addSymbol(boolRHS);
+                parseBoolRHS(boolRHS);
+                boolExprFactor.setFollow(boolRHS.getFollow());
+            }
+        } else {
+            ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
+            boolExprFactor.addSymbol(arithmConstExpr);
+            parseArithmConstExpr(arithmConstExpr);
+            boolExprFactor.setStart(arithmConstExpr.getStart());
+
+            ArithmRHSVar arithmRHS = new ArithmRHSVar();
+            boolExprFactor.addSymbol(arithmRHS);
+            parseArithmRHS(arithmRHS);
+            boolExprFactor.setFollow(arithmRHS.getFollow());
         }
     }
 
-    //BoolConst            ::= TRUE | FALSE | NULL | BoolStmt
+    private void parseRHS(RHSVar rhs) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.LESS
+                || sym.getTag() == TokenTag.LESSEQ
+                || sym.getTag() == TokenTag.GREATER
+                || sym.getTag() == TokenTag.GREATEREQ
+                || sym.getTag() == TokenTag.EQUAL
+                || sym.getTag() == TokenTag.NOTEQUAL
+                || sym.getTag() == TokenTag.BETWEEN) {
+            ArithmRHSVar arithmRHS = new ArithmRHSVar();
+            rhs.addSymbol(arithmRHS);
+            parseArithmRHS(arithmRHS);
+            rhs.setCoords(arithmRHS.getCoords());
+        } else if (sym.getTag() == TokenTag.IS) {
+            BoolRHSVar boolRHS = new BoolRHSVar();
+            rhs.addSymbol(boolRHS);
+            parseBoolRHS(boolRHS);
+            boolRHS.setCoords(boolRHS.getCoords());
+        } else {
+            throw new RuntimeException("Boolean RHS expected, got " + sym);
+        }
+    }
+
+    //BoolConst            ::= TRUE | FALSE | NULL
     private void parseBoolConst(BoolConstVar boolConst) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.TRUE) {
             boolConst.addSymbol(sym);
@@ -1246,10 +1298,9 @@ public class Parser {
             boolConst.setCoords(sym.getCoords());
             parse(TokenTag.FALSE);
         } else {
-            BoolStmtVar boolStmtVar = new BoolStmtVar();
-            boolConst.addSymbol(boolStmtVar);
-            parseBoolStmt(boolStmtVar);
-            boolConst.setCoords(boolStmtVar.getCoords());
+            boolConst.addSymbol(sym);
+            boolConst.setCoords(sym.getCoords());
+            parse(TokenTag.NULL);
         }
     }
 
@@ -1271,109 +1322,109 @@ public class Parser {
     //                  // |   ColId NOT LIKE StringValue                       // ONLY FOR STRING TYPE OF ColId
     //                  // |   StringValue LIKE ColId                           // ONLY FOR STRING TYPE OF ColId
     //                  // |   StringValue NOT LIKE ColId                       // ONLY FOR STRING TYPE OF ColId
-    private void parseBoolStmt(BoolStmtVar boolStmt) throws CloneNotSupportedException {
-        //TODO UNSUPPORTED FIRST(ColId)
-        ArithmExprVar arithmExpr = new ArithmExprVar();
-        boolStmt.addSymbol(arithmExpr);
-        parseArithmExpr(arithmExpr);
-        boolStmt.setStart(arithmExpr.getStart());
-
-        if (sym.getTag() == TokenTag.LESS
-                || sym.getTag() == TokenTag.LESSEQ
-                || sym.getTag() == TokenTag.GREATER
-                || sym.getTag() == TokenTag.GREATEREQ
-                || sym.getTag() == TokenTag.EQUAL
-                || sym.getTag() == TokenTag.NOTEQUAL) {
-
-            boolStmt.addSymbol(sym);
-
-            if (sym.getTag() == TokenTag.LESS)
-                parse(TokenTag.LESS);
-            else if (sym.getTag() == TokenTag.LESSEQ)
-                parse(TokenTag.LESSEQ);
-            else if (sym.getTag() == TokenTag.GREATER)
-                parse(TokenTag.GREATER);
-            else if (sym.getTag() == TokenTag.GREATEREQ)
-                parse(TokenTag.GREATEREQ);
-            else if (sym.getTag() == TokenTag.EQUAL)
-                parse(TokenTag.EQUAL);
-            else
-                parse(TokenTag.NOTEQUAL);
-
-            ArithmExprVar arithmExprVar = new ArithmExprVar();
-            boolStmt.addSymbol(arithmExprVar);
-            parseArithmExpr(arithmExprVar);
-            boolStmt.setFollow(arithmExprVar.getFollow());
-        } else if (sym.getTag() == TokenTag.IS) {
-            boolStmt.addSymbol(sym);
-            parse(TokenTag.IS);
-
-            boolStmt.setFollow(sym.getFollow());
-            boolStmt.addSymbol(sym);
-            if (sym.getTag() == TokenTag.NULL) {
-                parse(TokenTag.NULL);
-            } else if (sym.getTag() == TokenTag.TRUE) {
-                parse(TokenTag.TRUE);
-            } else if (sym.getTag() == TokenTag.FALSE) {
-                parse(TokenTag.FALSE);
-            } else if (sym.getTag() == TokenTag.NOT) {
-                parse(TokenTag.NOT);
-
-                if (sym.getTag() == TokenTag.NULL) {
-                    boolStmt.setFollow(sym.getFollow());
-                    boolStmt.addSymbol(sym);
-                    parse(TokenTag.NULL);
-                } else if (sym.getTag() == TokenTag.TRUE) {
-                    boolStmt.setFollow(sym.getFollow());
-                    boolStmt.addSymbol(sym);
-                    parse(TokenTag.TRUE);
-                } else if (sym.getTag() == TokenTag.FALSE) {
-                    boolStmt.setFollow(sym.getFollow());
-                    boolStmt.addSymbol(sym);
-                    parse(TokenTag.FALSE);
-                } else {
-                    throw new RuntimeException("Not boolean: " + sym);
-                }
-            } else {
-                throw new RuntimeException("Not boolean: " + sym);
-            }
-        } else if (sym.getTag() == TokenTag.BETWEEN) {
-            boolStmt.addSymbol(sym);
-            parse(TokenTag.BETWEEN);
-
-            ArithmExprVar arithmExprLeft = new ArithmExprVar();
-            boolStmt.addSymbol(arithmExprLeft);
-            parseArithmExpr(arithmExprLeft);
-
-            parse(TokenTag.AND);
-
-            ArithmExprVar arithmExprRight = new ArithmExprVar();
-            boolStmt.addSymbol(arithmExprRight);
-            parseArithmExpr(arithmExprRight);
-
-            boolStmt.setFollow(arithmExprRight.getFollow());
-        } else if (sym.getTag() == TokenTag.NOT) {
-            boolStmt.addSymbol(sym);
-            parse(TokenTag.NOT);
-
-            boolStmt.addSymbol(sym);
-            parse(TokenTag.BETWEEN);
-
-            ArithmExprVar arithmExprLeft = new ArithmExprVar();
-            boolStmt.addSymbol(arithmExprLeft);
-            parseArithmExpr(arithmExprLeft);
-
-            parse(TokenTag.AND);
-
-            ArithmExprVar arithmExprRight = new ArithmExprVar();
-            boolStmt.addSymbol(arithmExprRight);
-            parseArithmExpr(arithmExprRight);
-
-            boolStmt.setFollow(arithmExprRight.getFollow());
-        } else {
-            throw new RuntimeException("Bool statement expected, got " + sym);
-        }
-    }
+//    private void parseBoolStmt(BoolStmtVar boolStmt) throws CloneNotSupportedException {
+//        //TODO UNSUPPORTED FIRST(ColId)
+//        ArithmExprVar arithmExpr = new ArithmExprVar();
+//        boolStmt.addSymbol(arithmExpr);
+//        parseArithmExpr(arithmExpr);
+//        boolStmt.setStart(arithmExpr.getStart());
+//
+//        if (sym.getTag() == TokenTag.LESS
+//                || sym.getTag() == TokenTag.LESSEQ
+//                || sym.getTag() == TokenTag.GREATER
+//                || sym.getTag() == TokenTag.GREATEREQ
+//                || sym.getTag() == TokenTag.EQUAL
+//                || sym.getTag() == TokenTag.NOTEQUAL) {
+//
+//            boolStmt.addSymbol(sym);
+//
+//            if (sym.getTag() == TokenTag.LESS)
+//                parse(TokenTag.LESS);
+//            else if (sym.getTag() == TokenTag.LESSEQ)
+//                parse(TokenTag.LESSEQ);
+//            else if (sym.getTag() == TokenTag.GREATER)
+//                parse(TokenTag.GREATER);
+//            else if (sym.getTag() == TokenTag.GREATEREQ)
+//                parse(TokenTag.GREATEREQ);
+//            else if (sym.getTag() == TokenTag.EQUAL)
+//                parse(TokenTag.EQUAL);
+//            else
+//                parse(TokenTag.NOTEQUAL);
+//
+//            ArithmExprVar arithmExprVar = new ArithmExprVar();
+//            boolStmt.addSymbol(arithmExprVar);
+//            parseArithmExpr(arithmExprVar);
+//            boolStmt.setFollow(arithmExprVar.getFollow());
+//        } else if (sym.getTag() == TokenTag.IS) {
+//            boolStmt.addSymbol(sym);
+//            parse(TokenTag.IS);
+//
+//            boolStmt.setFollow(sym.getFollow());
+//            boolStmt.addSymbol(sym);
+//            if (sym.getTag() == TokenTag.NULL) {
+//                parse(TokenTag.NULL);
+//            } else if (sym.getTag() == TokenTag.TRUE) {
+//                parse(TokenTag.TRUE);
+//            } else if (sym.getTag() == TokenTag.FALSE) {
+//                parse(TokenTag.FALSE);
+//            } else if (sym.getTag() == TokenTag.NOT) {
+//                parse(TokenTag.NOT);
+//
+//                if (sym.getTag() == TokenTag.NULL) {
+//                    boolStmt.setFollow(sym.getFollow());
+//                    boolStmt.addSymbol(sym);
+//                    parse(TokenTag.NULL);
+//                } else if (sym.getTag() == TokenTag.TRUE) {
+//                    boolStmt.setFollow(sym.getFollow());
+//                    boolStmt.addSymbol(sym);
+//                    parse(TokenTag.TRUE);
+//                } else if (sym.getTag() == TokenTag.FALSE) {
+//                    boolStmt.setFollow(sym.getFollow());
+//                    boolStmt.addSymbol(sym);
+//                    parse(TokenTag.FALSE);
+//                } else {
+//                    throw new RuntimeException("Not boolean: " + sym);
+//                }
+//            } else {
+//                throw new RuntimeException("Not boolean: " + sym);
+//            }
+//        } else if (sym.getTag() == TokenTag.BETWEEN) {
+//            boolStmt.addSymbol(sym);
+//            parse(TokenTag.BETWEEN);
+//
+//            ArithmExprVar arithmExprLeft = new ArithmExprVar();
+//            boolStmt.addSymbol(arithmExprLeft);
+//            parseArithmExpr(arithmExprLeft);
+//
+//            parse(TokenTag.AND);
+//
+//            ArithmExprVar arithmExprRight = new ArithmExprVar();
+//            boolStmt.addSymbol(arithmExprRight);
+//            parseArithmExpr(arithmExprRight);
+//
+//            boolStmt.setFollow(arithmExprRight.getFollow());
+//        } else if (sym.getTag() == TokenTag.NOT) {
+//            boolStmt.addSymbol(sym);
+//            parse(TokenTag.NOT);
+//
+//            boolStmt.addSymbol(sym);
+//            parse(TokenTag.BETWEEN);
+//
+//            ArithmExprVar arithmExprLeft = new ArithmExprVar();
+//            boolStmt.addSymbol(arithmExprLeft);
+//            parseArithmExpr(arithmExprLeft);
+//
+//            parse(TokenTag.AND);
+//
+//            ArithmExprVar arithmExprRight = new ArithmExprVar();
+//            boolStmt.addSymbol(arithmExprRight);
+//            parseArithmExpr(arithmExprRight);
+//
+//            boolStmt.setFollow(arithmExprRight.getFollow());
+//        } else {
+//            throw new RuntimeException("Bool statement expected, got " + sym);
+//        }
+//    }
 
     //ArithmExpr           ::= ArithmExprTerm ( {'+' | '-'} ArithmExprTerm )*
     private void parseArithmExpr(ArithmExprVar arithmExpr) throws CloneNotSupportedException {
