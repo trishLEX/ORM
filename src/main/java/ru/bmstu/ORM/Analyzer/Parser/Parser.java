@@ -4,6 +4,20 @@ import ru.bmstu.ORM.Analyzer.Lexer.Scanner;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.ArithmeticExpression.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.BooleanExpression.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.GeneralExpression.ConstExprVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.DeclareBlockVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.FuncAsVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.FuncBodyVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.VariableDeclVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionDeclaration.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Table.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Trigger.CreateTriggerStmtVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Trigger.KeyActionVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Trigger.KeyActionsVar;
 
 public class Parser {
     private Scanner scanner;
@@ -54,7 +68,7 @@ public class Parser {
 
         } else if (sym.getTag() == TokenTag.FUNCTION || sym.getTag() == TokenTag.OR) {
             CreateFunctionStmtVar createFunctionStmt = new CreateFunctionStmtVar();
-            //parseCreateFunctionStmt(createFunctionStmt);
+            parseCreateFunctionStmt(createFunctionStmt);
             createTableFunctionTrigger.addSymbol(createFunctionStmt);
             createTableFunctionTrigger.setStart(createFunctionStmt.getStart());
         } else if (sym.getTag() == TokenTag.TRIGGER) {
@@ -1516,5 +1530,497 @@ public class Parser {
         } else {
             throw new RuntimeException("Number or '(' arithmetic expression ')' expected, got " + sym);
         }
+    }
+
+    //CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' CreateFunctionRightPart
+    private void parseCreateFunctionStmt(CreateFunctionStmtVar createFunctionStmt) throws CloneNotSupportedException {
+        boolean wasOR = false;
+
+        if (sym.getTag() == TokenTag.OR) {
+            wasOR = true;
+            createFunctionStmt.addSymbol(sym);
+            createFunctionStmt.setStart(sym.getStart());
+            parse(TokenTag.OR);
+
+            createFunctionStmt.addSymbol(sym);
+            parse(TokenTag.REPLACE);
+        }
+
+        createFunctionStmt.addSymbol(sym);
+        if (!wasOR)
+            createFunctionStmt.setStart(sym.getStart());
+        parse(TokenTag.FUNCTION);
+
+        QualifiedNameVar qualifiedName = new QualifiedNameVar();
+        createFunctionStmt.addSymbol(qualifiedName);
+        parseQualifiedName(qualifiedName);
+
+        createFunctionStmt.addSymbol(sym);
+        parse(TokenTag.LPAREN);
+
+        CreateFunctionRightPartVar createFunctionRightPart = new CreateFunctionRightPartVar();
+        createFunctionStmt.addSymbol(createFunctionRightPart);
+        parseCreateFunctionRightPart(createFunctionRightPart);
+        createFunctionStmt.setFollow(createFunctionRightPart.getFollow());
+    }
+
+    //CreateFunctionRightPart     ::= ')' RETURNS CreateFunctionAllReturnStmt
+    //                            |    funcArgsWithDefaultsList ')' RETURNS CreateFunctionNoTrReturnStmt
+    private void parseCreateFunctionRightPart(CreateFunctionRightPartVar createFunctionRightPart) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.RPAREN) {
+            createFunctionRightPart.addSymbol(sym);
+            createFunctionRightPart.setStart(sym.getStart());
+            parse(TokenTag.RPAREN);
+
+            CreateFunctionAllReturnStmtVar createFunctionAllReturnStmt = new CreateFunctionAllReturnStmtVar();
+            createFunctionRightPart.addSymbol(createFunctionAllReturnStmt);
+            parseCreateFunctionAllReturnStmt(createFunctionAllReturnStmt);
+            createFunctionRightPart.setFollow(createFunctionAllReturnStmt.getFollow());
+        } else {
+            FuncArgsWithDefaultsListVar funcArgsWithDefaultsList = new FuncArgsWithDefaultsListVar();
+            createFunctionRightPart.addSymbol(funcArgsWithDefaultsList);
+            parseFuncArgsWithDefaultsList(funcArgsWithDefaultsList);
+            createFunctionRightPart.setStart(funcArgsWithDefaultsList.getStart());
+
+            createFunctionRightPart.addSymbol(sym);
+            parse(TokenTag.RPAREN);
+
+            createFunctionRightPart.addSymbol(sym);
+            parse(TokenTag.RETURNS);
+
+            CreateFunctionNoTrReturnStmtVar createFunctionNoTrReturnStmt = new CreateFunctionNoTrReturnStmtVar();
+            createFunctionRightPart.addSymbol(createFunctionNoTrReturnStmt);
+            parseCreateFunctionNoTrStmt(createFunctionNoTrReturnStmt);
+            createFunctionRightPart.setFollow(createFunctionNoTrReturnStmt.getFollow());
+        }
+    }
+
+    //CreateFunctionAllReturnStmt ::= Typename CreateFuncBody
+    //                            |   TABLE '(' TableFuncColumnList ')' CreateFuncBody
+    //                            |   TRIGGER CreateFuncBody //В семантическом анализе, если имя NEW.smth валидировать это
+    private void parseCreateFunctionAllReturnStmt(CreateFunctionAllReturnStmtVar createFunctionAllReturnStmt) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.CHARACTER
+                || sym.getTag() == TokenTag.CHAR
+                || sym.getTag() == TokenTag.VARCHAR
+                || sym.getTag() == TokenTag.DATE
+                || sym.getTag() == TokenTag.TIME
+                || sym.getTag() == TokenTag.TIMESTAMP
+                || sym.getTag() == TokenTag.RECORD
+                || sym.getTag() == TokenTag.INT
+                || sym.getTag() == TokenTag.INTEGER
+                || sym.getTag() == TokenTag.SMALLINT
+                || sym.getTag() == TokenTag.BIGINT
+                || sym.getTag() == TokenTag.REAL
+                || sym.getTag() == TokenTag.FLOAT
+                || sym.getTag() == TokenTag.DOUBLE
+                || sym.getTag() == TokenTag.DECIMAL
+                || sym.getTag() == TokenTag.NUMERIC
+                || sym.getTag() == TokenTag.BOOLEAN) {
+            TypenameVar typename = new TypenameVar();
+            createFunctionAllReturnStmt.addSymbol(typename);
+            parseTypename(typename);
+            createFunctionAllReturnStmt.setStart(typename.getStart());
+
+            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
+            createFunctionAllReturnStmt.addSymbol(createFuncBody);
+            parseCreateFuncBody(createFuncBody);
+            createFunctionAllReturnStmt.setFollow(createFuncBody.getFollow());
+        } else if (sym.getTag() == TokenTag.TABLE) {
+            createFunctionAllReturnStmt.addSymbol(sym);
+            createFunctionAllReturnStmt.setStart(sym.getStart());
+            parse(TokenTag.TABLE);
+
+            createFunctionAllReturnStmt.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            TableFuncColumnListVar tableFuncColumnList = new TableFuncColumnListVar();
+            createFunctionAllReturnStmt.addSymbol(tableFuncColumnList);
+            parseTableFuncColumnList(tableFuncColumnList);
+
+            createFunctionAllReturnStmt.addSymbol(sym);
+            parse(TokenTag.RPAREN);
+
+            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
+            createFunctionAllReturnStmt.addSymbol(createFuncBody);
+            parseCreateFuncBody(createFuncBody);
+            createFunctionAllReturnStmt.setFollow(createFuncBody.getFollow());
+        } else if (sym.getTag() == TokenTag.TRIGGER) {
+            createFunctionAllReturnStmt.addSymbol(sym);
+            createFunctionAllReturnStmt.setStart(sym.getStart());
+            parse(TokenTag.TRIGGER);
+
+            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
+            createFunctionAllReturnStmt.addSymbol(createFuncBody);
+            parseCreateFuncBody(createFuncBody);
+            createFunctionAllReturnStmt.setFollow(createFuncBody.getFollow());
+        } else {
+            throw new RuntimeException("Typename, TABLE or TRIGGER expected, got " + sym);
+        }
+    }
+
+    //CreateFunctionNoTrReturnStmt::= Typename CreateFuncBody
+    //                            |   TABLE '(' TableFuncColumnList ')' CreateFuncBody
+    private void parseCreateFunctionNoTrStmt(CreateFunctionNoTrReturnStmtVar createFunctionNoTrReturnStmt) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.CHARACTER
+                || sym.getTag() == TokenTag.CHAR
+                || sym.getTag() == TokenTag.VARCHAR
+                || sym.getTag() == TokenTag.DATE
+                || sym.getTag() == TokenTag.TIME
+                || sym.getTag() == TokenTag.TIMESTAMP
+                || sym.getTag() == TokenTag.RECORD
+                || sym.getTag() == TokenTag.INT
+                || sym.getTag() == TokenTag.INTEGER
+                || sym.getTag() == TokenTag.SMALLINT
+                || sym.getTag() == TokenTag.BIGINT
+                || sym.getTag() == TokenTag.REAL
+                || sym.getTag() == TokenTag.FLOAT
+                || sym.getTag() == TokenTag.DOUBLE
+                || sym.getTag() == TokenTag.DECIMAL
+                || sym.getTag() == TokenTag.NUMERIC
+                || sym.getTag() == TokenTag.BOOLEAN) {
+            TypenameVar typename = new TypenameVar();
+            createFunctionNoTrReturnStmt.addSymbol(typename);
+            parseTypename(typename);
+            createFunctionNoTrReturnStmt.setStart(typename.getStart());
+
+            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
+            createFunctionNoTrReturnStmt.addSymbol(createFuncBody);
+            parseCreateFuncBody(createFuncBody);
+            createFunctionNoTrReturnStmt.setFollow(createFuncBody.getFollow());
+        } else if (sym.getTag() == TokenTag.TABLE) {
+            createFunctionNoTrReturnStmt.addSymbol(sym);
+            createFunctionNoTrReturnStmt.setStart(sym.getStart());
+            parse(TokenTag.TABLE);
+
+            createFunctionNoTrReturnStmt.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            TableFuncColumnListVar tableFuncColumnList = new TableFuncColumnListVar();
+            createFunctionNoTrReturnStmt.addSymbol(tableFuncColumnList);
+            parseTableFuncColumnList(tableFuncColumnList);
+
+            createFunctionNoTrReturnStmt.addSymbol(sym);
+            parse(TokenTag.RPAREN);
+
+            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
+            createFunctionNoTrReturnStmt.addSymbol(createFuncBody);
+            parseCreateFuncBody(createFuncBody);
+            createFunctionNoTrReturnStmt.setFollow(createFuncBody.getFollow());
+        } else {
+            throw new RuntimeException("Typename or TABLE expected, got " + sym);
+        }
+    }
+
+    //funcArgsWithDefaultsList    ::= funcArgWithDefault (',' funcArgWithDefault)*
+    private void parseFuncArgsWithDefaultsList(FuncArgsWithDefaultsListVar funcArgsWithDefaultsList) throws CloneNotSupportedException {
+        FuncArgWithDefaultVar funcArgWithDefault = new FuncArgWithDefaultVar();
+        funcArgsWithDefaultsList.addSymbol(funcArgWithDefault);
+        parseFuncArgWithDefault(funcArgWithDefault);
+        funcArgsWithDefaultsList.setCoords(funcArgWithDefault.getCoords());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            funcArgsWithDefaultsList.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            FuncArgWithDefaultVar funcArgWithDefaultVar = new FuncArgWithDefaultVar();
+            funcArgsWithDefaultsList.addSymbol(funcArgWithDefaultVar);
+            parseFuncArgWithDefault(funcArgWithDefaultVar);
+            funcArgsWithDefaultsList.setFollow(funcArgWithDefaultVar.getFollow());
+        }
+    }
+
+    //funcArgWithDefault          ::= funcArg funcArgDefault?
+    private void parseFuncArgWithDefault(FuncArgWithDefaultVar funcArgWithDefault) throws CloneNotSupportedException {
+        FuncArgVar funcArg = new FuncArgVar();
+        funcArgWithDefault.addSymbol(funcArg);
+        parseFuncArg(funcArg);
+        funcArgWithDefault.setCoords(funcArg.getCoords());
+
+        if (sym.getTag() == TokenTag.DEFAULT
+                || sym.getTag() == TokenTag.EQUAL) {
+            FuncArgDefaultVar funcArgDefault = new FuncArgDefaultVar();
+            funcArgWithDefault.addSymbol(funcArgDefault);
+            parseFuncArgDefault(funcArgDefault);
+            funcArgWithDefault.setFollow(funcArgDefault.getFollow());
+        }
+    }
+
+    //funcArgDefault              ::= DEFAULT constExpr
+    //                            |   '=' constExpr
+    private void parseFuncArgDefault(FuncArgDefaultVar funcArgDefault) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.DEFAULT) {
+            funcArgDefault.addSymbol(sym);
+            funcArgDefault.setStart(sym.getStart());
+            parse(TokenTag.DEFAULT);
+
+            ConstExprVar constExpr = new ConstExprVar();
+            funcArgDefault.addSymbol(constExpr);
+            parseConstExpr(constExpr);
+            funcArgDefault.setFollow(constExpr.getFollow());
+        } else if (sym.getTag() == TokenTag.EQUAL) {
+            funcArgDefault.addSymbol(sym);
+            funcArgDefault.setStart(sym.getStart());
+            parse(TokenTag.EQUAL);
+
+            ConstExprVar constExpr = new ConstExprVar();
+            funcArgDefault.addSymbol(constExpr);
+            parseConstExpr(constExpr);
+            funcArgDefault.setFollow(constExpr.getFollow());
+        } else {
+            throw new RuntimeException("DEFAULT or '=' expected, got " + sym);
+        }
+    }
+
+    //funcArg                     ::= argClass IDENT? Typename
+    //                            |   IDENT argClass? Typename
+    //                            |   Typename
+    private void parseFuncArg(FuncArgVar funcArg) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.IN
+                || sym.getTag() == TokenTag.OUT
+                || sym.getTag() == TokenTag.INOUT) {
+            ArgClassVar argClass = new ArgClassVar();
+            funcArg.addSymbol(argClass);
+            parseArgClass(argClass);
+            funcArg.setStart(argClass.getStart());
+
+            if (sym.getTag() == TokenTag.IDENTIFIER) {
+                funcArg.addSymbol(sym);
+                parse(TokenTag.IDENTIFIER);
+            }
+
+            TypenameVar typename = new TypenameVar();
+            funcArg.addSymbol(typename);
+            parseTypename(typename);
+            funcArg.setFollow(typename.getFollow());
+        } else if (sym.getTag() == TokenTag.IDENTIFIER) {
+            funcArg.addSymbol(sym);
+            funcArg.setStart(sym.getStart());
+            parse(TokenTag.IDENTIFIER);
+
+            if (sym.getTag() == TokenTag.IN
+                    || sym.getTag() == TokenTag.OUT
+                    || sym.getTag() == TokenTag.INOUT) {
+                ArgClassVar argClass = new ArgClassVar();
+                funcArg.addSymbol(argClass);
+                parseArgClass(argClass);
+            }
+
+            TypenameVar typename = new TypenameVar();
+            funcArg.addSymbol(typename);
+            parseTypename(typename);
+            funcArg.setFollow(typename.getFollow());
+        } else if (sym.getTag() == TokenTag.CHARACTER
+                || sym.getTag() == TokenTag.CHAR
+                || sym.getTag() == TokenTag.VARCHAR
+                || sym.getTag() == TokenTag.DATE
+                || sym.getTag() == TokenTag.TIME
+                || sym.getTag() == TokenTag.TIMESTAMP
+                || sym.getTag() == TokenTag.RECORD
+                || sym.getTag() == TokenTag.INT
+                || sym.getTag() == TokenTag.INTEGER
+                || sym.getTag() == TokenTag.SMALLINT
+                || sym.getTag() == TokenTag.BIGINT
+                || sym.getTag() == TokenTag.REAL
+                || sym.getTag() == TokenTag.FLOAT
+                || sym.getTag() == TokenTag.DOUBLE
+                || sym.getTag() == TokenTag.DECIMAL
+                || sym.getTag() == TokenTag.NUMERIC
+                || sym.getTag() == TokenTag.BOOLEAN) {
+            TypenameVar typename = new TypenameVar();
+            funcArg.addSymbol(typename);
+            parseTypename(typename);
+            funcArg.setCoords(typename.getCoords());
+        } else {
+            throw new RuntimeException("IN, OUT, identifier or typename expected, got " + sym);
+        }
+    }
+
+    //argClass                    ::= IN OUT?
+    //                            |   OUT
+    //                            |   INOUT
+    private void parseArgClass(ArgClassVar argClass) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.IN) {
+            argClass.addSymbol(sym);
+            argClass.setCoords(sym.getCoords());
+            parse(TokenTag.IN);
+
+            if (sym.getTag() == TokenTag.OUT) {
+                argClass.addSymbol(sym);
+                argClass.setFollow(sym.getFollow());
+                parse(TokenTag.OUT);
+            }
+        } else if (sym.getTag() == TokenTag.OUT) {
+            argClass.addSymbol(sym);
+            argClass.setCoords(sym.getCoords());
+            parse(TokenTag.OUT);
+        } else if (sym.getTag() == TokenTag.INOUT) {
+            argClass.addSymbol(sym);
+            argClass.setCoords(sym.getCoords());
+            parse(TokenTag.INOUT);
+        } else {
+            throw new RuntimeException("IN, OUT, or INOUT expected, got " + sym);
+        }
+    }
+
+    //TableFuncColumnList         ::= IDENT Typename (',' IDENT Typename)*
+    private void parseTableFuncColumnList(TableFuncColumnListVar tableFuncColumnList) throws CloneNotSupportedException {
+        tableFuncColumnList.addSymbol(sym);
+        tableFuncColumnList.setStart(sym.getStart());
+        parse(TokenTag.IDENTIFIER);
+
+        TypenameVar typename = new TypenameVar();
+        tableFuncColumnList.addSymbol(typename);
+        parseTypename(typename);
+        tableFuncColumnList.setFollow(typename.getFollow());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            tableFuncColumnList.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            tableFuncColumnList.addSymbol(sym);
+            parse(TokenTag.IDENTIFIER);
+
+            TypenameVar typenameVar = new TypenameVar();
+            tableFuncColumnList.addSymbol(typenameVar);
+            parseTypename(typenameVar);
+            tableFuncColumnList.setFollow(typenameVar.getFollow());
+        }
+    }
+
+    //CreateFuncBody              ::= AS '$$' funcAs '$$' LANGUAGE plpgsql
+    //                            |   LANGUAGE plpgsql AS '$$' funcAs '$$'
+    private void parseCreateFuncBody(CreateFuncBodyVar createFuncBody) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.AS) {
+            createFuncBody.addSymbol(sym);
+            createFuncBody.setStart(sym.getStart());
+            parse(TokenTag.AS);
+
+            createFuncBody.addSymbol(sym);
+            parse(TokenTag.DOUBLE_DOLLAR);
+
+            FuncAsVar funcAs = new FuncAsVar();
+            createFuncBody.addSymbol(funcAs);
+            parseFuncAs(funcAs);
+
+            createFuncBody.addSymbol(sym);
+            parse(TokenTag.DOUBLE_DOLLAR);
+
+            createFuncBody.addSymbol(sym);
+            parse(TokenTag.LANGUAGE);
+
+            createFuncBody.addSymbol(sym);
+            createFuncBody.setFollow(sym.getFollow());
+            parse(TokenTag.PLPGSQL);
+        } else if (sym.getTag() == TokenTag.LANGUAGE) {
+            createFuncBody.addSymbol(sym);
+            createFuncBody.setStart(sym.getStart());
+            parse(TokenTag.LANGUAGE);
+
+            createFuncBody.addSymbol(sym);
+            parse(TokenTag.PLPGSQL);
+
+            createFuncBody.addSymbol(sym);
+            parse(TokenTag.AS);
+
+            createFuncBody.addSymbol(sym);
+            parse(TokenTag.DOUBLE_DOLLAR);
+
+            FuncAsVar funcAs = new FuncAsVar();
+            createFuncBody.addSymbol(funcAs);
+            parseFuncAs(funcAs);
+
+            createFuncBody.addSymbol(sym);
+            createFuncBody.setFollow(sym.getFollow());
+            parse(TokenTag.DOUBLE_DOLLAR);
+        } else {
+            throw new RuntimeException("AS or LANGUAGE expected, got " + sym);
+        }
+    }
+
+    //funcAs                      ::= declareBlock? BEGIN funcBody* END ';'
+    private void parseFuncAs(FuncAsVar funcAsVar) throws CloneNotSupportedException {
+        boolean wasDeclareBlock = false;
+
+        if (sym.getTag() == TokenTag.DECLARE) {
+            DeclareBlockVar declareBlock = new DeclareBlockVar();
+            funcAsVar.addSymbol(declareBlock);
+            parseDeclareBlock(declareBlock);
+            funcAsVar.setStart(declareBlock.getStart());
+
+            wasDeclareBlock = true;
+        }
+
+        if (!wasDeclareBlock)
+            funcAsVar.setStart(sym.getStart());
+        funcAsVar.addSymbol(sym);
+        parse(TokenTag.BEGIN);
+
+        //TODO FIRST(QUAILIFIED_NAME, COlId)
+        while (sym.getTag() == TokenTag.DECLARE
+                || sym.getTag() == TokenTag.BEGIN
+                || sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.RETURN
+                || sym.getTag() == TokenTag.IF
+                || sym.getTag() == TokenTag.WHILE
+                || sym.getTag() == TokenTag.LOOP
+                || sym.getTag() == TokenTag.FOR
+                || sym.getTag() == TokenTag.NULL
+                || sym.getTag() == TokenTag.RAISE
+                || sym.getTag() == TokenTag.INSERT
+                || sym.getTag() == TokenTag.UPDATE
+                || sym.getTag() == TokenTag.DELETE
+                || sym.getTag() == TokenTag.SELECT
+                || sym.getTag() == TokenTag.LPAREN) {
+            FuncBodyVar funcBody = new FuncBodyVar();
+            funcAsVar.addSymbol(funcBody);
+            parseFuncBody(funcBody);
+        }
+
+        funcAsVar.addSymbol(sym);
+        parse(TokenTag.END);
+
+        funcAsVar.addSymbol(sym);
+        funcAsVar.setFollow(sym.getFollow());
+        parse(TokenTag.SEMICOLON);
+    }
+
+    //declareBlock                ::= DECLARE variableDecl+
+    private void parseDeclareBlock(DeclareBlockVar declareBlock) throws CloneNotSupportedException {
+        declareBlock.addSymbol(sym);
+        declareBlock.setStart(sym.getStart());
+        parse(TokenTag.DECLARE);
+
+        do {
+            VariableDeclVar variableDecl = new VariableDeclVar();
+            declareBlock.addSymbol(variableDecl);
+            parseVariableDecl(variableDecl);
+            declareBlock.setFollow(variableDecl.getFollow());
+        //TODO FIRST(ColId)
+        } while (sym.getTag() == TokenTag.IDENTIFIER);
+    }
+
+    //variableDecl                ::= QualifiedName Typename (':=' ConstExpr)? ';'
+    private void parseVariableDecl(VariableDeclVar variableDecl) throws CloneNotSupportedException {
+        QualifiedNameVar qualifiedName = new QualifiedNameVar();
+        variableDecl.addSymbol(qualifiedName);
+        parseQualifiedName(qualifiedName);
+        variableDecl.setStart(qualifiedName.getStart());
+
+        TypenameVar typename = new TypenameVar();
+        variableDecl.addSymbol(typename);
+        parseTypename(typename);
+
+        if (sym.getTag() == TokenTag.ASSIGN) {
+            variableDecl.addSymbol(sym);
+            parse(TokenTag.ASSIGN);
+
+            ConstExprVar constExpr = new ConstExprVar();
+            variableDecl.addSymbol(constExpr);
+            parseConstExpr(constExpr);
+        }
+
+        variableDecl.addSymbol(sym);
+        variableDecl.setFollow(sym.getFollow());
+        parse(TokenTag.SEMICOLON);
     }
 }

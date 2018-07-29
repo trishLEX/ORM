@@ -624,20 +624,18 @@ CreateFunctionNoTrReturnStmt::= Typename CreateFuncBody
 
 funcArgsWithDefaultsList    ::= funcArgWithDefault (',' funcArgWithDefault)*
 
-funcArgWithDefault          ::= funcArg
-                            |   funcArg DEFAULT exprNoVar
-                            |   funcArg '=' exprNoVar
+funcArgWithDefault          ::= funcArg funcArgDefault?
 
-funcArg                     ::= argClass IDENT Typename
-                            |   IDENT argClass Typename
-                            |   IDENT Typename
-                            |   argClass Typename
+funcArgDefault              ::= DEFAULT constExpr
+                            |   '=' constExpr
+
+funcArg                     ::= argClass IDENT? Typename
+                            |   IDENT argClass? Typename
                             |   Typename
 
-argClass                    ::= IN
+argClass                    ::= IN OUT?
                             |   OUT
                             |   INOUT
-                            |   IN OUT
 
 TableFuncColumnList         ::= IDENT Typename (',' IDENT Typename)*
 

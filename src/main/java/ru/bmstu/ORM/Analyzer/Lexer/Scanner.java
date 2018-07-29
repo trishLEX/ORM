@@ -2306,6 +2306,17 @@ public class Scanner {
                     cur.nextCp();
 
                     return new DotToken(start, (Position) cur.clone());
+                case ':':
+                    cur.nextCp();
+
+                    if (cur.getChar() == '=') {
+                        cur.nextCp();
+
+                        return new AssignOpToken(start, (Position) cur.clone());
+                    }
+
+                    messages.add(new Message((Position) cur.clone(), "Unrecognizable operator"));
+                    break;
                 case ';':
                     cur.nextCp();
 
@@ -2318,8 +2329,10 @@ public class Scanner {
                        Token number = getNumber(start);
                        if (number != null)
                            return number;
-                       else
+                       else {
                            messages.add(new Message((Position) cur.clone(), "Unrecognizable number"));
+                           break;
+                       }
                    }
 //                   else {
 //                       messages.add(new Message((Position) cur.clone(), "Unrecognizable token"));
