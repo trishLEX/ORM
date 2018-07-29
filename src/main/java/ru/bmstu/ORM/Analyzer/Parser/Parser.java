@@ -59,7 +59,7 @@ public class Parser {
             createTableFunctionTrigger.setStart(createFunctionStmt.getStart());
         } else if (sym.getTag() == TokenTag.TRIGGER) {
             CreateTriggerStmtVar createTriggerStmt = new CreateTriggerStmtVar();
-            //parseCreateTriggerStmt(createTriggerStmt);
+            //TODO parseCreateTriggerStmt(createTriggerStmt);
             createTableFunctionTrigger.addSymbol(createTriggerStmt);
             createTableFunctionTrigger.setStart(createTriggerStmt.getStart());
         } else {
@@ -305,7 +305,7 @@ public class Parser {
         }
     }
 
-    //SimpleTypename       ::= NumericType | CharacterType | DateTimeType
+    //SimpleTypename       ::= NumericType | CharacterType | DateTimeType | RECORD | BOOLEAN
     private void parseSympleTypeName(SimpleTypeNameVar simpleTypeName) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.CHARACTER
                 || sym.getTag() == TokenTag.CHAR
@@ -314,22 +314,26 @@ public class Parser {
             CharacterTypeVar characterType = new CharacterTypeVar();
             simpleTypeName.addSymbol(characterType);
             parseCharacterType(characterType);
-            simpleTypeName.setStart(characterType.getStart());
-            simpleTypeName.setFollow(characterType.getFollow());
+            simpleTypeName.setCoords(characterType.getCoords());
         } else if (sym.getTag() == TokenTag.DATE
                 || sym.getTag() == TokenTag.TIME
-                || sym.getTag() == TokenTag.TIMESTAMP){
+                || sym.getTag() == TokenTag.TIMESTAMP) {
 
             DateTimeTypeVar dateTimeType = new DateTimeTypeVar();
             simpleTypeName.addSymbol(dateTimeType);
             parseDateTimeType(dateTimeType);
             simpleTypeName.setCoords(dateTimeType.getCoords());
+        } else if (sym.getTag() == TokenTag.RECORD) {
+            simpleTypeName.addSymbol(sym);
+            simpleTypeName.setCoords(sym.getCoords());
+            parse(TokenTag.RECORD);
+        } else if (sym.getTag() == TokenTag.BOOLEAN) {
+            parse(TokenTag.BOOLEAN);
         } else {
             NumericTypeVar numericType = new NumericTypeVar();
             simpleTypeName.addSymbol(numericType);
             parseNumericType(numericType);
-            simpleTypeName.setStart(numericType.getStart());
-            simpleTypeName.setFollow(numericType.getFollow());
+            simpleTypeName.setCoords(numericType.getCoords());
         }
     }
 
@@ -385,8 +389,6 @@ public class Parser {
             parse(TokenTag.DECIMAL);
         } else if (sym.getTag() == TokenTag.NUMERIC) {
             parse(TokenTag.NUMERIC);
-        } else if (sym.getTag() == TokenTag.BOOLEAN) {
-            parse(TokenTag.BOOLEAN);
         } else {
             throw new RuntimeException("Invalid type at " + sym);
         }

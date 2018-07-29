@@ -27,6 +27,7 @@ SimpleTypename       ::= NumericType
                      |   CharacterType
                      |   DateTimeType
                      |   RECORD
+                     |   BOOLEAN
 
 NumericType          ::= INT
                      |   INTEGER
@@ -37,7 +38,6 @@ NumericType          ::= INT
                      |   DOUBLE PRECISION
                      |   DECIMAL
                      |   NUMERIC
-                     |   BOOLEAN
 
 CharacterType        ::= CharacterKeyword ( '(' intConst ')' )?
 
@@ -603,29 +603,24 @@ relationExprOptAlias        ::= relationExpr
                             |   relationExpr ColId
                             |   relationExpr AS ColId
 
-CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName funcArgsWithDefaults
-                                RETURNS Typename createFuncOptList
-                            |   (OR REPLACE)? FUNCTION QualifiedName funcArgsWithDefaults
-                                RETURNS TABLE '(' TableFuncColumnList ')' createFuncOptList
+CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' funcArgsWithDefaultsList? ')'
+                                RETURNS Typename CreateFuncBody
+                            |   (OR REPLACE)? FUNCTION QualifiedName '(' funcArgsWithDefaultsList? ')'
+                                RETURNS TABLE '(' TableFuncColumnList ')' CreateFuncBody
                             |   (OR REPLACE)? FUNCTION QualifiedName '(' ')'
-                                RETURNS TRIGGER createFuncOptList //В семантическом анализе, если имя NEW.smth валдировать это
+                                RETURNS CreateFunctionReturnStmt
 
-CreateTriggerStmt           ::= TRIGGER QualifiedName trigTime trigAction (OR trigAction)* ON QualifiedName
-                                FOR EACH ROW EXECUTE PROCEDURE QualifiedName '(' ')' ';'
-                                
-TableFuncColumnList         ::= TableFuncColumn (',' TableFuncColumn)*
+CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' CreateFunctionRightPart
 
-TableFuncColumn             ::= IDENT Typename
+CreateFunctionRightPart     ::= ')' RETURNS CreateFunctionAllReturnStmt
+                            |    funcArgsWithDefaultsList ')' RETURNS CreateFunctionNoTrReturnStmt
 
-trigTime                    ::= BEFORE
-                            |   AFTER
-                            |   INSTEAD OF
+CreateFunctionAllReturnStmt ::= Typename CreateFuncBody
+                            |   TABLE '(' TableFuncColumnList ')' CreateFuncBody
+                            |   TRIGGER CreateFuncBody //В семантическом анализе, если имя NEW.smth валидировать это
 
-trigAction                  ::= INSERT
-                            |   UPDATE
-                            |   DELETE
-
-funcArgsWithDefaults        ::= '(' funcArgsWithDefaultsList? ')'
+CreateFunctionNoTrReturnStmt::= Typename CreateFuncBody
+                            |   TABLE '(' TableFuncColumnList ')' CreateFuncBody
 
 funcArgsWithDefaultsList    ::= funcArgWithDefault (',' funcArgWithDefault)*
 
@@ -644,17 +639,19 @@ argClass                    ::= IN
                             |   INOUT
                             |   IN OUT
 
-createFuncOptList           ::= AS '$$' funcAs '$$' LANGUAGE plpgsql
+TableFuncColumnList         ::= IDENT Typename (',' IDENT Typename)*
+
+CreateFuncBody              ::= AS '$$' funcAs '$$' LANGUAGE plpgsql
                             |   LANGUAGE plpgsql AS '$$' funcAs '$$'
 
 funcAs                      ::= declareBlock? BEGIN funcBody* END ';'
 
-declareBlock                ::= DECLARE varDecl+
+declareBlock                ::= DECLARE variableDecl+
 
-varDecl                     ::= QualifiedName Typename (':=' ConstExpr)? ';'
+variableDecl                ::= QualifiedName Typename (':=' ConstExpr)? ';'
 
 funcBody                    ::= funcAs
-                            |   varAssign
+                            |   variableAssign
                             |   returnStmt
                             |   ifStmt
                             |   loopStmt
@@ -665,7 +662,7 @@ funcBody                    ::= funcAs
                             |   DeleteStmt ';'
                             |   SelectStmt ';'
 
-varAssign                   ::= QualifiedName ':=' Expr ';'
+variableAssign              ::= QualifiedName ':=' Expr ';'
 
 raiseStmt                   ::= RAISE NOTICE CharacterValue ';'
                             |   RAISE EXCEPTION? CharacterValue ';'
@@ -673,19 +670,30 @@ raiseStmt                   ::= RAISE NOTICE CharacterValue ';'
 returnStmt                  ::= RETURN Expr ';'
                             |   RETURN QUERY SelectStmt ';'
 
-ifStmt                      ::= IF boolExpr THEN ifAs (ELSIF boolExpr THEN ifAs)? (ELSE ifAs)? END IF ';'
+ifStmt                      ::= IF boolExpr THEN ifBody (ELSIF boolExpr THEN ifBody)? (ELSE ifBody)? END IF ';'
 
-ifAs                        ::= declareBlock? BEGIN funcBody* END ';'
+ifBody                      ::= declareBlock? BEGIN funcBody* END ';'
                             |   declareBlock? funcBody? ';'
 
-loopStmt                    ::= (WHILE boolExpr)? LOOP cycleAs END LOOP ';'
-                            |   FOR IDENT IN REVERSE? arithmExpr '..' arithmExpr (BY arithmExpr)? LOOP cycleAs END LOOP ';'
-                            |   FOR QualifiedName IN SelectStmt cycleAs END LOOP ';'  //QualifiedName should be of type RECORD
+loopStmt                    ::= (WHILE boolExpr)? LOOP cycleDecl END LOOP ';'
+                            |   FOR IDENT IN REVERSE? arithmExpr '..' arithmExpr (BY arithmExpr)? LOOP cycleDecl END LOOP ';'
+                            |   FOR QualifiedName IN SelectStmt cycleDecl END LOOP ';'  //QualifiedName should be of type RECORD
 
-cycleAs                     ::= declareBlock? BEGIN cycleBody* END ';'
+cycleDecl                   ::= declareBlock? BEGIN cycleBody* END ';'
                             |   declareBlock? cycleBody? ';'
 
 cycleBody                   ::= funcBody
                             |   EXIT (WHEN boolExpr)? ';'
                             |   CONTINUE (WHEN boolExpr)? ';'
+
+CreateTriggerStmt           ::= TRIGGER QualifiedName trigTime trigAction (OR trigAction)* ON QualifiedName
+                                FOR EACH ROW (WHEN '(' boolExpr ')')? EXECUTE PROCEDURE QualifiedName '(' ')' ';' //instead of not supports when clause
+
+trigTime                    ::= BEFORE
+                            |   AFTER
+                            |   INSTEAD OF
+
+trigAction                  ::= INSERT
+                            |   UPDATE (OF ColId (',' ColId)* )?
+                            |   DELETE
 
