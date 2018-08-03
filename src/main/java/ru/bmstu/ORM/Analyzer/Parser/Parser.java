@@ -112,7 +112,6 @@ public class Parser {
         createTableStmt.addSymbol(sym);
         parse(TokenTag.LPAREN);
 
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.IDENTIFIER ||
                 sym.getTag() == TokenTag.CONSTRAINT) {
 
@@ -162,8 +161,7 @@ public class Parser {
         qualifiedName.setFollow(colIdVar.getFollow());
     }
 
-    //TODO UNSUPPORTED
-    //ColId                ::= IDENT //UNSUPPORTED TILL | UnreservedKeyword | ColNameKeyword
+    //ColId                ::= IDENT
     private void parseColId(ColIdVar colId) throws CloneNotSupportedException {
         colId.setStart(sym.getStart());
         colId.setFollow(sym.getFollow());
@@ -171,7 +169,6 @@ public class Parser {
         parse(TokenTag.IDENTIFIER);
     }
 
-    //TODO UNSUPPORTED FIRST(ColumnDef)
     //TableElement         ::= ColumnDef | TableConstraint
     private void parseTableElement(TableElementVar tableElement) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.IDENTIFIER) {
@@ -790,7 +787,6 @@ public class Parser {
 
     //Expr                 ::= ColExpr | CharacterValue | DateValue
     private void parseExpr(ExprVar expr) throws CloneNotSupportedException {
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.IDENTIFIER
                 || sym.getTag() == TokenTag.SUB
                 || sym.getTag() == TokenTag.LPAREN
@@ -878,7 +874,6 @@ public class Parser {
     //                     |   NumericValue      ArithmRHS?
     //                     |   BoolConst         BoolRHS?
     private void parseColExprFactor(ColExprFactorVar colExprFactor) throws CloneNotSupportedException {
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.IDENTIFIER) {
             ColIdVar colId = new ColIdVar();
             colExprFactor.addSymbol(colId);
@@ -1410,7 +1405,6 @@ public class Parser {
             boolExprFactor.addSymbol(sym);
             boolExprFactor.setFollow(sym.getFollow());
             parse(TokenTag.RPAREN);
-        //TODO FIRST(ColId)
         } else if (sym.getTag() == TokenTag.IDENTIFIER) {
             ColIdVar colId = new ColIdVar();
             boolExprFactor.addSymbol(colId);
@@ -1599,7 +1593,6 @@ public class Parser {
     //                  // |   StringValue LIKE ColId                           // ONLY FOR STRING TYPE OF ColId
     //                  // |   StringValue NOT LIKE ColId                       // ONLY FOR STRING TYPE OF ColId
 //    private void parseBoolStmt(BoolStmtVar boolStmt) throws CloneNotSupportedException {
-//        //TODO UNSUPPORTED FIRST(ColId)
 //        ArithmExprVar arithmExpr = new ArithmExprVar();
 //        boolStmt.addSymbol(arithmExpr);
 //        parseArithmExpr(arithmExpr);
@@ -1751,7 +1744,6 @@ public class Parser {
     //                     |   '-' ArithmExprFactor
     //                     |   '(' ArithmExpr ')'
     private void parseArithmExprFactor(ArithmExprFactorVar arithmExprFactor) throws CloneNotSupportedException {
-        //TODO UNSUPPORTED FIRST(ColId)
         if (sym.getTag() == TokenTag.IDENTIFIER) {
             arithmExprFactor.addSymbol(sym);
             arithmExprFactor.setCoords(sym.getCoords());
@@ -2209,7 +2201,6 @@ public class Parser {
         funcAsVar.addSymbol(sym);
         parse(TokenTag.BEGIN);
 
-        //TODO FIRST(QUAILIFIED_NAME, COlId)
         while (sym.getTag() == TokenTag.DECLARE
                 || sym.getTag() == TokenTag.BEGIN
                 || sym.getTag() == TokenTag.IDENTIFIER
@@ -2249,7 +2240,6 @@ public class Parser {
             declareBlock.addSymbol(variableDecl);
             parseVariableDecl(variableDecl);
             declareBlock.setFollow(variableDecl.getFollow());
-        //TODO FIRST(ColId)
         } while (sym.getTag() == TokenTag.IDENTIFIER);
     }
 
@@ -2296,7 +2286,6 @@ public class Parser {
             funcBody.addSymbol(funcAs);
             parseFuncAs(funcAs);
             funcBody.setCoords(funcAs.getCoords());
-        //TODO FIRST(ColId)
         } else if (sym.getTag() == TokenTag.IDENTIFIER) {
             VariableAssignVar variableAssign = new VariableAssignVar();
             funcBody.addSymbol(variableAssign);
@@ -2442,7 +2431,6 @@ public class Parser {
     //returnedValue               ::= Expr
     //                            |   QUERY SelectStmt
     private void parseReturnedValue(ReturnedValueVar returnedValue) throws CloneNotSupportedException {
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.IDENTIFIER
                 || sym.getTag() == TokenTag.SUB
                 || sym.getTag() == TokenTag.LPAREN
@@ -2616,7 +2604,6 @@ public class Parser {
     //forClause                   ::= REVERSE? arithmExpr '..' arithmExpr (BY arithmExpr)? LOOP cycleDecl END LOOP ';'
     //                            |   SelectStmt cycleDecl END LOOP ';'  //ident should be of type RECORD
     private void parseForClause(ForClauseVar forClause) throws CloneNotSupportedException {
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.REVERSE
                 || sym.getTag() == TokenTag.IDENTIFIER
                 || sym.getTag() == TokenTag.SUB
@@ -2673,7 +2660,6 @@ public class Parser {
             forClause.addSymbol(sym);
             forClause.setFollow(sym.getFollow());
             parse(TokenTag.SEMICOLON);
-        //TODO FIRST(ColId, QualifiedName)
         } else if (sym.getTag() == TokenTag.SELECT) {
             SelectStmtVar selectStmt = new SelectStmtVar();
             forClause.addSymbol(selectStmt);
@@ -2768,7 +2754,6 @@ public class Parser {
             cycleBody.addSymbol(funcAs);
             parseFuncAs(funcAs);
             cycleBody.setCoords(funcAs.getCoords());
-            //TODO FIRST(ColId)
         } else if (sym.getTag() == TokenTag.IDENTIFIER) {
             VariableAssignVar variableAssign = new VariableAssignVar();
             cycleBody.addSymbol(variableAssign);
@@ -3014,7 +2999,6 @@ public class Parser {
             parseAllDistinctClause(allDistinctClause);
         }
 
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.MUL
                 || sym.getTag() == TokenTag.IDENTIFIER
                 || sym.getTag() == TokenTag.AVG
@@ -3160,7 +3144,6 @@ public class Parser {
         parseSortByElem(sortByElem);
         sortClause.setFollow(sortByElem.getFollow());
 
-        //TODO FIRST(ColId)
         while (sym.getTag() == TokenTag.COMMA) {
             sortClause.addSymbol(sym);
             parse(TokenTag.COMMA);
@@ -3242,7 +3225,6 @@ public class Parser {
     //targetEl                    ::= targetExpr aliasClause?
     //                            |   '*'
     private void parseTargetEl(TargetElVar targetEl) throws CloneNotSupportedException {
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.IDENTIFIER
                 || sym.getTag() == TokenTag.AVG
                 || sym.getTag() == TokenTag.SUM
@@ -3254,7 +3236,6 @@ public class Parser {
             parseTargetExpr(targetExpr);
             targetEl.setCoords(targetExpr.getCoords());
 
-            //TODO FIRST(ColId)
             if (sym.getTag() == TokenTag.AS
                     || sym.getTag() == TokenTag.IDENTIFIER) {
                 AliasClauseVar aliasClause = new AliasClauseVar();
@@ -3452,7 +3433,6 @@ public class Parser {
         parseQualifiedName(qualifiedName);
         tableRef.setCoords(qualifiedName.getCoords());
 
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.AS
                 || sym.getTag() == TokenTag.IDENTIFIER) {
             AliasClauseVar aliasClause = new AliasClauseVar();
@@ -3502,7 +3482,6 @@ public class Parser {
             aliasClause.addSymbol(colId);
             parseColId(colId);
             aliasClause.setFollow(colId.getFollow());
-        //TODO FIRST(ColId)
         } else if (sym.getTag() == TokenTag.IDENTIFIER) {
             ColIdVar colId = new ColIdVar();
             aliasClause.addSymbol(colId);
@@ -3761,7 +3740,6 @@ public class Parser {
         updateStmt.addSymbol(qualifiedName);
         parseQualifiedName(qualifiedName);
 
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.AS
                 || sym.getTag() == TokenTag.IDENTIFIER) {
             AliasClauseVar aliasClause = new AliasClauseVar();
@@ -3816,7 +3794,6 @@ public class Parser {
     //setClause                   ::= QualifiedName '=' setClauseRest
     //                            |   '(' setTargetList ')' '=' setClauseRest
     private void parseSetClause(SetClauseVar setClause) throws CloneNotSupportedException {
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.IDENTIFIER) {
             QualifiedNameVar qualifiedName = new QualifiedNameVar();
             setClause.addSymbol(qualifiedName);
@@ -3923,7 +3900,6 @@ public class Parser {
         parseQualifiedName(qualifiedName);
         deleteStmt.setFollow(qualifiedName.getFollow());
 
-        //TODO FIRST(ColId)
         if (sym.getTag() == TokenTag.AS
                 || sym.getTag() == TokenTag.IDENTIFIER) {
             AliasClauseVar aliasClause = new AliasClauseVar();
