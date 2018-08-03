@@ -56,6 +56,7 @@ public enum TokenTag implements SymbolType {
     IF,
     IN,
     INHERITS,
+    INNER,
     INSERT,
     INT,
     INTEGER,
