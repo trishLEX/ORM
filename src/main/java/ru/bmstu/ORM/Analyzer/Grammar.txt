@@ -3,16 +3,14 @@ S                    ::= (CREATE CreateTableFunctionTrigger)*
 
 CreateTableFunctionTrigger ::= (CreateTableStmt ';')
                            |   (CreateFunctionStmt ';')
-                           |   (CreateTriggerStmt ';')
+                           //|   (CreateTriggerStmt ';')
 
 CreateTableStmt      ::= TABLE (IF NOT EXISTS)?
-                         QualifiedName '(' (TableElement (',' TableElement)*)? ')' Inherit?
+                         QualifiedName '(' (TableElement (',' TableElement)*)? ')'
 
 QualifiedName        ::= ColId ('.'ColId)*
 
 ColId                ::= IDENT //UNSUPPORTED TILL | UnreservedKeyword | ColNameKeyword
-
-Inherit              ::= INHERITS '(' QualifiedName (',' QualifiedName)* ')'
 
 TableElement         ::= ColumnDef | TableConstraint
 
@@ -135,473 +133,15 @@ BoolConstExpr       ::= BoolConstExprTerm (OR BoolConstExprTerm)*
 BoolConstExprTerm   ::= BoolConstExprFactor (AND BoolConstExprFactor)*
 BoolConstExprFactor ::= BoolConst BoolRHS? 
                     | NOT BoolConstExprFactor BoolRHS?
-                    | ArithmConstExpr ArithmRHS
+                    | ArithmConstExpr ArithmConstRHS
                                       
-ArithmRHS           ::= '<'  ArithmConstExpr
+ArithmConstRHS      ::= '<'  ArithmConstExpr
                     |   '<=' ArithmConstExpr
                     |   '>'  ArithmConstExpr
                     |   '>=' ArithmConstExpr
                     |   '='  ArithmConstExpr
                     |   '!=' ArithmConstExpr
                     |   BETWEEN ArithmConstExpr AND ArithmConstExpr     // ARITHMETIC ONLY TILL
-                    |   NOT BETWEEN ArithmConstExpr AND ArithmConstExpr // ARITHMETIC ONLY TILL
-
-ColNameKeyword::=
-			  BETWEEN
-			| BIGINT
-			| BIT
-			| BOOLEAN_P
-			| CHAR_P
-			| CHARACTER
-			| COALESCE
-			| DEC
-			| DECIMAL_P
-			| EXISTS
-			| EXTRACT
-			| FLOAT_P
-			| GREATEST
-			| GROUPING
-			| INOUT
-			| INT_P
-			| INTEGER
-			| INTERVAL
-			| LEAST
-			| NATIONAL
-			| NCHAR
-			| NONE
-			| NULLIF
-			| NUMERIC
-			| OUT_P
-			| OVERLAY
-			| POSITION
-			| PRECISION
-			| REAL
-			| ROW
-			| SETOF
-			| SMALLINT
-			| SUBSTRING
-			| TIME
-			| TIMESTAMP
-			| TREAT
-			| TRIM
-			| VALUES
-			| VARCHAR
-			| XMLATTRIBUTES
-			| XMLCONCAT
-			| XMLELEMENT
-			| XMLEXISTS
-			| XMLFOREST
-			| XMLNAMESPACES
-			| XMLPARSE
-			| XMLPI
-			| XMLROOT
-			| XMLSERIALIZE
-			| XMLTABLE
-
-UnreservedKeyword::=
-			  ABORT_P
-			| ABSOLUTE_P
-			| ACCESS
-			| ACTION
-			| ADD_P
-			| ADMIN
-			| AFTER
-			| AGGREGATE
-			| ALSO
-			| ALTER
-			| ALWAYS
-			| ASSERTION
-			| ASSIGNMENT
-			| AT
-			| ATTACH
-			| ATTRIBUTE
-			| BACKWARD
-			| BEFORE
-			| BEGIN_P
-			| BY
-			| CACHE
-			| CALL
-			| CALLED
-			| CASCADE
-			| CASCADED
-			| CATALOG_P
-			| CHAIN
-			| CHARACTERISTICS
-			| CHECKPOINT
-			| CLASS
-			| CLOSE
-			| CLUSTER
-			| COLUMNS
-			| COMMENT
-			| COMMENTS
-			| COMMIT
-			| COMMITTED
-			| CONFIGURATION
-			| CONFLICT
-			| CONNECTION
-			| CONSTRAINTS
-			| CONTENT_P
-			| CONTINUE_P
-			| CONVERSION_P
-			| COPY
-			| COST
-			| CSV
-			| CUBE
-			| CURRENT_P
-			| CURSOR
-			| CYCLE
-			| DATA_P
-			| DATABASE
-			| DAY_P
-			| DEALLOCATE
-			| DECLARE
-			| DEFAULTS
-			| DEFERRED
-			| DEFINER
-			| DELETE_P
-			| DELIMITER
-			| DELIMITERS
-			| DEPENDS
-			| DETACH
-			| DICTIONARY
-			| DISABLE_P
-			| DISCARD
-			| DOCUMENT_P
-			| DOMAIN_P
-			| DOUBLE_P
-			| DROP
-			| EACH
-			| ENABLE_P
-			| ENCODING
-			| ENCRYPTED
-			| ENUM_P
-			| ESCAPE
-			| EVENT
-			| EXCLUDE
-			| EXCLUDING
-			| EXCLUSIVE
-			| EXECUTE
-			| EXPLAIN
-			| EXTENSION
-			| EXTERNAL
-			| FAMILY
-			| FILTER
-			| FIRST_P
-			| FOLLOWING
-			| FORCE
-			| FORWARD
-			| FUNCTION
-			| FUNCTIONS
-			| GENERATED
-			| GLOBAL
-			| GRANTED
-			| GROUPS
-			| HANDLER
-			| HEADER_P
-			| HOLD
-			| HOUR_P
-			| IDENTITY_P
-			| IF_P
-			| IMMEDIATE
-			| IMMUTABLE
-			| IMPLICIT_P
-			| IMPORT_P
-			| INCLUDE
-			| INCLUDING
-			| INCREMENT
-			| INDEX
-			| INDEXES
-			| INHERIT
-			| INHERITS
-			| INLINE_P
-			| INPUT_P
-			| INSENSITIVE
-			| INSERT
-			| INSTEAD
-			| INVOKER
-			| ISOLATION
-			| KEY
-			| LABEL
-			| LANGUAGE
-			| LARGE_P
-			| LAST_P
-			| LEAKPROOF
-			| LEVEL
-			| LISTEN
-			| LOAD
-			| LOCAL
-			| LOCATION
-			| LOCK_P
-			| LOCKED
-			| LOGGED
-			| MAPPING
-			| MATCH
-			| MATERIALIZED
-			| MAXVALUE
-			| METHOD
-			| MINUTE_P
-			| MINVALUE
-			| MODE
-			| MONTH_P
-			| MOVE
-			| NAME_P
-			| NAMES
-			| NEW
-			| NEXT
-			| NO
-			| NOTHING
-			| NOTIFY
-			| NOWAIT
-			| NULLS_P
-			| OBJECT_P
-			| OF
-			| OFF
-			| OIDS
-			| OLD
-			| OPERATOR
-			| OPTION
-			| OPTIONS
-			| ORDINALITY
-			| OTHERS
-			| OVER
-			| OVERRIDING
-			| OWNED
-			| OWNER
-			| PARALLEL
-			| PARSER
-			| PARTIAL
-			| PARTITION
-			| PASSING
-			| PASSWORD
-			| PLANS
-			| POLICY
-			| PRECEDING
-			| PREPARE
-			| PREPARED
-			| PRESERVE
-			| PRIOR
-			| PRIVILEGES
-			| PROCEDURAL
-			| PROCEDURE
-			| PROCEDURES
-			| PROGRAM
-			| PUBLICATION
-			| QUOTE
-			| RANGE
-			| READ
-			| REASSIGN
-			| RECHECK
-			| RECURSIVE
-			| REF
-			| REFERENCING
-			| REFRESH
-			| REINDEX
-			| RELATIVE_P
-			| RELEASE
-			| RENAME
-			| REPEATABLE
-			| REPLACE
-			| REPLICA
-			| RESET
-			| RESTART
-			| RESTRICT
-			| RETURNS
-			| REVOKE
-			| ROLE
-			| ROLLBACK
-			| ROLLUP
-			| ROUTINE
-			| ROUTINES
-			| ROWS
-			| RULE
-			| SAVEPOINT
-			| SCHEMA
-			| SCHEMAS
-			| SCROLL
-			| SEARCH
-			| SECOND_P
-			| SECURITY
-			| SEQUENCE
-			| SEQUENCES
-			| SERIALIZABLE
-			| SERVER
-			| SESSION
-			| SET
-			| SETS
-			| SHARE
-			| SHOW
-			| SIMPLE
-			| SKIP
-			| SNAPSHOT
-			| SQL_P
-			| STABLE
-			| STANDALONE_P
-			| START
-			| STATEMENT
-			| STATISTICS
-			| STDIN
-			| STDOUT
-			| STORAGE
-			| STRICT_P
-			| STRIP_P
-			| SUBSCRIPTION
-			| SYSID
-			| SYSTEM_P
-			| TABLES
-			| TABLESPACE
-			| TEMP
-			| TEMPLATE
-			| TEMPORARY
-			| TEXT_P
-			| TIES
-			| TRANSACTION
-			| TRANSFORM
-			| TRIGGER
-			| TRUNCATE
-			| TRUSTED
-			| TYPE_P
-			| TYPES_P
-			| UNBOUNDED
-			| UNCOMMITTED
-			| UNENCRYPTED
-			| UNKNOWN
-			| UNLISTEN
-			| UNLOGGED
-			| UNTIL
-			| UPDATE
-			| VACUUM
-			| VALID
-			| VALIDATE
-			| VALIDATOR
-			| VALUE_P
-			| VARYING
-			| VERSION_P
-			| VIEW
-			| VIEWS
-			| VOLATILE
-			| WHITESPACE_P
-			| WITHIN
-			| WITHOUT
-			| WORK
-			| WRAPPER
-			| WRITE
-			| XML_P
-			| YEAR_P
-			| YES_P
-			| ZONE
-
-SelectStmt                  ::= simpleSelectClause
-                            |   selectWithParens
-
-simpleSelectClause          ::=  SELECT ALL? targetList?
-                                FROM fromList whereClause?
-                                groupClause? havingClause?
-                            |   SELECT distinctClause targetList?
-                                FROM fromList whereClause?
-                                groupClause? havingClause?
-                            |   select_clause UNION allOrDistinct? SelectStmt
-                            |   select_clause INTERSECT allOrDistinct? SelectStmt
-                            |   select_clause EXCEPT allOrDistinct? SelectStmt
-
-selectWithParens            ::= '(' select_no_parens ')'
-                            |   '(' selectWithParens ')'
-
-selectNoParens              ::= simpleSelectClause
-                            |   SelectStmt sortClause
-
-sortClause                  ::= ORDER BY sortByElemList
-
-sortByElemList              ::= sortByElem (',' sortByElem)*
-
-sortByElem                  ::= colRef ascDesc?
-
-colRef                      ::= intConst //>=0 номер столбца
-                            |   ColId
-
-ascDesc                     ::= ASC | DESC //ASC ON DEFAULT
-
-targetList                  ::= targetEl (',' targetEl)*
-
-targetEl                    ::= targetExpr AS IDENT
-                            |   targetExpr IDENT
-                            |   targetExpr
-                            |   '*'
-
-targetExpr                  ::= ColId                //если есть аггрегатные функции, то должен содержаться или в них или в GROUP BY
-                            |   AVG   '(' ColId ')'
-                            |   SUM   '(' ColId ')'
-                            |   COUNT '(' ColId ')'
-                            |   MIN   '(' ColId ')'
-                            |   MAX   '(' ColId ')'
-
-fromList                    ::= tableRef (',' tableRef)*
-
-whereClause                 ::= WHERE boolExpr
-
-groupClause                 ::= GROUP BY colRef (',' colRef)*
-
-havingClause                ::= HAVING boolExpr
-
-distinctClause              ::= DISTINCT (ON '(' colRefList ')')?
-
-allOrDistinct               ::= ALL| DISTINCT
-
-colRefList                  ::= colRef (',' colRef)*
-
-tableRef                    ::= relationExpr aliasClause?
-                            |   selectWithParens aliasClause?
-                            |   joinedTable aliasClause?
-
-relationExpr                ::= QualifiedName '*'?
-                            |   ONLY QualifiedName
-                            |   ONLY '(' QualifiedName ')'
-
-aliasClause                 ::= AS ColId
-                            |   ColId
-
-joinedTable                 ::= '(' joinedTable ')'
-                            |   tableRef CROSS JOIN tableRef
-                            |   tableRef joinType JOIN tableRef joinQual
-                            |   tableRef JOIN tableRef joinQual
-
-joinType                    ::= FULL OUTER?
-                            |   LEFT OUTER?
-                            |   RIGHT OUTER?
-                            |   INNER
-
-joinQual                    ::= USING '(' ColId (',' ColId)* ')'
-                            |   ON boolExpr
-
-
-InsertStmt                  ::= INSERT INTO insertTarget insertRest
-
-insertTarget                ::= QualifiedName (AS ColId)?
-
-insertRest                  ::= SelectStmt
-                            |   '(' insertColumnList ')' SelectStmt
-                            |   DEFAULT VALUES
-
-insertColumnList            ::= QualifiedName (',' QualifiedName)
-
-UpdateStmt                  ::= UPDATE relationExprOptAlias SET setClauseList FROM fromList whereClause
-
-setClauseList               ::= setClause (',' setClause)*
-
-
-setClause                   ::= QualifiedName '=' Expr
-                            |   QualifiedName '=' DEFAULT
-                            |   QualifiedName '=' SelectStmt          //UNSUPPORTED SelectStmt должен возвращать 1 строку (try_catch)
-                            |   '(' setTargetList ')' '=' Expr
-                            |   '(' setTargetList ')' '=' DEFAULT
-                            |   '(' setTargetList ')' '=' SelectStmt //UNSUPPORTED SelectStmt должен возвращать 1 строку
-
-setTargetList              ::= QualifiedName (',' QualifiedName)*
-
-DeleteStmt                  ::= DELETE FROM relationExprOptAlias whereClause
-
-relationExprOptAlias        ::= relationExpr
-                            |   relationExpr ColId
-                            |   relationExpr AS ColId
 
 CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' funcArgsWithDefaultsList? ')'
                                 RETURNS Typename CreateFuncBody
@@ -662,36 +202,160 @@ funcBody                    ::= funcAs
 
 variableAssign              ::= QualifiedName ':=' Expr ';'
 
-raiseStmt                   ::= RAISE NOTICE CharacterValue ';'
-                            |   RAISE EXCEPTION? CharacterValue ';'
+raiseStmt                   ::= RAISE raiseLevel CharacterValue ';'
 
-returnStmt                  ::= RETURN Expr ';'
-                            |   RETURN QUERY SelectStmt ';'
+raiseLevel                  ::= NOTICE
+                            |   EXCEPTION?
+
+returnStmt                  ::= RETURN returnedValue ';'
+
+returnedValue               ::= Expr
+                            |   QUERY SelectStmt
 
 ifStmt                      ::= IF boolExpr THEN ifBody (ELSIF boolExpr THEN ifBody)? (ELSE ifBody)? END IF ';'
 
-ifBody                      ::= declareBlock? BEGIN funcBody* END ';'
-                            |   declareBlock? funcBody? ';'
+ifBody                      ::= funcAs
+                            |   (funcBody)?
 
 loopStmt                    ::= (WHILE boolExpr)? LOOP cycleDecl END LOOP ';'
-                            |   FOR IDENT IN REVERSE? arithmExpr '..' arithmExpr (BY arithmExpr)? LOOP cycleDecl END LOOP ';'
-                            |   FOR QualifiedName IN SelectStmt cycleDecl END LOOP ';'  //QualifiedName should be of type RECORD
+                            |   FOR IDENT IN forClause
+
+forClause                   ::= REVERSE? arithmExpr '..' arithmExpr (BY arithmExpr)? LOOP cycleDecl END LOOP ';'
+                            |   SelectStmt cycleDecl END LOOP ';'  //ident should be of type RECORD
 
 cycleDecl                   ::= declareBlock? BEGIN cycleBody* END ';'
-                            |   declareBlock? cycleBody? ';'
+                            |   cycleBody*
 
-cycleBody                   ::= funcBody
+cycleBody                   ::= variableAssign
+                            |   returnStmt
+                            |   ifCycleStmt
+                            |   loopStmt
+                            |   NULL ';'
+                            |   raiseStmt
+                            |   InsertStmt ';'
+                            |   UpdateStmt ';'
+                            |   DeleteStmt ';'
+                            |   SelectStmt ';'
                             |   EXIT (WHEN boolExpr)? ';'
                             |   CONTINUE (WHEN boolExpr)? ';'
 
-CreateTriggerStmt           ::= TRIGGER QualifiedName trigTime trigAction (OR trigAction)* ON QualifiedName
-                                FOR EACH ROW (WHEN '(' boolExpr ')')? EXECUTE PROCEDURE QualifiedName '(' ')' ';' //instead of not supports when clause
+ifCycleStmt                 ::= IF boolExpr THEN ifCycleBody (ELSIF boolExpr THEN ifCycleBody)? (ELSE ifCycleBody)? END IF ';'
 
-trigTime                    ::= BEFORE
-                            |   AFTER
-                            |   INSTEAD OF
+ifCycleBody                 ::= declareBlock? BEGIN cycleBody* END ';'
+                            |   (cycleBody)?
 
-trigAction                  ::= INSERT
-                            |   UPDATE (OF ColId (',' ColId)* )?
-                            |   DELETE
+//SelectStmt                  ::= simpleSelectClause
+//                            |   selectWithParens
+
+SelectStmt                  ::= SELECT allDistinctClause? targetList?
+                                FROM fromList whereClause?
+                                groupClause? havingClause? sortClause?
+                                ( unionIntOps allOrDistinct? SelectStmt )?
+//                            |   SelectStmt UNION allOrDistinct? SelectStmt
+//                            |   SelectStmt INTERSECT allOrDistinct? SelectStmt
+//                            |   SelectStmt EXCEPT allOrDistinct? SelectStmt
+
+allDistinctClause           ::= ALL
+                            |   DISTINCT (ON '(' colRefList ')')?
+
+allOrDistinct               ::= ALL | DISTINCT
+
+unionIntOps                 ::= UNION
+                            |   INTERSECT
+                            |   EXCEPT
+
+//selectWithParens            ::= '(' selectNoParens ')'
+//                            |   '(' selectWithParens ')'
+
+//selectNoParens              ::= simpleSelectClause
+//                            |   SelectStmt sortClause
+
+sortClause                  ::= ORDER BY sortByElem (',' sortByElem)*
+
+sortByElem                  ::= colRef ascDesc?
+
+colRef                      ::= intConst //>=0 номер столбца
+                            |   ColId
+
+ascDesc                     ::= ASC | DESC //ASC ON DEFAULT
+
+targetList                  ::= targetEl (',' targetEl)*
+
+targetEl                    ::= targetExpr aliasClause?
+                            |   '*'
+
+targetExpr                  ::= ColId                //если есть аггрегатные функции, то должен содержаться или в них или в GROUP BY
+                            |   AVG   '(' ColId ')'
+                            |   SUM   '(' ColId ')'
+                            |   COUNT '(' ColId ')'
+                            |   MIN   '(' ColId ')'
+                            |   MAX   '(' ColId ')'
+
+fromList                    ::= tableRef (',' tableRef)*
+
+whereClause                 ::= WHERE boolExpr
+
+groupClause                 ::= GROUP BY colRef (',' colRef)*
+
+havingClause                ::= HAVING boolExpr
+
+colRefList                  ::= colRef (',' colRef)*
+
+tableRef                    ::= QualifiedName aliasClause? ( joinType? JOIN tableRef joinQual )?
+
+aliasClause                 ::= AS ColId
+                            |   ColId
+
+joinType                    ::= FULL OUTER?
+                            |   LEFT OUTER?
+                            |   RIGHT OUTER?
+                            |   INNER
+
+joinQual                    ::= USING '(' ColId (',' ColId)* ')'
+                            |   ON boolExpr
+
+
+InsertStmt                  ::= INSERT INTO insertTarget insertRest
+
+insertTarget                ::= QualifiedName (AS ColId)?
+
+insertRest                  ::= SelectStmt
+                            |   '(' insertColumnList ')' InsertSelectOrValues
+                            |   DEFAULT VALUES
+
+InsertSelectOrValues        ::= SelectStmt
+                            |   VALUES '(' insertedValue (',' insertedValue)* ')'
+
+insertedValue               ::= DEFAULT
+                            |   Expr
+
+insertColumnList            ::= ColId (',' ColId)*
+
+UpdateStmt                  ::= UPDATE qualifiedName aliasClause?
+                                SET setClauseList (FROM fromList)? whereClause?
+
+setClauseList               ::= setClause (',' setClause)*
+
+
+setClause                   ::= QualifiedName '=' setClauseRest
+                            |   '(' setTargetList ')' '=' setClauseRest
+
+setClauseRest               ::= Expr
+                            |   DEFAULT
+                            |   SelectStmt  //UNSUPPORTED SelectStmt должен возвращать 1 строку (try_catch)
+
+setTargetList              ::= QualifiedName (',' QualifiedName)*
+
+DeleteStmt                  ::= DELETE FROM qualifiedName aliasClause? whereClause?
+
+//CreateTriggerStmt           ::= TRIGGER QualifiedName trigTime trigAction (OR trigAction)* ON QualifiedName
+//                                FOR EACH ROW (WHEN '(' boolExpr ')')? EXECUTE PROCEDURE QualifiedName '(' ')' ';' //instead of not supports when clause
+//
+//trigTime                    ::= BEFORE
+//                            |   AFTER
+//                            |   INSTEAD OF
+//
+//trigAction                  ::= INSERT
+//                            |   UPDATE (OF ColId (',' ColId)* )?
+//                            |   DELETE
 

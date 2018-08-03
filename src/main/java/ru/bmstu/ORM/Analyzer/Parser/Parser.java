@@ -7,17 +7,22 @@ import ru.bmstu.ORM.Analyzer.Symbols.Variables.*;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.*;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.ArithmeticExpression.*;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.BooleanExpression.*;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.GeneralExpression.ConstExprVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.ColumnExpression.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.GeneralExpression.*;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.*;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.DeclareBlockVar;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.FuncAsVar;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.FuncBodyVar;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.VariableDeclVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Cycle.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.IfClause.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Query.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Query.Insert.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Query.Select.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Query.Update.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Query.Delete.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Raise.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Return.*;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Variable.*;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionDeclaration.*;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Table.*;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Trigger.CreateTriggerStmtVar;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Trigger.KeyActionVar;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Trigger.KeyActionsVar;
 
 public class Parser {
     private Scanner scanner;
@@ -54,11 +59,12 @@ public class Parser {
             s.addSymbol(createTableFunctionTrigger);
             s.setFollow(createTableFunctionTrigger.getFollow());
         }
+        if (sym.getTag() != TokenTag.END_OF_PROGRAM)
+            throw new RuntimeException("CREATE expected, got " + sym);
     }
 
     //CreateTableFunctionTrigger ::= (CreateTableStmt ';')
     //                           |   (CreateFunctionStmt ';')
-    //                           |   (CreateTriggerStmt ';')
     private void parseCreateTableFunctionTrigger(CreateTableFunctionTriggerVar createTableFunctionTrigger) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.TABLE) {
             CreateTableStmtVar createTableStmt = new CreateTableStmtVar();
@@ -71,11 +77,6 @@ public class Parser {
             parseCreateFunctionStmt(createFunctionStmt);
             createTableFunctionTrigger.addSymbol(createFunctionStmt);
             createTableFunctionTrigger.setStart(createFunctionStmt.getStart());
-        } else if (sym.getTag() == TokenTag.TRIGGER) {
-            CreateTriggerStmtVar createTriggerStmt = new CreateTriggerStmtVar();
-            //TODO parseCreateTriggerStmt(createTriggerStmt);
-            createTableFunctionTrigger.addSymbol(createTriggerStmt);
-            createTableFunctionTrigger.setStart(createTriggerStmt.getStart());
         } else {
             throw new RuntimeException("TABLE, FUNCTION, TRIGGER expected, got " + sym);
         }
@@ -86,7 +87,7 @@ public class Parser {
     }
 
     //CreateTableStmt      ::= CREATE TABLE (IF NOT EXISTS)?
-    //                         QualifiedName '(' (TableElement (',' TableElement)*)? ')' Inherit?
+    //                         QualifiedName '(' (TableElement (',' TableElement)*)? ')'
     private void parseCreateTableStmt(CreateTableStmtVar createTableStmt) throws CloneNotSupportedException {
         createTableStmt.setStart(sym.getStart());
 
@@ -134,14 +135,6 @@ public class Parser {
         createTableStmt.setFollow(sym.getFollow());
         createTableStmt.addSymbol(sym);
         parse(TokenTag.RPAREN);
-
-        if (sym.getTag() == TokenTag.INHERITS) {
-            InheritVar inherit = new InheritVar();
-            createTableStmt.addSymbol(inherit);
-            parseInherit(inherit);
-
-            createTableStmt.setFollow(inherit.getFollow());
-        }
     }
 
     //QualifiedName        ::= ColId ('.'ColId)*
@@ -176,33 +169,6 @@ public class Parser {
         colId.setFollow(sym.getFollow());
         colId.addSymbol(sym);
         parse(TokenTag.IDENTIFIER);
-    }
-
-    //Inherit              ::= INHERITS '(' QualifiedName (',' QualifiedName)* ')'
-    private void parseInherit(InheritVar inherit) throws CloneNotSupportedException {
-        inherit.setStart(sym.getStart());
-        inherit.addSymbol(sym);
-        parse(TokenTag.INHERITS);
-
-        inherit.addSymbol(sym);
-        parse(TokenTag.LPAREN);
-
-        QualifiedNameVar qualifiedName = new QualifiedNameVar();
-        inherit.addSymbol(qualifiedName);
-        parseQualifiedName(qualifiedName);
-
-        while (sym.getTag() == TokenTag.COMMA) {
-            inherit.addSymbol(sym);
-            parse(TokenTag.COMMA);
-
-            QualifiedNameVar qualifiedNameVar = new QualifiedNameVar();
-            inherit.addSymbol(qualifiedNameVar);
-            parseQualifiedName(qualifiedNameVar);
-        }
-
-        inherit.setFollow(sym.getFollow());
-        inherit.addSymbol(sym);
-        parse(TokenTag.RPAREN);
     }
 
     //TODO UNSUPPORTED FIRST(ColumnDef)
@@ -251,9 +217,7 @@ public class Parser {
         }
     }
 
-    private void parseIntConst(Var var) throws CloneNotSupportedException {
-        var.addSymbol(sym);
-
+    private void parseIntConst() throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.BYTE_CONST)
             parse(TokenTag.BYTE_CONST);
         else if (sym.getTag() == TokenTag.SHORT_CONST)
@@ -292,8 +256,10 @@ public class Parser {
                 if (sym.getTag() == TokenTag.BYTE_CONST
                         || sym.getTag() == TokenTag.SHORT_CONST
                         || sym.getTag() == TokenTag.INT_CONST
-                        || sym.getTag() == TokenTag.LONG_CONST)
-                    parseIntConst(arrayType);
+                        || sym.getTag() == TokenTag.LONG_CONST) {
+                    arrayType.addSymbol(sym);
+                    parseIntConst();
+                }
 
                 arrayType.setFollow(sym.getFollow());
                 arrayType.addSymbol(sym);
@@ -308,7 +274,8 @@ public class Parser {
                 arrayType.addSymbol(sym);
                 parse(TokenTag.LBRACKET);
 
-                parseIntConst(arrayType);
+                arrayType.addSymbol(sym);
+                parseIntConst();
 
                 arrayType.setFollow(sym.getFollow());
                 arrayType.addSymbol(sym);
@@ -383,7 +350,8 @@ public class Parser {
 
                 Token number = sym;
 
-                parseIntConst(numericType);
+                numericType.addSymbol(sym);
+                parseIntConst();
 
                 Number value = (Number) number.getValue();
                 if (value.byteValue() < 1 || value.byteValue() > 53)
@@ -421,14 +389,7 @@ public class Parser {
             parse(TokenTag.LPAREN);
 
             characterType.addSymbol(sym);
-            if (sym.getTag() == TokenTag.BYTE_CONST)
-                parse(TokenTag.BYTE_CONST);
-            else if (sym.getTag() == TokenTag.SHORT_CONST)
-                parse(TokenTag.SHORT_CONST);
-            else if (sym.getTag() == TokenTag.INT_CONST)
-                parse(TokenTag.INT_CONST);
-            else if (sym.getTag() == TokenTag.LONG_CONST)
-                parse(TokenTag.LONG_CONST);
+            parseIntConst();
 
             characterType.setFollow(sym.getFollow());
             characterType.addSymbol(sym);
@@ -469,7 +430,8 @@ public class Parser {
 
                 Token number = sym;
 
-                parseIntConst(dateTimeType);
+                dateTimeType.addSymbol(sym);
+                parseIntConst();
 
                 Number value = (Number) number.getValue();
                 if (value.byteValue() < 0 || value.byteValue() >= 6)
@@ -490,7 +452,8 @@ public class Parser {
 
                 Token number = sym;
 
-                parseIntConst(dateTimeType);
+                dateTimeType.addSymbol(sym);
+                parseIntConst();
 
                 Number value = (Number) number.getValue();
                 if (value.byteValue() < 0 || value.byteValue() >= 6)
@@ -825,6 +788,219 @@ public class Parser {
         }
     }
 
+    //Expr                 ::= ColExpr | CharacterValue | DateValue
+    private void parseExpr(ExprVar expr) throws CloneNotSupportedException {
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.SUB
+                || sym.getTag() == TokenTag.LPAREN
+                || sym.getTag() == TokenTag.NOT
+                || sym.getTag() == TokenTag.BYTE_CONST
+                || sym.getTag() == TokenTag.SHORT_CONST
+                || sym.getTag() == TokenTag.INT_CONST
+                || sym.getTag() == TokenTag.LONG_CONST
+                || sym.getTag() == TokenTag.FLOAT_CONST
+                || sym.getTag() == TokenTag.DOUBLE_CONST
+                || sym.getTag() == TokenTag.TRUE
+                || sym.getTag() == TokenTag.FALSE
+                || sym.getTag() == TokenTag.NULL) {
+            ColExprVar colExpr = new ColExprVar();
+            expr.addSymbol(colExpr);
+            parseColExpr(colExpr);
+            expr.setCoords(colExpr.getCoords());
+        } else if (sym.getTag() == TokenTag.STRING_CONST) {
+            expr.addSymbol(sym);
+            expr.setCoords(sym.getCoords());
+            parse(TokenTag.STRING_CONST);
+        } else if (sym.getTag() == TokenTag.DATE_CONST) {
+            expr.addSymbol(sym);
+            expr.setCoords(sym.getCoords());
+            parse(TokenTag.DATE_CONST);
+        } else {
+            throw new RuntimeException("Expression, string or datetime expected, got " + sym);
+        }
+    }
+
+    //ColExpr              ::= ColExprTerm ({'+' | '-' | OR} ColExprTerm)*
+    private void parseColExpr(ColExprVar colExpr) throws CloneNotSupportedException {
+        ColExprTermVar colExprTerm = new ColExprTermVar();
+        colExpr.addSymbol(colExprTerm);
+        parseColExprTerm(colExprTerm);
+        colExpr.setCoords(colExprTerm.getCoords());
+
+        while (sym.getTag() == TokenTag.ADD
+                || sym.getTag() == TokenTag.SUB
+                || sym.getTag() == TokenTag.OR) {
+            colExpr.addSymbol(sym);
+            if (sym.getTag() == TokenTag.ADD)
+                parse(TokenTag.ADD);
+            else if (sym.getTag() == TokenTag.SUB)
+                parse(TokenTag.SUB);
+            else
+                parse(TokenTag.OR);
+
+            ColExprTermVar colExprTermVar = new ColExprTermVar();
+            colExpr.addSymbol(colExprTermVar);
+            parseColExprTerm(colExprTermVar);
+            colExpr.setFollow(colExprTermVar.getFollow());
+        }
+    }
+
+    //ColExprTerm          ::= ColExprFactor ({'*' | '/' | AND} ColExprFactor)*
+    private void parseColExprTerm(ColExprTermVar colExprTerm) throws CloneNotSupportedException {
+        ColExprFactorVar colExprFactor = new ColExprFactorVar();
+        colExprTerm.addSymbol(colExprFactor);
+        parseColExprFactor(colExprFactor);
+        colExprTerm.setCoords(colExprFactor.getCoords());
+
+        while (sym.getTag() == TokenTag.MUL
+                || sym.getTag() == TokenTag.DIV
+                || sym.getTag() == TokenTag.AND) {
+            colExprTerm.addSymbol(sym);
+            if (sym.getTag() == TokenTag.MUL)
+                parse(TokenTag.MUL);
+            else if (sym.getTag() == TokenTag.DIV)
+                parse(TokenTag.DIV);
+            else
+                parse(TokenTag.AND);
+
+            ColExprFactorVar colExprFactorVar = new ColExprFactorVar();
+            colExprTerm.addSymbol(colExprFactorVar);
+            parseColExprFactor(colExprFactorVar);
+            colExprTerm.setFollow(colExprFactorVar.getFollow());
+        }
+    }
+
+    //ColExprFactor        ::= ColId             RHS?
+    //                     |   '-' ColExprFactor ArithmRHS?
+    //                     |   '(' ColExpr ')'   RHS?
+    //                     |   NOT ColExprFactor BoolRHS?
+    //                     |   NumericValue      ArithmRHS?
+    //                     |   BoolConst         BoolRHS?
+    private void parseColExprFactor(ColExprFactorVar colExprFactor) throws CloneNotSupportedException {
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.IDENTIFIER) {
+            ColIdVar colId = new ColIdVar();
+            colExprFactor.addSymbol(colId);
+            parseColId(colId);
+            colExprFactor.setCoords(colId.getCoords());
+
+            if (sym.getTag() == TokenTag.LESS
+                    || sym.getTag() == TokenTag.LESSEQ
+                    || sym.getTag() == TokenTag.GREATER
+                    || sym.getTag() == TokenTag.GREATEREQ
+                    || sym.getTag() == TokenTag.EQUAL
+                    || sym.getTag() == TokenTag.NOTEQUAL
+                    || sym.getTag() == TokenTag.BETWEEN
+                    || sym.getTag() == TokenTag.IS) {
+                RHSVar rhs = new RHSVar();
+                colExprFactor.addSymbol(rhs);
+                parseRHS(rhs);
+                colExprFactor.setFollow(rhs.getFollow());
+            }
+        } else if (sym.getTag() == TokenTag.SUB) {
+            colExprFactor.addSymbol(sym);
+            colExprFactor.setStart(sym.getStart());
+            parse(TokenTag.SUB);
+
+            ColExprFactorVar colExprFactorVar = new ColExprFactorVar();
+            colExprFactor.addSymbol(colExprFactorVar);
+            parseColExprFactor(colExprFactorVar);
+            colExprFactor.setFollow(colExprFactorVar.getFollow());
+
+            if (sym.getTag() == TokenTag.LESS
+                    || sym.getTag() == TokenTag.LESSEQ
+                    || sym.getTag() == TokenTag.GREATER
+                    || sym.getTag() == TokenTag.GREATEREQ
+                    || sym.getTag() == TokenTag.EQUAL
+                    || sym.getTag() == TokenTag.NOTEQUAL
+                    || sym.getTag() == TokenTag.BETWEEN) {
+                ArithmRHSVar arithmRHS = new ArithmRHSVar();
+                colExprFactor.addSymbol(arithmRHS);
+                parseArithmRHS(arithmRHS);
+                colExprFactor.setFollow(arithmRHS.getFollow());
+            }
+        } else if (sym.getTag() == TokenTag.LPAREN) {
+            colExprFactor.addSymbol(sym);
+            colExprFactor.setStart(sym.getStart());
+            parse(TokenTag.LPAREN);
+
+            ColExprVar colExpr = new ColExprVar();
+            colExprFactor.addSymbol(colExpr);
+            parseColExpr(colExpr);
+
+            colExprFactor.addSymbol(sym);
+            colExprFactor.setFollow(sym.getFollow());
+            parse(TokenTag.RPAREN);
+
+            if (sym.getTag() == TokenTag.LESS
+                    || sym.getTag() == TokenTag.LESSEQ
+                    || sym.getTag() == TokenTag.GREATER
+                    || sym.getTag() == TokenTag.GREATEREQ
+                    || sym.getTag() == TokenTag.EQUAL
+                    || sym.getTag() == TokenTag.NOTEQUAL
+                    || sym.getTag() == TokenTag.BETWEEN
+                    || sym.getTag() == TokenTag.IS) {
+                RHSVar rhs = new RHSVar();
+                colExprFactor.addSymbol(rhs);
+                parseRHS(rhs);
+                colExprFactor.setFollow(rhs.getFollow());
+            }
+        } else if (sym.getTag() == TokenTag.NOT) {
+            colExprFactor.addSymbol(sym);
+            colExprFactor.setStart(sym.getStart());
+            parse(TokenTag.NOT);
+
+            ColExprFactorVar colExprFactorVar = new ColExprFactorVar();
+            colExprFactor.addSymbol(colExprFactorVar);
+            parseColExprFactor(colExprFactorVar);
+            colExprFactor.setFollow(colExprFactorVar.getFollow());
+
+            if (sym.getTag() == TokenTag.IS) {
+                BoolRHSVar boolRHS = new BoolRHSVar();
+                colExprFactor.addSymbol(boolRHS);
+                parseBoolRHS(boolRHS);
+                colExprFactor.setFollow(boolRHS.getFollow());
+            }
+        } else if (sym.getTag() == TokenTag.BYTE_CONST
+                || sym.getTag() == TokenTag.SHORT_CONST
+                || sym.getTag() == TokenTag.INT_CONST
+                || sym.getTag() == TokenTag.LONG_CONST
+                || sym.getTag() == TokenTag.FLOAT_CONST
+                || sym.getTag() == TokenTag.DOUBLE_CONST) {
+            colExprFactor.addSymbol(sym);
+            colExprFactor.setCoords(sym.getCoords());
+            parseNumber();
+
+            if (sym.getTag() == TokenTag.LESS
+                    || sym.getTag() == TokenTag.LESSEQ
+                    || sym.getTag() == TokenTag.GREATER
+                    || sym.getTag() == TokenTag.GREATEREQ
+                    || sym.getTag() == TokenTag.EQUAL
+                    || sym.getTag() == TokenTag.NOTEQUAL
+                    || sym.getTag() == TokenTag.BETWEEN) {
+                ArithmRHSVar arithmRHS = new ArithmRHSVar();
+                colExprFactor.addSymbol(arithmRHS);
+                parseArithmRHS(arithmRHS);
+                colExprFactor.setFollow(arithmRHS.getFollow());
+            }
+        } else if (sym.getTag() == TokenTag.TRUE
+                || sym.getTag() == TokenTag.FALSE
+                || sym.getTag() == TokenTag.NULL) {
+            BoolConstVar boolConst = new BoolConstVar();
+            colExprFactor.addSymbol(boolConst);
+            parseBoolConst(boolConst);
+            colExprFactor.setCoords(boolConst.getCoords());
+
+            if (sym.getTag() == TokenTag.IS) {
+                BoolRHSVar boolRHS = new BoolRHSVar();
+                colExprFactor.addSymbol(boolRHS);
+                parseBoolRHS(boolRHS);
+                colExprFactor.setFollow(boolRHS.getFollow());
+            }
+        }
+    }
+
     //ConstExpr           ::= ArithmConstExpr | BoolConst | CharacterValue | DateValue | '(' ConstExpr ')'
     private void parseConstExpr(ConstExprVar constExpr) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.BYTE_CONST
@@ -935,8 +1111,8 @@ public class Parser {
                 || sym.getTag() == TokenTag.DOUBLE_CONST) {
 
             arithmExprNoVarFactor.setCoords(sym.getCoords());
-
-            parseNumber(arithmExprNoVarFactor);
+            arithmExprNoVarFactor.addSymbol(sym);
+            parseNumber();
         } else if (sym.getTag() == TokenTag.SUB) {
             arithmExprNoVarFactor.addSymbol(sym);
             arithmExprNoVarFactor.setStart(sym.getStart());
@@ -961,8 +1137,8 @@ public class Parser {
         }
     }
 
-    private void parseNumber(Var var) throws CloneNotSupportedException {
-        var.addSymbol(var);
+    private void parseNumber() throws CloneNotSupportedException {
+        //var.addSymbol(var);
 
         if (sym.getTag() == TokenTag.BYTE_CONST)
             parse(TokenTag.BYTE_CONST);
@@ -1062,93 +1238,93 @@ public class Parser {
             parseArithmConstExpr(arithmConstExpr);
             boolConstExprFactor.setStart(arithmConstExpr.getStart());
 
-            ArithmRHSVar arithmRHS = new ArithmRHSVar();
-            boolConstExprFactor.addSymbol(arithmRHS);
-            parseArithmRHS(arithmRHS);
-            boolConstExprFactor.setFollow(arithmRHS.getFollow());
+            ArithmConstRHSVar arithmConstRHS = new ArithmConstRHSVar();
+            boolConstExprFactor.addSymbol(arithmConstRHS);
+            parseArithmConstRHS(arithmConstRHS);
+            boolConstExprFactor.setFollow(arithmConstRHS.getFollow());
         } else {
             throw new RuntimeException("Bool const expression expected, got " + sym);
         }
     }
 
-    //ArithmRHS           ::= '<'  ArithmConstExpr
+    //ArithmConstRHS      ::= '<'  ArithmConstExpr
     //                    |   '<=' ArithmConstExpr
     //                    |   '>'  ArithmConstExpr
     //                    |   '>=' ArithmConstExpr
     //                    |   '='  ArithmConstExpr
     //                    |   '!=' ArithmConstExpr
     //                    |   BETWEEN ArithmConstExpr AND ArithmConstExpr     // ARITHMETIC ONLY TILL
-    private void parseArithmRHS(ArithmRHSVar arithmRHS) throws CloneNotSupportedException {
+    private void parseArithmConstRHS(ArithmConstRHSVar arithmConstRHS) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.LESS) {
-            arithmRHS.addSymbol(sym);
-            arithmRHS.setStart(sym.getStart());
+            arithmConstRHS.addSymbol(sym);
+            arithmConstRHS.setStart(sym.getStart());
             parse(TokenTag.LESS);
 
             ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExpr);
+            arithmConstRHS.addSymbol(arithmConstExpr);
             parseArithmConstExpr(arithmConstExpr);
-            arithmRHS.setFollow(arithmConstExpr.getFollow());
+            arithmConstRHS.setFollow(arithmConstExpr.getFollow());
         } else if (sym.getTag() == TokenTag.LESSEQ) {
-            arithmRHS.addSymbol(sym);
-            arithmRHS.setStart(sym.getStart());
+            arithmConstRHS.addSymbol(sym);
+            arithmConstRHS.setStart(sym.getStart());
             parse(TokenTag.LESSEQ);
 
             ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExpr);
+            arithmConstRHS.addSymbol(arithmConstExpr);
             parseArithmConstExpr(arithmConstExpr);
-            arithmRHS.setFollow(arithmConstExpr.getFollow());
+            arithmConstRHS.setFollow(arithmConstExpr.getFollow());
         } else if (sym.getTag() == TokenTag.GREATER) {
-            arithmRHS.addSymbol(sym);
-            arithmRHS.setStart(sym.getStart());
+            arithmConstRHS.addSymbol(sym);
+            arithmConstRHS.setStart(sym.getStart());
             parse(TokenTag.GREATER);
 
             ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExpr);
+            arithmConstRHS.addSymbol(arithmConstExpr);
             parseArithmConstExpr(arithmConstExpr);
-            arithmRHS.setFollow(arithmConstExpr.getFollow());
+            arithmConstRHS.setFollow(arithmConstExpr.getFollow());
         } else if (sym.getTag() == TokenTag.GREATEREQ) {
-            arithmRHS.addSymbol(sym);
-            arithmRHS.setStart(sym.getStart());
+            arithmConstRHS.addSymbol(sym);
+            arithmConstRHS.setStart(sym.getStart());
             parse(TokenTag.GREATEREQ);
 
             ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExpr);
+            arithmConstRHS.addSymbol(arithmConstExpr);
             parseArithmConstExpr(arithmConstExpr);
-            arithmRHS.setFollow(arithmConstExpr.getFollow());
+            arithmConstRHS.setFollow(arithmConstExpr.getFollow());
         } else if (sym.getTag() == TokenTag.EQUAL) {
-            arithmRHS.addSymbol(sym);
-            arithmRHS.setStart(sym.getStart());
+            arithmConstRHS.addSymbol(sym);
+            arithmConstRHS.setStart(sym.getStart());
             parse(TokenTag.EQUAL);
 
             ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExpr);
+            arithmConstRHS.addSymbol(arithmConstExpr);
             parseArithmConstExpr(arithmConstExpr);
-            arithmRHS.setFollow(arithmConstExpr.getFollow());
+            arithmConstRHS.setFollow(arithmConstExpr.getFollow());
         } else if (sym.getTag() == TokenTag.NOTEQUAL) {
-            arithmRHS.addSymbol(sym);
-            arithmRHS.setStart(sym.getStart());
+            arithmConstRHS.addSymbol(sym);
+            arithmConstRHS.setStart(sym.getStart());
             parse(TokenTag.NOTEQUAL);
 
             ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExpr);
+            arithmConstRHS.addSymbol(arithmConstExpr);
             parseArithmConstExpr(arithmConstExpr);
-            arithmRHS.setFollow(arithmConstExpr.getFollow());
+            arithmConstRHS.setFollow(arithmConstExpr.getFollow());
         } else if (sym.getTag() == TokenTag.BETWEEN) {
-            arithmRHS.addSymbol(sym);
-            arithmRHS.setStart(sym.getStart());
+            arithmConstRHS.addSymbol(sym);
+            arithmConstRHS.setStart(sym.getStart());
             parse(TokenTag.BETWEEN);
 
             ArithmConstExprVar arithmConstExpr = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExpr);
+            arithmConstRHS.addSymbol(arithmConstExpr);
             parseArithmConstExpr(arithmConstExpr);
 
-            arithmRHS.addSymbol(sym);
+            arithmConstRHS.addSymbol(sym);
             parse(TokenTag.AND);
 
             ArithmConstExprVar arithmConstExprVar = new ArithmConstExprVar();
-            arithmRHS.addSymbol(arithmConstExprVar);
+            arithmConstRHS.addSymbol(arithmConstExprVar);
             parseArithmConstExpr(arithmConstExprVar);
-            arithmRHS.setFollow(arithmConstExprVar.getFollow());
+            arithmConstRHS.setFollow(arithmConstExprVar.getFollow());
         } else {
             throw new RuntimeException("Compare operators or BETWEEN expected, got " + sym);
         }
@@ -1281,6 +1457,7 @@ public class Parser {
         }
     }
 
+    //RHS                 ::= ArithmRHS | BoolRHS
     private void parseRHS(RHSVar rhs) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.LESS
                 || sym.getTag() == TokenTag.LESSEQ
@@ -1300,6 +1477,89 @@ public class Parser {
             boolRHS.setCoords(boolRHS.getCoords());
         } else {
             throw new RuntimeException("Boolean RHS expected, got " + sym);
+        }
+    }
+
+    //ArithmRHS           ::= '<'  ArithmExpr
+    //                    |   '<=' ArithmExpr
+    //                    |   '>'  ArithmExpr
+    //                    |   '>=' ArithmExpr
+    //                    |   '='  ArithmExpr
+    //                    |   '!=' ArithmExpr
+    //                    |   BETWEEN ArithmExpr AND ArithmExpr     // ARITHMETIC ONLY TILL
+    private void parseArithmRHS(ArithmRHSVar arithmRHS) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.LESS) {
+            arithmRHS.addSymbol(sym);
+            arithmRHS.setStart(sym.getStart());
+            parse(TokenTag.LESS);
+
+            ArithmExprVar arithmExpr = new ArithmExprVar();
+            arithmRHS.addSymbol(arithmExpr);
+            parseArithmExpr(arithmExpr);
+            arithmRHS.setFollow(arithmExpr.getFollow());
+        } else if (sym.getTag() == TokenTag.LESSEQ) {
+            arithmRHS.addSymbol(sym);
+            arithmRHS.setStart(sym.getStart());
+            parse(TokenTag.LESSEQ);
+
+            ArithmExprVar arithmExpr = new ArithmExprVar();
+            arithmRHS.addSymbol(arithmExpr);
+            parseArithmExpr(arithmExpr);
+            arithmRHS.setFollow(arithmExpr.getFollow());
+        } else if (sym.getTag() == TokenTag.GREATER) {
+            arithmRHS.addSymbol(sym);
+            arithmRHS.setStart(sym.getStart());
+            parse(TokenTag.GREATER);
+
+            ArithmExprVar arithmExpr = new ArithmExprVar();
+            arithmRHS.addSymbol(arithmExpr);
+            parseArithmExpr(arithmExpr);
+            arithmRHS.setFollow(arithmExpr.getFollow());
+        } else if (sym.getTag() == TokenTag.GREATEREQ) {
+            arithmRHS.addSymbol(sym);
+            arithmRHS.setStart(sym.getStart());
+            parse(TokenTag.GREATEREQ);
+
+            ArithmExprVar arithmExpr = new ArithmExprVar();
+            arithmRHS.addSymbol(arithmExpr);
+            parseArithmExpr(arithmExpr);
+            arithmRHS.setFollow(arithmExpr.getFollow());
+        } else if (sym.getTag() == TokenTag.EQUAL) {
+            arithmRHS.addSymbol(sym);
+            arithmRHS.setStart(sym.getStart());
+            parse(TokenTag.EQUAL);
+
+            ArithmExprVar arithmExpr = new ArithmExprVar();
+            arithmRHS.addSymbol(arithmExpr);
+            parseArithmExpr(arithmExpr);
+            arithmRHS.setFollow(arithmExpr.getFollow());
+        } else if (sym.getTag() == TokenTag.NOTEQUAL) {
+            arithmRHS.addSymbol(sym);
+            arithmRHS.setStart(sym.getStart());
+            parse(TokenTag.NOTEQUAL);
+
+            ArithmExprVar arithmExpr = new ArithmExprVar();
+            arithmRHS.addSymbol(arithmExpr);
+            parseArithmExpr(arithmExpr);
+            arithmRHS.setFollow(arithmExpr.getFollow());
+        } else if (sym.getTag() == TokenTag.BETWEEN) {
+            arithmRHS.addSymbol(sym);
+            arithmRHS.setStart(sym.getStart());
+            parse(TokenTag.BETWEEN);
+
+            ArithmExprVar arithmExpr = new ArithmExprVar();
+            arithmRHS.addSymbol(arithmExpr);
+            parseArithmExpr(arithmExpr);
+
+            arithmRHS.addSymbol(sym);
+            parse(TokenTag.AND);
+
+            ArithmExprVar arithmExprVar = new ArithmExprVar();
+            arithmRHS.addSymbol(arithmExprVar);
+            parseArithmExpr(arithmExprVar);
+            arithmRHS.setFollow(arithmExprVar.getFollow());
+        } else {
+            throw new RuntimeException("Compare operators or BETWEEN expected, got " + sym);
         }
     }
 
@@ -1503,9 +1763,9 @@ public class Parser {
                 || sym.getTag() == TokenTag.FLOAT_CONST
                 || sym.getTag() == TokenTag.DOUBLE_CONST) {
 
+            arithmExprFactor.addSymbol(sym);
             arithmExprFactor.setCoords(sym.getCoords());
-
-            parseNumber(arithmExprFactor);
+            parseNumber();
         } else if (sym.getTag() == TokenTag.SUB) {
             arithmExprFactor.addSymbol(sym);
             arithmExprFactor.setStart(sym.getStart());
@@ -1571,6 +1831,9 @@ public class Parser {
             createFunctionRightPart.addSymbol(sym);
             createFunctionRightPart.setStart(sym.getStart());
             parse(TokenTag.RPAREN);
+
+            createFunctionRightPart.addSymbol(sym);
+            parse(TokenTag.RETURNS);
 
             CreateFunctionAllReturnStmtVar createFunctionAllReturnStmt = new CreateFunctionAllReturnStmtVar();
             createFunctionRightPart.addSymbol(createFunctionAllReturnStmt);
@@ -1644,17 +1907,8 @@ public class Parser {
             createFunctionAllReturnStmt.addSymbol(createFuncBody);
             parseCreateFuncBody(createFuncBody);
             createFunctionAllReturnStmt.setFollow(createFuncBody.getFollow());
-        } else if (sym.getTag() == TokenTag.TRIGGER) {
-            createFunctionAllReturnStmt.addSymbol(sym);
-            createFunctionAllReturnStmt.setStart(sym.getStart());
-            parse(TokenTag.TRIGGER);
-
-            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
-            createFunctionAllReturnStmt.addSymbol(createFuncBody);
-            parseCreateFuncBody(createFuncBody);
-            createFunctionAllReturnStmt.setFollow(createFuncBody.getFollow());
         } else {
-            throw new RuntimeException("Typename, TABLE or TRIGGER expected, got " + sym);
+            throw new RuntimeException("Typename or TABLE expected, got " + sym);
         }
     }
 
@@ -2022,5 +2276,1667 @@ public class Parser {
         variableDecl.addSymbol(sym);
         variableDecl.setFollow(sym.getFollow());
         parse(TokenTag.SEMICOLON);
+    }
+
+    //funcBody                    ::= funcAs
+    //                            |   variableAssign
+    //                            |   returnStmt
+    //                            |   ifStmt
+    //                            |   loopStmt
+    //                            |   NULL ';'
+    //                            |   raiseStmt
+    //                            |   InsertStmt ';'
+    //                            |   UpdateStmt ';'
+    //                            |   DeleteStmt ';'
+    //                            |   SelectStmt ';'
+    private void parseFuncBody(FuncBodyVar funcBody) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.DECLARE
+                || sym.getTag() == TokenTag.BEGIN) {
+            FuncAsVar funcAs = new FuncAsVar();
+            funcBody.addSymbol(funcAs);
+            parseFuncAs(funcAs);
+            funcBody.setCoords(funcAs.getCoords());
+        //TODO FIRST(ColId)
+        } else if (sym.getTag() == TokenTag.IDENTIFIER) {
+            VariableAssignVar variableAssign = new VariableAssignVar();
+            funcBody.addSymbol(variableAssign);
+            parseVariableAssign(variableAssign);
+            funcBody.setCoords(variableAssign.getCoords());
+        } else if (sym.getTag() == TokenTag.RETURN) {
+            ReturnStmtVar returnStmt = new ReturnStmtVar();
+            funcBody.addSymbol(returnStmt);
+            parseReturnStmt(returnStmt);
+            funcBody.setCoords(returnStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.IF) {
+            IfStmtVar ifStmt = new IfStmtVar();
+            funcBody.addSymbol(ifStmt);
+            parseIfStmt(ifStmt);
+            funcBody.setCoords(ifStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.WHILE
+                || sym.getTag() == TokenTag.LOOP
+                || sym.getTag() == TokenTag.FOR) {
+            LoopStmtVar loopStmt = new LoopStmtVar();
+            funcBody.addSymbol(loopStmt);
+            parseLoopStmt(loopStmt);
+            funcBody.setCoords(loopStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.NULL) {
+            funcBody.addSymbol(sym);
+            funcBody.setStart(sym.getStart());
+            parse(TokenTag.NULL);
+
+            funcBody.addSymbol(sym);
+            funcBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.RAISE) {
+            RaiseStmtVar raiseStmt = new RaiseStmtVar();
+            funcBody.addSymbol(raiseStmt);
+            parseRaiseStmt(raiseStmt);
+            funcBody.setCoords(raiseStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.INSERT) {
+            InsertStmtVar insertStmt = new InsertStmtVar();
+            funcBody.addSymbol(insertStmt);
+            parseInsertStmt(insertStmt);
+            funcBody.setStart(insertStmt.getStart());
+
+            funcBody.addSymbol(sym);
+            funcBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.UPDATE) {
+            UpdateStmtVar updateStmt = new UpdateStmtVar();
+            funcBody.addSymbol(updateStmt);
+            parseUpdateStmt(updateStmt);
+            funcBody.setStart(updateStmt.getStart());
+
+            funcBody.addSymbol(sym);
+            funcBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.DELETE) {
+            DeleteStmtVar deleteStmt = new DeleteStmtVar();
+            funcBody.addSymbol(deleteStmt);
+            parseDeleteStmt(deleteStmt);
+            funcBody.setStart(deleteStmt.getStart());
+
+            funcBody.addSymbol(sym);
+            funcBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.SELECT) {
+            SelectStmtVar selectStmt = new SelectStmtVar();
+            funcBody.addSymbol(selectStmt);
+            parseSelectStmt(selectStmt);
+            funcBody.setStart(selectStmt.getStart());
+
+            funcBody.addSymbol(sym);
+            funcBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else {
+            throw new RuntimeException("Function body expression expected, got " + sym);
+        }
+    }
+
+    //variableAssign              ::= QualifiedName ':=' Expr ';'
+    private void parseVariableAssign(VariableAssignVar variableAssign) throws CloneNotSupportedException {
+        QualifiedNameVar qualifiedName = new QualifiedNameVar();
+        variableAssign.addSymbol(qualifiedName);
+        parseQualifiedName(qualifiedName);
+        variableAssign.setStart(qualifiedName.getStart());
+
+        variableAssign.addSymbol(sym);
+        parse(TokenTag.ASSIGN);
+
+        ExprVar expr = new ExprVar();
+        variableAssign.addSymbol(expr);
+        parseExpr(expr);
+
+        variableAssign.addSymbol(sym);
+        variableAssign.setFollow(sym.getFollow());
+        parse(TokenTag.SEMICOLON);
+    }
+
+    //raiseStmt                   ::= RAISE raiseLevel CharacterValue ';'
+    private void parseRaiseStmt(RaiseStmtVar raiseStmt) throws CloneNotSupportedException {
+        raiseStmt.addSymbol(sym);
+        raiseStmt.setStart(sym.getStart());
+        parse(TokenTag.RAISE);
+
+        RaiseLevelVar raiseLevel = new RaiseLevelVar();
+        raiseStmt.addSymbol(raiseLevel);
+        parseRaiseLevel(raiseLevel);
+
+        raiseStmt.addSymbol(sym);
+        parse(TokenTag.STRING_CONST);
+
+        raiseStmt.addSymbol(sym);
+        raiseStmt.setFollow(sym.getFollow());
+        parse(TokenTag.SEMICOLON);
+    }
+
+    //raiseLevel                  ::= NOTICE
+    //                            |   EXCEPTION?
+    private void parseRaiseLevel(RaiseLevelVar raiseLevel) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.NOTICE) {
+            raiseLevel.addSymbol(sym);
+            raiseLevel.setCoords(sym.getCoords());
+            parse(TokenTag.NOTICE);
+        } else if (sym.getTag() == TokenTag.EXCEPTION) {
+            raiseLevel.addSymbol(sym);
+            raiseLevel.setCoords(sym.getCoords());
+            parse(TokenTag.EXCEPTION);
+        }
+    }
+
+    //returnStmt                  ::= RETURN returnedValue ';'
+    private void parseReturnStmt(ReturnStmtVar returnStmt) throws CloneNotSupportedException {
+        returnStmt.addSymbol(sym);
+        returnStmt.setStart(sym.getStart());
+        parse(TokenTag.RETURN);
+
+        ReturnedValueVar returnedValue = new ReturnedValueVar();
+        returnStmt.addSymbol(returnedValue);
+        parseReturnedValue(returnedValue);
+
+        returnStmt.addSymbol(sym);
+        returnedValue.setFollow(sym.getFollow());
+        parse(TokenTag.SEMICOLON);
+    }
+
+    //returnedValue               ::= Expr
+    //                            |   QUERY SelectStmt
+    private void parseReturnedValue(ReturnedValueVar returnedValue) throws CloneNotSupportedException {
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.SUB
+                || sym.getTag() == TokenTag.LPAREN
+                || sym.getTag() == TokenTag.NOT
+                || sym.getTag() == TokenTag.BYTE_CONST
+                || sym.getTag() == TokenTag.SHORT_CONST
+                || sym.getTag() == TokenTag.INT_CONST
+                || sym.getTag() == TokenTag.LONG_CONST
+                || sym.getTag() == TokenTag.FLOAT_CONST
+                || sym.getTag() == TokenTag.DOUBLE_CONST
+                || sym.getTag() == TokenTag.TRUE
+                || sym.getTag() == TokenTag.FALSE
+                || sym.getTag() == TokenTag.NULL
+                || sym.getTag() == TokenTag.STRING_CONST
+                || sym.getTag() == TokenTag.DATE_CONST) {
+            ExprVar expr = new ExprVar();
+            returnedValue.addSymbol(expr);
+            parseExpr(expr);
+            returnedValue.setCoords(expr.getCoords());
+        } else if (sym.getTag() == TokenTag.QUERY) {
+            returnedValue.addSymbol(sym);
+            returnedValue.setStart(sym.getStart());
+            parse(TokenTag.QUERY);
+
+            SelectStmtVar selectStmt = new SelectStmtVar();
+            returnedValue.addSymbol(selectStmt);
+            parseSelectStmt(selectStmt);
+            returnedValue.setFollow(selectStmt.getFollow());
+        } else {
+            throw new RuntimeException("Expression or QUERY expected, got " + sym);
+        }
+    }
+
+    //ifStmt                      ::= IF boolExpr THEN ifBody (ELSIF boolExpr THEN ifBody)? (ELSE ifBody)? END IF ';'
+    private void parseIfStmt(IfStmtVar ifStmt) throws CloneNotSupportedException {
+        ifStmt.addSymbol(sym);
+        ifStmt.setStart(sym.getStart());
+        parse(TokenTag.IF);
+
+        BoolExprVar boolExpr = new BoolExprVar();
+        ifStmt.addSymbol(boolExpr);
+        parseBoolExpr(boolExpr);
+
+        ifStmt.addSymbol(sym);
+        parse(TokenTag.THEN);
+
+        IfBodyVar ifBody = new IfBodyVar();
+        ifStmt.addSymbol(ifBody);
+        parseIfBody(ifBody);
+
+        if (sym.getTag() == TokenTag.ELSIF) {
+            ifStmt.addSymbol(sym);
+            parse(TokenTag.ELSIF);
+
+            BoolExprVar boolExprVar = new BoolExprVar();
+            ifStmt.addSymbol(boolExprVar);
+            parseBoolExpr(boolExprVar);
+
+            ifStmt.addSymbol(sym);
+            parse(TokenTag.THEN);
+
+            IfBodyVar ifBodyVar = new IfBodyVar();
+            ifStmt.addSymbol(ifBodyVar);
+            parseIfBody(ifBodyVar);
+        }
+
+        if (sym.getTag() == TokenTag.ELSE) {
+            ifStmt.addSymbol(sym);
+            parse(TokenTag.ELSE);
+
+            IfBodyVar ifBodyVar = new IfBodyVar();
+            ifStmt.addSymbol(ifBodyVar);
+            parseIfBody(ifBodyVar);
+        }
+
+        ifStmt.addSymbol(sym);
+        parse(TokenTag.END);
+
+        ifStmt.addSymbol(sym);
+        parse(TokenTag.IF);
+
+        ifStmt.addSymbol(sym);
+        parse(TokenTag.SEMICOLON);
+    }
+
+    //ifBody                      ::= funcAs
+    //                            |   (funcBody)?
+    private void parseIfBody(IfBodyVar ifBody) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.DECLARE
+                || sym.getTag() == TokenTag.BEGIN) {
+            FuncAsVar funcAs = new FuncAsVar();
+            ifBody.addSymbol(funcAs);
+            parseFuncAs(funcAs);
+            ifBody.setCoords(funcAs.getCoords());
+        } else if (sym.getTag() == TokenTag.DECLARE
+                || sym.getTag() == TokenTag.BEGIN
+                || sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.RETURN
+                || sym.getTag() == TokenTag.IF
+                || sym.getTag() == TokenTag.LOOP
+                || sym.getTag() == TokenTag.WHILE
+                || sym.getTag() == TokenTag.FOR
+                || sym.getTag() == TokenTag.NULL
+                || sym.getTag() == TokenTag.RAISE
+                || sym.getTag() == TokenTag.INSERT
+                || sym.getTag() == TokenTag.UPDATE
+                || sym.getTag() == TokenTag.DELETE
+                || sym.getTag() == TokenTag.SELECT) {
+            FuncBodyVar funcBody = new FuncBodyVar();
+            ifBody.addSymbol(funcBody);
+            parseFuncBody(funcBody);
+            ifBody.setCoords(funcBody.getCoords());
+        }
+    }
+
+    //loopStmt                    ::= (WHILE boolExpr)? LOOP cycleDecl END LOOP ';'
+    //                            |   FOR IDENT IN forClause
+    private void parseLoopStmt(LoopStmtVar loopStmt) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.WHILE
+                || sym.getTag() == TokenTag.LOOP) {
+            boolean wasWhile = false;
+            if (sym.getTag() == TokenTag.WHILE) {
+                loopStmt.addSymbol(sym);
+                loopStmt.setStart(sym.getStart());
+                parse(TokenTag.WHILE);
+
+                BoolExprVar boolExpr = new BoolExprVar();
+                loopStmt.addSymbol(boolExpr);
+                parseBoolExpr(boolExpr);
+
+                wasWhile = true;
+            }
+
+            loopStmt.addSymbol(sym);
+            if (!wasWhile)
+                loopStmt.setStart(sym.getStart());
+            parse(TokenTag.LOOP);
+
+            CycleDeclVar cycleDecl = new CycleDeclVar();
+            loopStmt.addSymbol(cycleDecl);
+            parseCycleDecl(cycleDecl);
+
+            loopStmt.addSymbol(sym);
+            parse(TokenTag.END);
+
+            loopStmt.addSymbol(sym);
+            parse(TokenTag.LOOP);
+
+            loopStmt.addSymbol(sym);
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.FOR) {
+            loopStmt.addSymbol(sym);
+            loopStmt.setStart(sym.getStart());
+            parse(TokenTag.FOR);
+
+            loopStmt.addSymbol(sym);
+            parse(TokenTag.IDENTIFIER);
+
+            loopStmt.addSymbol(sym);
+            parse(TokenTag.IN);
+
+            ForClauseVar forClause = new ForClauseVar();
+            loopStmt.addSymbol(forClause);
+            parseForClause(forClause);
+            loopStmt.setFollow(forClause.getFollow());
+        } else {
+            throw new RuntimeException("WHILE, LOOP or FOR expected, got " + sym);
+        }
+    }
+
+    //forClause                   ::= REVERSE? arithmExpr '..' arithmExpr (BY arithmExpr)? LOOP cycleDecl END LOOP ';'
+    //                            |   SelectStmt cycleDecl END LOOP ';'  //ident should be of type RECORD
+    private void parseForClause(ForClauseVar forClause) throws CloneNotSupportedException {
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.REVERSE
+                || sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.SUB
+                || sym.getTag() == TokenTag.LPAREN
+                || sym.getTag() == TokenTag.BYTE_CONST
+                || sym.getTag() == TokenTag.SHORT_CONST
+                || sym.getTag() == TokenTag.INT_CONST
+                || sym.getTag() == TokenTag.LONG_CONST
+                || sym.getTag() == TokenTag.FLOAT_CONST
+                || sym.getTag() == TokenTag.DOUBLE_CONST) {
+            boolean wasReverse = false;
+            if (sym.getTag() == TokenTag.REVERSE) {
+                forClause.addSymbol(sym);
+                forClause.setStart(sym.getStart());
+                parse(TokenTag.REVERSE);
+                wasReverse = true;
+            }
+
+            ArithmExprVar arithmExpr = new ArithmExprVar();
+            forClause.addSymbol(arithmExpr);
+            parseArithmExpr(arithmExpr);
+            if (!wasReverse)
+                forClause.setStart(arithmExpr.getStart());
+
+            forClause.addSymbol(sym);
+            parse(TokenTag.DOUBLE_DOT);
+
+            ArithmExprVar arithmExprVar = new ArithmExprVar();
+            forClause.addSymbol(arithmExprVar);
+            parseArithmExpr(arithmExprVar);
+
+            if (sym.getTag() == TokenTag.BY) {
+                forClause.addSymbol(sym);
+                parse(TokenTag.BY);
+
+                ArithmExprVar arithmExprVarBy = new ArithmExprVar();
+                forClause.addSymbol(arithmExprVarBy);
+                parseArithmExpr(arithmExprVarBy);
+            }
+
+            forClause.addSymbol(sym);
+            parse(TokenTag.LOOP);
+
+            CycleDeclVar cycleDecl = new CycleDeclVar();
+            forClause.addSymbol(cycleDecl);
+            parseCycleDecl(cycleDecl);
+
+            forClause.addSymbol(sym);
+            parse(TokenTag.END);
+
+            forClause.addSymbol(sym);
+            parse(TokenTag.LOOP);
+
+            forClause.addSymbol(sym);
+            forClause.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        //TODO FIRST(ColId, QualifiedName)
+        } else if (sym.getTag() == TokenTag.SELECT) {
+            SelectStmtVar selectStmt = new SelectStmtVar();
+            forClause.addSymbol(selectStmt);
+            parseSelectStmt(selectStmt);
+            forClause.setStart(selectStmt.getStart());
+
+            CycleDeclVar cycleDecl = new CycleDeclVar();
+            forClause.addSymbol(cycleDecl);
+            parseCycleDecl(cycleDecl);
+
+            forClause.addSymbol(sym);
+            parse(TokenTag.END);
+
+            forClause.addSymbol(sym);
+            parse(TokenTag.LOOP);
+
+            forClause.addSymbol(sym);
+            forClause.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else {
+            throw new RuntimeException("REVERSE, arithmetic expression or SELECT expected, got " + sym);
+        }
+    }
+
+    //cycleDecl                   ::= declareBlock? BEGIN cycleBody* END ';'
+    //                            |   cycleBody*
+    private void parseCycleDecl(CycleDeclVar cycleDecl) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.DECLARE
+                || sym.getTag() == TokenTag.BEGIN) {
+            boolean wasDeclare = false;
+            if (sym.getTag() == TokenTag.DECLARE) {
+                DeclareBlockVar declareBlock = new DeclareBlockVar();
+                cycleDecl.addSymbol(declareBlock);
+                parseDeclareBlock(declareBlock);
+                cycleDecl.setStart(declareBlock.getStart());
+                wasDeclare = true;
+            }
+
+            cycleDecl.addSymbol(sym);
+            if (!wasDeclare)
+                cycleDecl.setStart(sym.getStart());
+            parse(TokenTag.BEGIN);
+
+            CycleBodyVar cycleBody = new CycleBodyVar();
+            cycleDecl.addSymbol(cycleBody);
+            parseCycleBody(cycleBody);
+
+            cycleDecl.addSymbol(sym);
+            parse(TokenTag.END);
+
+            cycleDecl.addSymbol(sym);
+            parse(TokenTag.SEMICOLON);
+        } else while (sym.getTag() == TokenTag.DECLARE
+                || sym.getTag() == TokenTag.BEGIN
+                || sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.RETURN
+                || sym.getTag() == TokenTag.IF
+                || sym.getTag() == TokenTag.LOOP
+                || sym.getTag() == TokenTag.WHILE
+                || sym.getTag() == TokenTag.FOR
+                || sym.getTag() == TokenTag.NULL
+                || sym.getTag() == TokenTag.RAISE
+                || sym.getTag() == TokenTag.INSERT
+                || sym.getTag() == TokenTag.UPDATE
+                || sym.getTag() == TokenTag.DELETE
+                || sym.getTag() == TokenTag.SELECT
+                || sym.getTag() == TokenTag.EXIT
+                || sym.getTag() == TokenTag.CONTINUE) {
+            CycleBodyVar cycleBody = new CycleBodyVar();
+            cycleDecl.addSymbol(cycleBody);
+            parseCycleBody(cycleBody);
+            cycleDecl.setCoords(cycleBody.getCoords());
+        }
+    }
+
+    //cycleBody                   ::= variableAssign
+    //                            |   returnStmt
+    //                            |   ifCycleStmt
+    //                            |   loopStmt
+    //                            |   NULL ';'
+    //                            |   raiseStmt
+    //                            |   InsertStmt ';'
+    //                            |   UpdateStmt ';'
+    //                            |   DeleteStmt ';'
+    //                            |   SelectStmt ';'
+    //                            |   EXIT (WHEN boolExpr)? ';'
+    //                            |   CONTINUE (WHEN boolExpr)? ';'
+    private void parseCycleBody(CycleBodyVar cycleBody) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.DECLARE
+                || sym.getTag() == TokenTag.BEGIN) {
+            FuncAsVar funcAs = new FuncAsVar();
+            cycleBody.addSymbol(funcAs);
+            parseFuncAs(funcAs);
+            cycleBody.setCoords(funcAs.getCoords());
+            //TODO FIRST(ColId)
+        } else if (sym.getTag() == TokenTag.IDENTIFIER) {
+            VariableAssignVar variableAssign = new VariableAssignVar();
+            cycleBody.addSymbol(variableAssign);
+            parseVariableAssign(variableAssign);
+            cycleBody.setCoords(variableAssign.getCoords());
+        } else if (sym.getTag() == TokenTag.RETURN) {
+            ReturnStmtVar returnStmt = new ReturnStmtVar();
+            cycleBody.addSymbol(returnStmt);
+            parseReturnStmt(returnStmt);
+            cycleBody.setCoords(returnStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.IF) {
+            IfCycleStmtVar ifCycleStmt = new IfCycleStmtVar();
+            cycleBody.addSymbol(ifCycleStmt);
+            parseIfCycleStmt(ifCycleStmt);
+            cycleBody.setCoords(ifCycleStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.WHILE
+                || sym.getTag() == TokenTag.LOOP
+                || sym.getTag() == TokenTag.FOR) {
+            LoopStmtVar loopStmt = new LoopStmtVar();
+            cycleBody.addSymbol(loopStmt);
+            parseLoopStmt(loopStmt);
+            cycleBody.setCoords(loopStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.NULL) {
+            cycleBody.addSymbol(sym);
+            cycleBody.setStart(sym.getStart());
+            parse(TokenTag.NULL);
+
+            cycleBody.addSymbol(sym);
+            cycleBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.RAISE) {
+            RaiseStmtVar raiseStmt = new RaiseStmtVar();
+            cycleBody.addSymbol(raiseStmt);
+            parseRaiseStmt(raiseStmt);
+            cycleBody.setCoords(raiseStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.INSERT) {
+            InsertStmtVar insertStmt = new InsertStmtVar();
+            cycleBody.addSymbol(insertStmt);
+            parseInsertStmt(insertStmt);
+            cycleBody.setStart(insertStmt.getStart());
+
+            cycleBody.addSymbol(sym);
+            cycleBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.UPDATE) {
+            UpdateStmtVar updateStmt = new UpdateStmtVar();
+            cycleBody.addSymbol(updateStmt);
+            parseUpdateStmt(updateStmt);
+            cycleBody.setStart(updateStmt.getStart());
+
+            cycleBody.addSymbol(sym);
+            cycleBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.DELETE) {
+            DeleteStmtVar deleteStmt = new DeleteStmtVar();
+            cycleBody.addSymbol(deleteStmt);
+            parseDeleteStmt(deleteStmt);
+            cycleBody.setStart(deleteStmt.getStart());
+
+            cycleBody.addSymbol(sym);
+            cycleBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.SELECT) {
+            SelectStmtVar selectStmt = new SelectStmtVar();
+            cycleBody.addSymbol(selectStmt);
+            parseSelectStmt(selectStmt);
+            cycleBody.setStart(selectStmt.getStart());
+
+            cycleBody.addSymbol(sym);
+            cycleBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.EXIT) {
+            cycleBody.addSymbol(sym);
+            cycleBody.setStart(sym.getStart());
+            parse(TokenTag.EXIT);
+
+            if (sym.getTag() == TokenTag.WHEN) {
+                cycleBody.addSymbol(sym);
+                parse(TokenTag.WHEN);
+
+                BoolExprVar boolExpr = new BoolExprVar();
+                cycleBody.addSymbol(boolExpr);
+                parseBoolExpr(boolExpr);
+            }
+
+            cycleBody.addSymbol(sym);
+            cycleBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.CONTINUE) {
+            cycleBody.addSymbol(sym);
+            cycleBody.setStart(sym.getStart());
+            parse(TokenTag.CONTINUE);
+
+            if (sym.getTag() == TokenTag.WHEN) {
+                cycleBody.addSymbol(sym);
+                parse(TokenTag.WHEN);
+
+                BoolExprVar boolExpr = new BoolExprVar();
+                cycleBody.addSymbol(boolExpr);
+                parseBoolExpr(boolExpr);
+            }
+
+            cycleBody.addSymbol(sym);
+            cycleBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else {
+            throw new RuntimeException("Cycle body expression expected, got " + sym);
+        }
+    }
+
+    //ifCycleStmt                 ::= IF boolExpr THEN ifCycleBody (ELSIF boolExpr THEN ifCycleBody)? (ELSE ifCycleBody)? END IF ';'
+    private void parseIfCycleStmt(IfCycleStmtVar ifCycleStmt) throws CloneNotSupportedException{
+        ifCycleStmt.addSymbol(sym);
+        ifCycleStmt.setStart(sym.getStart());
+        parse(TokenTag.IF);
+
+        BoolExprVar boolExpr = new BoolExprVar();
+        ifCycleStmt.addSymbol(boolExpr);
+        parseBoolExpr(boolExpr);
+
+        ifCycleStmt.addSymbol(sym);
+        parse(TokenTag.THEN);
+
+        IfCycleBodyVar ifCycleBody = new IfCycleBodyVar();
+        ifCycleBody.addSymbol(ifCycleBody);
+        parseIfCycleBody(ifCycleBody);
+
+        if (sym.getTag() == TokenTag.ELSIF) {
+            ifCycleStmt.addSymbol(sym);
+            parse(TokenTag.ELSIF);
+
+            BoolExprVar boolExprVar = new BoolExprVar();
+            ifCycleStmt.addSymbol(boolExprVar);
+            parseBoolExpr(boolExprVar);
+
+            ifCycleStmt.addSymbol(sym);
+            parse(TokenTag.THEN);
+
+            IfCycleBodyVar ifCycleBodyVar = new IfCycleBodyVar();
+            ifCycleStmt.addSymbol(ifCycleBodyVar);
+            parseIfCycleBody(ifCycleBodyVar);
+        }
+
+        if (sym.getTag() == TokenTag.ELSE) {
+            ifCycleStmt.addSymbol(sym);
+            parse(TokenTag.ELSE);
+
+            IfCycleBodyVar ifCycleBodyVar = new IfCycleBodyVar();
+            ifCycleStmt.addSymbol(ifCycleBodyVar);
+            parseIfCycleBody(ifCycleBodyVar);
+        }
+
+        ifCycleStmt.addSymbol(sym);
+        parse(TokenTag.END);
+
+        ifCycleStmt.addSymbol(sym);
+        parse(TokenTag.IF);
+
+        ifCycleStmt.addSymbol(sym);
+        parse(TokenTag.SEMICOLON);
+    }
+
+    //ifCycleBody                 ::= declareBlock? BEGIN cycleBody* END ';'
+    //                            |   (cycleBody)?
+    private void parseIfCycleBody(IfCycleBodyVar ifCycleBody) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.DECLARE
+                || sym.getTag() == TokenTag.BEGIN) {
+            boolean wasDeclare = false;
+            if (sym.getTag() == TokenTag.DECLARE) {
+                DeclareBlockVar declareBlock = new DeclareBlockVar();
+                ifCycleBody.addSymbol(declareBlock);
+                parseDeclareBlock(declareBlock);
+                ifCycleBody.setStart(declareBlock.getStart());
+                wasDeclare = true;
+            }
+
+            ifCycleBody.addSymbol(sym);
+            if (!wasDeclare)
+                ifCycleBody.setStart(sym.getStart());
+            parse(TokenTag.BEGIN);
+
+            while (sym.getTag() == TokenTag.IDENTIFIER
+                    || sym.getTag() == TokenTag.RETURN
+                    || sym.getTag() == TokenTag.IF
+                    || sym.getTag() == TokenTag.WHILE
+                    || sym.getTag() == TokenTag.LOOP
+                    || sym.getTag() == TokenTag.FOR
+                    || sym.getTag() == TokenTag.NULL
+                    || sym.getTag() == TokenTag.RAISE
+                    || sym.getTag() == TokenTag.INSERT
+                    || sym.getTag() == TokenTag.UPDATE
+                    || sym.getTag() == TokenTag.DELETE
+                    || sym.getTag() == TokenTag.SELECT
+                    || sym.getTag() == TokenTag.LPAREN
+                    || sym.getTag() == TokenTag.EXIT
+                    || sym.getTag() == TokenTag.CONTINUE) {
+                CycleBodyVar cycleBody = new CycleBodyVar();
+                ifCycleBody.addSymbol(cycleBody);
+                parseCycleBody(cycleBody);
+            }
+
+            ifCycleBody.addSymbol(sym);
+            parse(TokenTag.END);
+
+            ifCycleBody.addSymbol(sym);
+            ifCycleBody.setFollow(sym.getFollow());
+            parse(TokenTag.SEMICOLON);
+        } else if (sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.RETURN
+                || sym.getTag() == TokenTag.IF
+                || sym.getTag() == TokenTag.WHILE
+                || sym.getTag() == TokenTag.LOOP
+                || sym.getTag() == TokenTag.FOR
+                || sym.getTag() == TokenTag.NULL
+                || sym.getTag() == TokenTag.RAISE
+                || sym.getTag() == TokenTag.INSERT
+                || sym.getTag() == TokenTag.UPDATE
+                || sym.getTag() == TokenTag.DELETE
+                || sym.getTag() == TokenTag.SELECT
+                || sym.getTag() == TokenTag.LPAREN
+                || sym.getTag() == TokenTag.EXIT
+                || sym.getTag() == TokenTag.CONTINUE) {
+            CycleBodyVar cycleBody = new CycleBodyVar();
+            ifCycleBody.addSymbol(cycleBody);
+            parseCycleBody(cycleBody);
+            ifCycleBody.setCoords(cycleBody.getCoords());
+        }
+    }
+
+    //SelectStmt                  ::= SELECT allDistinctClause? targetList?
+    //                                FROM fromList whereClause?
+    //                                groupClause? havingClause? sortClause?
+    //                                ( unionIntOps allOrDistinct? SelectStmt )?
+    private void parseSelectStmt(SelectStmtVar selectStmt) throws CloneNotSupportedException {
+        selectStmt.addSymbol(sym);
+        selectStmt.setStart(sym.getStart());
+        parse(TokenTag.SELECT);
+
+        if (sym.getTag() == TokenTag.ALL
+                || sym.getTag() == TokenTag.DISTINCT) {
+            AllDistinctClauseVar allDistinctClause = new AllDistinctClauseVar();
+            selectStmt.addSymbol(allDistinctClause);
+            parseAllDistinctClause(allDistinctClause);
+        }
+
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.MUL
+                || sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.AVG
+                || sym.getTag() == TokenTag.SUM
+                || sym.getTag() == TokenTag.COUNT
+                || sym.getTag() == TokenTag.MIN
+                || sym.getTag() == TokenTag.MAX) {
+            TargetListVar targetList = new TargetListVar();
+            selectStmt.addSymbol(targetList);
+            parseTargetList(targetList);
+        }
+
+        selectStmt.addSymbol(sym);
+        parse(TokenTag.FROM);
+
+        FromListVar fromList = new FromListVar();
+        selectStmt.addSymbol(fromList);
+        parseFromList(fromList);
+        selectStmt.setFollow(fromList.getFollow());
+
+        if (sym.getTag() == TokenTag.WHERE) {
+            WhereClauseVar whereClause = new WhereClauseVar();
+            selectStmt.addSymbol(whereClause);
+            parseWhereClause(whereClause);
+            selectStmt.setFollow(whereClause.getFollow());
+        }
+
+        if (sym.getTag() == TokenTag.GROUP) {
+            GroupClauseVar groupClause = new GroupClauseVar();
+            selectStmt.addSymbol(groupClause);
+            parseGroupClause(groupClause);
+            selectStmt.setFollow(groupClause.getFollow());
+        }
+
+        if (sym.getTag() == TokenTag.HAVING) {
+            HavingClauseVar havingClause = new HavingClauseVar();
+            selectStmt.addSymbol(havingClause);
+            parseHavingClause(havingClause);
+            selectStmt.setFollow(havingClause.getFollow());
+        }
+
+        if (sym.getTag() == TokenTag.ORDER) {
+            SortClauseVar sortClause = new SortClauseVar();
+            selectStmt.addSymbol(sortClause);
+            parseSortClause(sortClause);
+            selectStmt.setFollow(sortClause.getFollow());
+        }
+
+        if (sym.getTag() == TokenTag.UNION
+                || sym.getTag() == TokenTag.INTERSECT
+                || sym.getTag() == TokenTag.EXCEPT) {
+            UnionIntOpsVar unionIntOps = new UnionIntOpsVar();
+            selectStmt.addSymbol(unionIntOps);
+            parseUnionIntOps(unionIntOps);
+
+            if (sym.getTag() == TokenTag.ALL
+                    || sym.getTag() == TokenTag.DISTINCT) {
+                AllOrDistinctVar allOrDistinct = new AllOrDistinctVar();
+                selectStmt.addSymbol(allOrDistinct);
+                parseAllOrDistinct(allOrDistinct);
+            }
+
+            SelectStmtVar selectStmtVar = new SelectStmtVar();
+            selectStmt.addSymbol(selectStmtVar);
+            parseSelectStmt(selectStmtVar);
+            selectStmt.setFollow(selectStmtVar.getFollow());
+        }
+    }
+
+    //allDistinctClause           ::= ALL
+    //                            |   DISTINCT (ON '(' colRefList ')' )?
+    private void parseAllDistinctClause(AllDistinctClauseVar allDistinctClause) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.ALL) {
+            allDistinctClause.addSymbol(sym);
+            allDistinctClause.setCoords(sym.getCoords());
+            parse(TokenTag.ALL);
+        } else if (sym.getTag() == TokenTag.DISTINCT) {
+            allDistinctClause.addSymbol(sym);
+            allDistinctClause.setCoords(sym.getCoords());
+            parse(TokenTag.DISTINCT);
+
+            if (sym.getTag() == TokenTag.ON) {
+                allDistinctClause.addSymbol(sym);
+                parse(TokenTag.ON);
+
+                allDistinctClause.addSymbol(sym);
+                parse(TokenTag.LPAREN);
+
+                ColRefListVar colRefList = new ColRefListVar();
+                allDistinctClause.addSymbol(colRefList);
+                parseColRefList(colRefList);
+
+                allDistinctClause.addSymbol(sym);
+                allDistinctClause.setFollow(sym.getFollow());
+                parse(TokenTag.RPAREN);
+            }
+        } else {
+            throw new RuntimeException("ALL or DISTINCT expected, got " + sym);
+        }
+    }
+
+    //allOrDistinct               ::= ALL | DISTINCT
+    private void parseAllOrDistinct(AllOrDistinctVar allOrDistinct) throws CloneNotSupportedException {
+        allOrDistinct.addSymbol(sym);
+        allOrDistinct.setCoords(sym.getCoords());
+        if (sym.getTag() == TokenTag.ALL) {
+            parse(TokenTag.ALL);
+        } else if (sym.getTag() == TokenTag.DISTINCT) {
+            parse(TokenTag.DISTINCT);
+        } else {
+            throw new RuntimeException("ALL or DISTINCT expected, got " + sym);
+        }
+    }
+
+    //unionIntOps                 ::= UNION
+    //                            |   INTERSECT
+    //                            |   EXCEPT
+    private void parseUnionIntOps(UnionIntOpsVar unionIntOps) throws CloneNotSupportedException {
+        unionIntOps.addSymbol(sym);
+        unionIntOps.setCoords(sym.getCoords());
+        if (sym.getTag() == TokenTag.UNION) {
+            parse(TokenTag.UNION);
+        } else if (sym.getTag() == TokenTag.INTERSECT) {
+            parse(TokenTag.INTERSECT);
+        } else if (sym.getTag() == TokenTag.EXCEPT) {
+            parse(TokenTag.EXCEPT);
+        } else {
+            throw new RuntimeException("UNION, INTERSECT or EXCEPT expected, got " + sym);
+        }
+    }
+
+    //sortClause                  ::= ORDER BY sortByElem (',' sortByElem)*
+    private void parseSortClause(SortClauseVar sortClause) throws CloneNotSupportedException {
+        sortClause.addSymbol(sym);
+        sortClause.setStart(sym.getStart());
+        parse(TokenTag.ORDER);
+
+        sortClause.addSymbol(sym);
+        parse(TokenTag.BY);
+
+        SortByElemVar sortByElem = new SortByElemVar();
+        sortClause.addSymbol(sortByElem);
+        parseSortByElem(sortByElem);
+        sortClause.setFollow(sortByElem.getFollow());
+
+        //TODO FIRST(ColId)
+        while (sym.getTag() == TokenTag.COMMA) {
+            sortClause.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            SortByElemVar sortByElemVar = new SortByElemVar();
+            sortClause.addSymbol(sortByElemVar);
+            parseSortByElem(sortByElemVar);
+            sortClause.setFollow(sortByElemVar.getFollow());
+        }
+    }
+
+    //sortByElem                  ::= colRef ascDesc?
+    private void parseSortByElem(SortByElemVar sortByElem) throws  CloneNotSupportedException {
+        ColRefVar colRef = new ColRefVar();
+        sortByElem.addSymbol(colRef);
+        parseColRef(colRef);
+        sortByElem.setCoords(colRef.getCoords());
+
+        if (sym.getTag() == TokenTag.ASC
+                || sym.getTag() == TokenTag.DESC) {
+            AscDescVar ascDesc = new AscDescVar();
+            sortByElem.addSymbol(ascDesc);
+            parseAscDesc(ascDesc);
+            sortByElem.setFollow(ascDesc.getFollow());
+        }
+    }
+
+    //colRef                      ::= intConst //>=0 номер столбца
+    //                            |   ColId
+    private void parseColRef(ColRefVar colRef) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.BYTE_CONST
+                || sym.getTag() == TokenTag.SHORT_CONST
+                || sym.getTag() == TokenTag.INT_CONST
+                || sym.getTag() == TokenTag.LONG_CONST) {
+            colRef.addSymbol(sym);
+            colRef.setCoords(sym.getCoords());
+            parseIntConst();
+        } else if (sym.getTag() == TokenTag.IDENTIFIER) {
+            ColIdVar colId = new ColIdVar();
+            colRef.addSymbol(colId);
+            parseColId(colId);
+            colRef.setCoords(colId.getCoords());
+        } else {
+            throw new RuntimeException("Int const or identifier expected, got" + sym);
+        }
+    }
+
+    //ascDesc                     ::= ASC | DESC //ASC ON DEFAULT
+    private void parseAscDesc(AscDescVar ascDesc) throws CloneNotSupportedException {
+        ascDesc.addSymbol(sym);
+        ascDesc.setCoords(sym.getCoords());
+        if (sym.getTag() == TokenTag.ASC) {
+            parse(TokenTag.ASC);
+        } else if (sym.getTag() == TokenTag.DESC) {
+            parse(TokenTag.DESC);
+        } else {
+            throw new RuntimeException("ASC or DESC expected, got " + sym);
+        }
+    }
+
+    //targetList                  ::= targetEl (',' targetEl)*
+    private void parseTargetList(TargetListVar targetList) throws CloneNotSupportedException {
+        TargetElVar targetEl = new TargetElVar();
+        targetList.addSymbol(targetEl);
+        parseTargetEl(targetEl);
+        targetList.setCoords(targetEl.getCoords());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            targetList.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            TargetElVar targetElVar = new TargetElVar();
+            targetList.addSymbol(targetElVar);
+            parseTargetEl(targetEl);
+            targetList.setFollow(targetElVar.getFollow());
+        }
+    }
+
+    //targetEl                    ::= targetExpr aliasClause?
+    //                            |   '*'
+    private void parseTargetEl(TargetElVar targetEl) throws CloneNotSupportedException {
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.AVG
+                || sym.getTag() == TokenTag.SUM
+                || sym.getTag() == TokenTag.COUNT
+                || sym.getTag() == TokenTag.MIN
+                || sym.getTag() == TokenTag.MAX) {
+            TargetExprVar targetExpr = new TargetExprVar();
+            targetEl.addSymbol(targetExpr);
+            parseTargetExpr(targetExpr);
+            targetEl.setCoords(targetExpr.getCoords());
+
+            //TODO FIRST(ColId)
+            if (sym.getTag() == TokenTag.AS
+                    || sym.getTag() == TokenTag.IDENTIFIER) {
+                AliasClauseVar aliasClause = new AliasClauseVar();
+                targetEl.addSymbol(aliasClause);
+                parseAliasClause(aliasClause);
+                targetEl.setFollow(aliasClause.getFollow());
+            }
+        } else if (sym.getTag() == TokenTag.MUL) {
+            targetEl.addSymbol(sym);
+            targetEl.setCoords(sym.getCoords());
+            parse(TokenTag.MUL);
+        } else {
+            throw new RuntimeException("Target columns or '*' expected, got " + sym);
+        }
+    }
+
+    //targetExpr                  ::= ColId                //если есть аггрегатные функции, то должен содержаться или в них или в GROUP BY
+    //                            |   AVG   '(' ColId ')'
+    //                            |   SUM   '(' ColId ')'
+    //                            |   COUNT '(' ColId ')'
+    //                            |   MIN   '(' ColId ')'
+    //                            |   MAX   '(' ColId ')'
+    private void parseTargetExpr(TargetExprVar targetExpr) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.IDENTIFIER) {
+            ColIdVar colId = new ColIdVar();
+            targetExpr.addSymbol(colId);
+            parseColId(colId);
+            targetExpr.setCoords(colId.getCoords());
+        } else if (sym.getTag() == TokenTag.AVG) {
+            targetExpr.addSymbol(sym);
+            targetExpr.setStart(sym.getStart());
+            parse(TokenTag.AVG);
+
+            targetExpr.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            ColIdVar colId = new ColIdVar();
+            targetExpr.addSymbol(colId);
+            parseColId(colId);
+
+            targetExpr.addSymbol(sym);
+            targetExpr.setFollow(sym.getFollow());
+            parse(TokenTag.RPAREN);
+        } else if (sym.getTag() == TokenTag.SUM) {
+            targetExpr.addSymbol(sym);
+            targetExpr.setStart(sym.getStart());
+            parse(TokenTag.SUM);
+
+            targetExpr.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            ColIdVar colId = new ColIdVar();
+            targetExpr.addSymbol(colId);
+            parseColId(colId);
+
+            targetExpr.addSymbol(sym);
+            targetExpr.setFollow(sym.getFollow());
+            parse(TokenTag.RPAREN);
+        } else if (sym.getTag() == TokenTag.COUNT) {
+            targetExpr.addSymbol(sym);
+            targetExpr.setStart(sym.getStart());
+            parse(TokenTag.COUNT);
+
+            targetExpr.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            ColIdVar colId = new ColIdVar();
+            targetExpr.addSymbol(colId);
+            parseColId(colId);
+
+            targetExpr.addSymbol(sym);
+            targetExpr.setFollow(sym.getFollow());
+            parse(TokenTag.RPAREN);
+        } else if (sym.getTag() == TokenTag.MIN) {
+            targetExpr.addSymbol(sym);
+            targetExpr.setStart(sym.getStart());
+            parse(TokenTag.MIN);
+
+            targetExpr.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            ColIdVar colId = new ColIdVar();
+            targetExpr.addSymbol(colId);
+            parseColId(colId);
+
+            targetExpr.addSymbol(sym);
+            targetExpr.setFollow(sym.getFollow());
+            parse(TokenTag.RPAREN);
+        } else if (sym.getTag() == TokenTag.MAX) {
+            targetExpr.addSymbol(sym);
+            targetExpr.setStart(sym.getStart());
+            parse(TokenTag.MAX);
+
+            targetExpr.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            ColIdVar colId = new ColIdVar();
+            targetExpr.addSymbol(colId);
+            parseColId(colId);
+
+            targetExpr.addSymbol(sym);
+            targetExpr.setFollow(sym.getFollow());
+            parse(TokenTag.RPAREN);
+        } else {
+            throw new RuntimeException("Identifier or aggregation function expected, got " + sym);
+        }
+    }
+
+    //fromList                    ::= tableRef (',' tableRef)*
+    private void parseFromList(FromListVar fromList) throws CloneNotSupportedException {
+        TableRefVar tableRef = new TableRefVar();
+        fromList.addSymbol(tableRef);
+        parseTableRef(tableRef);
+        fromList.setCoords(tableRef.getCoords());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            fromList.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            TableRefVar tableRefVar = new TableRefVar();
+            fromList.addSymbol(tableRefVar);
+            parseTableRef(tableRefVar);
+            fromList.setFollow(tableRefVar.getFollow());
+        }
+    }
+
+    //whereClause                 ::= WHERE boolExpr
+    private void parseWhereClause(WhereClauseVar whereClause) throws CloneNotSupportedException {
+        whereClause.addSymbol(sym);
+        whereClause.setStart(sym.getStart());
+        parse(TokenTag.WHERE);
+
+        BoolExprVar boolExpr = new BoolExprVar();
+        whereClause.addSymbol(boolExpr);
+        parseBoolExpr(boolExpr);
+        whereClause.setFollow(boolExpr.getFollow());
+    }
+
+    //groupClause                 ::= GROUP BY colRef (',' colRef)*
+    private void parseGroupClause(GroupClauseVar groupClause) throws CloneNotSupportedException {
+        groupClause.addSymbol(sym);
+        groupClause.setStart(sym.getStart());
+        parse(TokenTag.GROUP);
+
+        groupClause.addSymbol(sym);
+        parse(TokenTag.BY);
+
+        ColRefVar colRef = new ColRefVar();
+        groupClause.addSymbol(colRef);
+        parseColRef(colRef);
+        groupClause.setFollow(colRef.getFollow());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            ColRefVar colRefVar = new ColRefVar();
+            groupClause.addSymbol(colRefVar);
+            parseColRef(colRefVar);
+            groupClause.setFollow(colRefVar.getFollow());
+        }
+    }
+
+    //havingClause                ::= HAVING boolExpr
+    private void parseHavingClause(HavingClauseVar havingClause) throws CloneNotSupportedException {
+        havingClause.addSymbol(sym);
+        havingClause.setStart(sym.getStart());
+        parse(TokenTag.HAVING);
+
+        BoolExprVar boolExpr = new BoolExprVar();
+        havingClause.addSymbol(boolExpr);
+        parseBoolExpr(boolExpr);
+        havingClause.setFollow(boolExpr.getFollow());
+    }
+
+    //colRefList                  ::= colRef (',' colRef)*
+    private void parseColRefList(ColRefListVar colRefList) throws CloneNotSupportedException {
+        ColRefVar colRef = new ColRefVar();
+        colRefList.addSymbol(colRef);
+        parseColRef(colRef);
+        colRefList.setCoords(colRef.getCoords());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            colRefList.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            ColRefVar colRefVar = new ColRefVar();
+            colRefList.addSymbol(colRefVar);
+            parseColRef(colRefVar);
+            colRefList.setFollow(colRefVar.getFollow());
+        }
+    }
+
+    //tableRef                    ::= QualifiedName aliasClause? ( joinType? JOIN tableRef joinQual )?
+    private void parseTableRef(TableRefVar tableRef) throws CloneNotSupportedException {
+        QualifiedNameVar qualifiedName = new QualifiedNameVar();
+        tableRef.addSymbol(qualifiedName);
+        parseQualifiedName(qualifiedName);
+        tableRef.setCoords(qualifiedName.getCoords());
+
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.AS
+                || sym.getTag() == TokenTag.IDENTIFIER) {
+            AliasClauseVar aliasClause = new AliasClauseVar();
+            tableRef.addSymbol(aliasClause);
+            parseAliasClause(aliasClause);
+            tableRef.setFollow(aliasClause.getFollow());
+        }
+
+        if (sym.getTag() == TokenTag.JOIN
+                || sym.getTag() == TokenTag.FULL
+                || sym.getTag() == TokenTag.LEFT
+                || sym.getTag() == TokenTag.RIGHT
+                || sym.getTag() == TokenTag.INNER) {
+
+            if (sym.getTag() == TokenTag.FULL
+                    || sym.getTag() == TokenTag.LEFT
+                    || sym.getTag() == TokenTag.RIGHT
+                    || sym.getTag() == TokenTag.INNER) {
+                JoinTypeVar joinType = new JoinTypeVar();
+                tableRef.addSymbol(joinType);
+                parseJoinType(joinType);
+            }
+
+            tableRef.addSymbol(sym);
+            parse(TokenTag.JOIN);
+
+            TableRefVar tableRefVar = new TableRefVar();
+            tableRef.addSymbol(tableRefVar);
+            parseTableRef(tableRefVar);
+
+            JoinQualVar joinQual = new JoinQualVar();
+            tableRef.addSymbol(joinQual);
+            parseJoinQual(joinQual);
+            tableRef.setFollow(joinQual.getFollow());
+        }
+    }
+
+    //aliasClause                 ::= AS ColId
+    //                            |   ColId
+    private void parseAliasClause(AliasClauseVar aliasClause) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.AS) {
+            aliasClause.addSymbol(sym);
+            aliasClause.setStart(sym.getStart());
+            parse(TokenTag.AS);
+
+            ColIdVar colId = new ColIdVar();
+            aliasClause.addSymbol(colId);
+            parseColId(colId);
+            aliasClause.setFollow(colId.getFollow());
+        //TODO FIRST(ColId)
+        } else if (sym.getTag() == TokenTag.IDENTIFIER) {
+            ColIdVar colId = new ColIdVar();
+            aliasClause.addSymbol(colId);
+            parseColId(colId);
+            aliasClause.setCoords(colId.getCoords());
+        } else {
+            throw new RuntimeException("AS or identifier expected, got " + sym);
+        }
+    }
+
+    //joinType                    ::= FULL OUTER?
+    //                            |   LEFT OUTER?
+    //                            |   RIGHT OUTER?
+    //                            |   INNER
+    private void parseJoinType(JoinTypeVar joinType) throws CloneNotSupportedException {
+        joinType.addSymbol(sym);
+        joinType.setCoords(sym.getCoords());
+        if (sym.getTag() == TokenTag.FULL) {
+            parse(TokenTag.FULL);
+            if (sym.getTag() == TokenTag.OUTER) {
+                joinType.addSymbol(sym);
+                joinType.setFollow(sym.getFollow());
+                parse(TokenTag.OUTER);
+            }
+        } else if (sym.getTag() == TokenTag.LEFT) {
+            parse(TokenTag.LEFT);
+            if (sym.getTag() == TokenTag.OUTER) {
+                joinType.addSymbol(sym);
+                joinType.setFollow(sym.getFollow());
+                parse(TokenTag.OUTER);
+            }
+        } else if (sym.getTag() == TokenTag.RIGHT) {
+            parse(TokenTag.RIGHT);
+            if (sym.getTag() == TokenTag.OUTER) {
+                joinType.addSymbol(sym);
+                joinType.setFollow(sym.getFollow());
+                parse(TokenTag.OUTER);
+            }
+        } else if (sym.getTag() == TokenTag.INNER) {
+            parse(TokenTag.INNER);
+        } else {
+            throw new RuntimeException("FULL, LEFT, RIGHT or INNER expected, got " + sym);
+        }
+    }
+
+    //joinQual                    ::= USING '(' ColId (',' ColId)* ')'
+    //                            |   ON boolExpr
+    private void parseJoinQual(JoinQualVar joinQual) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.USING) {
+            joinQual.addSymbol(sym);
+            joinQual.setStart(sym.getStart());
+            parse(TokenTag.USING);
+
+            joinQual.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            ColIdVar colId = new ColIdVar();
+            joinQual.addSymbol(colId);
+            parseColId(colId);
+
+            while (sym.getTag() == TokenTag.COMMA) {
+                joinQual.addSymbol(sym);
+                parse(TokenTag.COMMA);
+
+                ColIdVar colIdVar = new ColIdVar();
+                joinQual.addSymbol(colIdVar);
+                parseColId(colIdVar);
+            }
+
+            joinQual.addSymbol(sym);
+            joinQual.setFollow(sym.getFollow());
+            parse(TokenTag.RPAREN);
+        } else if (sym.getTag() == TokenTag.ON) {
+            joinQual.addSymbol(sym);
+            joinQual.setStart(sym.getStart());
+            parse(TokenTag.ON);
+
+            BoolExprVar boolExpr = new BoolExprVar();
+            joinQual.addSymbol(boolExpr);
+            parseBoolExpr(boolExpr);
+            joinQual.setFollow(boolExpr.getFollow());
+        } else {
+            throw new RuntimeException("USING or ON expected, got " + sym);
+        }
+    }
+
+    //InsertStmt                  ::= INSERT INTO insertTarget insertRest
+    private void parseInsertStmt(InsertStmtVar insertStmt) throws CloneNotSupportedException {
+        insertStmt.addSymbol(sym);
+        insertStmt.setStart(sym.getStart());
+        parse(TokenTag.INSERT);
+
+        insertStmt.addSymbol(sym);
+        parse(TokenTag.INTO);
+
+        InsertTargetVar insertTarget = new InsertTargetVar();
+        insertStmt.addSymbol(insertTarget);
+        parseInsertTarget(insertTarget);
+
+        InsertRestVar insertRest = new InsertRestVar();
+        insertStmt.addSymbol(insertRest);
+        parseInsertRest(insertRest);
+        insertStmt.setFollow(insertRest.getFollow());
+    }
+
+    //insertTarget                ::= QualifiedName (AS ColId)?
+    private void parseInsertTarget(InsertTargetVar insertTarget) throws CloneNotSupportedException {
+        QualifiedNameVar qualifiedName = new QualifiedNameVar();
+        insertTarget.addSymbol(qualifiedName);
+        parseQualifiedName(qualifiedName);
+        insertTarget.setCoords(qualifiedName.getCoords());
+
+        if (sym.getTag() == TokenTag.AS) {
+            insertTarget.addSymbol(sym);
+            parse(TokenTag.AS);
+
+            ColIdVar colId = new ColIdVar();
+            insertTarget.addSymbol(colId);
+            parseColId(colId);
+            insertTarget.setFollow(colId.getFollow());
+        }
+    }
+
+    //insertRest                  ::= SelectStmt
+    //                            |   '(' insertColumnList ')' InsertSelectOrValues
+    //                            |   DEFAULT VALUES
+    private void parseInsertRest(InsertRestVar insertRest) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.SELECT) {
+            SelectStmtVar selectStmt = new SelectStmtVar();
+            insertRest.addSymbol(selectStmt);
+            parseSelectStmt(selectStmt);
+            insertRest.setCoords(selectStmt.getCoords());
+        } else if (sym.getTag() == TokenTag.LPAREN) {
+            insertRest.addSymbol(sym);
+            insertRest.setStart(sym.getStart());
+            parse(TokenTag.LPAREN);
+
+            InsertColumnListVar insertColumnList = new InsertColumnListVar();
+            insertRest.addSymbol(insertColumnList);
+            parseInsertColumnList(insertColumnList);
+
+            insertRest.addSymbol(sym);
+            parse(TokenTag.RPAREN);
+
+            InsertSelectOrValuesVar insertSelectOrValues = new InsertSelectOrValuesVar();
+            insertRest.addSymbol(insertSelectOrValues);
+            parseInsertSelectOrValues(insertSelectOrValues);
+            insertRest.setFollow(insertSelectOrValues.getFollow());
+        } else if (sym.getTag() == TokenTag.DEFAULT) {
+            insertRest.addSymbol(sym);
+            insertRest.setStart(sym.getStart());
+            parse(TokenTag.DEFAULT);
+
+            insertRest.addSymbol(sym);
+            insertRest.setFollow(sym.getFollow());
+            parse(TokenTag.VALUES);
+        } else {
+            throw new RuntimeException("Select statement, values or default values expected, got " + sym);
+        }
+    }
+
+    //InsertSelectOrValues        ::= SelectStmt
+    //                            |   VALUES '(' insertedValue (',' insertedValue)* ')'
+    private void parseInsertSelectOrValues(InsertSelectOrValuesVar insertSelectOrValues) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.SELECT) {
+            SelectStmtVar selectStmt = new SelectStmtVar();
+            insertSelectOrValues.addSymbol(selectStmt);
+            parseSelectStmt(selectStmt);
+            insertSelectOrValues.setFollow(selectStmt.getFollow());
+        } else if (sym.getTag() == TokenTag.VALUES) {
+            insertSelectOrValues.addSymbol(sym);
+            insertSelectOrValues.setFollow(sym.getFollow());
+            parse(TokenTag.VALUES);
+
+            insertSelectOrValues.addSymbol(sym);
+            parse(TokenTag.LPAREN);
+
+            InsertedValueVar insertedValue = new InsertedValueVar();
+            insertSelectOrValues.addSymbol(insertedValue);
+            parseInsertedValue(insertedValue);
+
+            while (sym.getTag() == TokenTag.COMMA) {
+                insertSelectOrValues.addSymbol(sym);
+                parse(TokenTag.COMMA);
+
+                InsertedValueVar insertedValueVar = new InsertedValueVar();
+                insertSelectOrValues.addSymbol(insertedValueVar);
+                parseInsertedValue(insertedValueVar);
+            }
+
+            insertSelectOrValues.addSymbol(sym);
+            insertSelectOrValues.setFollow(sym.getFollow());
+            parse(TokenTag.RPAREN);
+        } else {
+            throw new RuntimeException("Select statement or VALUES expected, got" + sym);
+        }
+    }
+
+    //insertedValue               ::= DEFAULT
+    //                            |   Expr
+    private void parseInsertedValue(InsertedValueVar insertedValue) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.DEFAULT) {
+            insertedValue.addSymbol(sym);
+            insertedValue.setCoords(sym.getCoords());
+            parse(TokenTag.DEFAULT);
+        } else if (sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.SUB
+                || sym.getTag() == TokenTag.LPAREN
+                || sym.getTag() == TokenTag.NOT
+                || sym.getTag() == TokenTag.BYTE_CONST
+                || sym.getTag() == TokenTag.SHORT_CONST
+                || sym.getTag() == TokenTag.INT_CONST
+                || sym.getTag() == TokenTag.LONG_CONST
+                || sym.getTag() == TokenTag.FLOAT_CONST
+                || sym.getTag() == TokenTag.DOUBLE_CONST
+                || sym.getTag() == TokenTag.TRUE
+                || sym.getTag() == TokenTag.FALSE
+                || sym.getTag() == TokenTag.NULL
+                || sym.getTag() == TokenTag.STRING_CONST
+                || sym.getTag() == TokenTag.DATE_CONST) {
+            ExprVar expr = new ExprVar();
+            insertedValue.addSymbol(expr);
+            parseExpr(expr);
+            insertedValue.setCoords(expr.getCoords());
+        } else {
+            throw new RuntimeException("DEFAULT or expression expected, got " + sym);
+        }
+    }
+
+    //insertColumnList            ::= ColId (',' ColId)*
+    private void parseInsertColumnList(InsertColumnListVar insertColumnList) throws CloneNotSupportedException {
+        ColIdVar colId = new ColIdVar();
+        insertColumnList.addSymbol(colId);
+        parseColId(colId);
+        insertColumnList.setCoords(colId.getCoords());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            insertColumnList.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            ColIdVar colIdVar = new ColIdVar();
+            insertColumnList.addSymbol(colIdVar);
+            parseColId(colIdVar);
+            insertColumnList.setFollow(colIdVar.getFollow());
+        }
+    }
+
+    //UpdateStmt                  ::= UPDATE qualifiedName aliasClause?
+    //                                SET setClauseList (FROM fromList)? whereClause?
+    private void parseUpdateStmt(UpdateStmtVar updateStmt) throws CloneNotSupportedException {
+        updateStmt.addSymbol(sym);
+        updateStmt.setStart(sym.getStart());
+        parse(TokenTag.UPDATE);
+
+        QualifiedNameVar qualifiedName = new QualifiedNameVar();
+        updateStmt.addSymbol(qualifiedName);
+        parseQualifiedName(qualifiedName);
+
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.AS
+                || sym.getTag() == TokenTag.IDENTIFIER) {
+            AliasClauseVar aliasClause = new AliasClauseVar();
+            updateStmt.addSymbol(aliasClause);
+            parseAliasClause(aliasClause);
+        }
+
+        updateStmt.addSymbol(sym);
+        parse(TokenTag.SET);
+
+        SetClauseListVar setClauseList = new SetClauseListVar();
+        updateStmt.addSymbol(setClauseList);
+        parseSetClauseList(setClauseList);
+        updateStmt.setFollow(setClauseList.getFollow());
+
+        if (sym.getTag() == TokenTag.FROM) {
+            updateStmt.addSymbol(sym);
+            parse(TokenTag.FROM);
+
+            FromListVar fromList = new FromListVar();
+            updateStmt.addSymbol(fromList);
+            parseFromList(fromList);
+            updateStmt.setFollow(fromList.getFollow());
+        }
+
+        if (sym.getTag() == TokenTag.WHERE) {
+            WhereClauseVar whereClause = new WhereClauseVar();
+            updateStmt.addSymbol(whereClause);
+            parseWhereClause(whereClause);
+            updateStmt.setFollow(whereClause.getFollow());
+        }
+    }
+
+    //setClauseList               ::= setClause (',' setClause)*
+    private void parseSetClauseList(SetClauseListVar setClauseList) throws CloneNotSupportedException {
+        SetClauseVar setClause = new SetClauseVar();
+        setClauseList.addSymbol(setClause);
+        parseSetClause(setClause);
+        setClauseList.setCoords(setClause.getCoords());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            setClauseList.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            SetClauseVar setClauseVar = new SetClauseVar();
+            setClauseList.addSymbol(setClauseVar);
+            parseSetClause(setClauseVar);
+            setClauseList.setFollow(setClauseVar.getFollow());
+        }
+    }
+
+    //setClause                   ::= QualifiedName '=' setClauseRest
+    //                            |   '(' setTargetList ')' '=' setClauseRest
+    private void parseSetClause(SetClauseVar setClause) throws CloneNotSupportedException {
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.IDENTIFIER) {
+            QualifiedNameVar qualifiedName = new QualifiedNameVar();
+            setClause.addSymbol(qualifiedName);
+            parseQualifiedName(qualifiedName);
+            setClause.setStart(qualifiedName.getStart());
+
+            setClause.addSymbol(sym);
+            parse(TokenTag.EQUAL);
+
+            SetClauseRestVar setClauseRest = new SetClauseRestVar();
+            setClause.addSymbol(setClauseRest);
+            parseSetClauseRest(setClauseRest);
+            setClause.setFollow(setClauseRest.getFollow());
+        } else if (sym.getTag() == TokenTag.LPAREN) {
+            setClause.addSymbol(sym);
+            setClause.setStart(sym.getStart());
+            parse(TokenTag.LPAREN);
+
+            SetTargetListVar setTargetList = new SetTargetListVar();
+            setClause.addSymbol(setTargetList);
+            parseSetTargetList(setTargetList);
+
+            setClause.addSymbol(sym);
+            parse(TokenTag.RPAREN);
+
+            setClause.addSymbol(sym);
+            parse(TokenTag.EQUAL);
+
+            SetClauseRestVar setClauseRest = new SetClauseRestVar();
+            setClause.addSymbol(setClauseRest);
+            parseSetClauseRest(setClauseRest);
+            setClause.setFollow(setClauseRest.getFollow());
+        } else {
+            throw new RuntimeException("Identifier or '(' expected, got " + sym);
+        }
+    }
+
+    //setClauseRest               ::= Expr
+    //                            |   DEFAULT
+    //                            |   SelectStmt  //UNSUPPORTED SelectStmt должен возвращать 1 строку (try_catch)
+    private void parseSetClauseRest(SetClauseRestVar setClauseRest) throws CloneNotSupportedException {
+        if (sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.SUB
+                || sym.getTag() == TokenTag.LPAREN
+                || sym.getTag() == TokenTag.NOT
+                || sym.getTag() == TokenTag.BYTE_CONST
+                || sym.getTag() == TokenTag.SHORT_CONST
+                || sym.getTag() == TokenTag.INT_CONST
+                || sym.getTag() == TokenTag.LONG_CONST
+                || sym.getTag() == TokenTag.FLOAT_CONST
+                || sym.getTag() == TokenTag.DOUBLE_CONST
+                || sym.getTag() == TokenTag.TRUE
+                || sym.getTag() == TokenTag.FALSE
+                || sym.getTag() == TokenTag.NULL
+                || sym.getTag() == TokenTag.STRING_CONST
+                || sym.getTag() == TokenTag.DATE_CONST) {
+            ExprVar expr = new ExprVar();
+            setClauseRest.addSymbol(expr);
+            parseExpr(expr);
+            setClauseRest.setCoords(expr.getCoords());
+        } else if (sym.getTag() == TokenTag.DEFAULT) {
+            setClauseRest.addSymbol(sym);
+            setClauseRest.setCoords(sym.getCoords());
+            parse(TokenTag.DEFAULT);
+        } else if (sym.getTag() == TokenTag.SELECT) {
+            SelectStmtVar selectStmt = new SelectStmtVar();
+            setClauseRest.addSymbol(selectStmt);
+            parseSelectStmt(selectStmt);
+            setClauseRest.setCoords(selectStmt.getCoords());
+        } else {
+            throw new RuntimeException("Expression, DEFAULT or SELECT expected, got " + sym);
+        }
+    }
+
+    //setTargetList              ::= QualifiedName (',' QualifiedName)*
+    private void parseSetTargetList(SetTargetListVar setTargetList) throws CloneNotSupportedException {
+        QualifiedNameVar qualifiedName = new QualifiedNameVar();
+        setTargetList.addSymbol(qualifiedName);
+        parseQualifiedName(qualifiedName);
+        setTargetList.setCoords(qualifiedName.getCoords());
+
+        while (sym.getTag() == TokenTag.COMMA) {
+            setTargetList.addSymbol(sym);
+            parse(TokenTag.COMMA);
+
+            QualifiedNameVar qualifiedNameVar = new QualifiedNameVar();
+            setTargetList.addSymbol(qualifiedNameVar);
+            parseQualifiedName(qualifiedNameVar);
+            setTargetList.setFollow(qualifiedNameVar.getFollow());
+        }
+    }
+
+    //DeleteStmt                  ::= DELETE FROM qualifiedName aliasClause? whereClause?
+    private void parseDeleteStmt(DeleteStmtVar deleteStmt) throws CloneNotSupportedException {
+        deleteStmt.addSymbol(sym);
+        deleteStmt.setStart(sym.getStart());
+        parse(TokenTag.DELETE);
+
+        deleteStmt.addSymbol(sym);
+        parse(TokenTag.FROM);
+
+        QualifiedNameVar qualifiedName = new QualifiedNameVar();
+        deleteStmt.addSymbol(qualifiedName);
+        parseQualifiedName(qualifiedName);
+        deleteStmt.setFollow(qualifiedName.getFollow());
+
+        //TODO FIRST(ColId)
+        if (sym.getTag() == TokenTag.AS
+                || sym.getTag() == TokenTag.IDENTIFIER) {
+            AliasClauseVar aliasClause = new AliasClauseVar();
+            deleteStmt.addSymbol(aliasClause);
+            parseAliasClause(aliasClause);
+            deleteStmt.setFollow(aliasClause.getFollow());
+        }
+
+        if (sym.getTag() == TokenTag.WHERE) {
+            WhereClauseVar whereClause = new WhereClauseVar();
+            deleteStmt.addSymbol(whereClause);
+            parseWhereClause(whereClause);
+            deleteStmt.setFollow(whereClause.getFollow());
+        }
     }
 }

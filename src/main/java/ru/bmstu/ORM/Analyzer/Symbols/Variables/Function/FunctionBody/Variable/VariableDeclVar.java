@@ -1,4 +1,4 @@
-package ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody;
+package ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.FunctionBody.Variable;
 
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Var;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.VarTag;

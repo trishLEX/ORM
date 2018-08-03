@@ -1,4 +1,4 @@
-package ru.bmstu.ORM.Analyzer.Symbols.Variables.Trigger;
+package ru.bmstu.ORM.Analyzer.Symbols.Variables.Table;
 
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Var;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.VarTag;

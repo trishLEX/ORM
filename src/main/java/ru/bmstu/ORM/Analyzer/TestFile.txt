@@ -1,14 +1,21 @@
-CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Shop
-(
-  shopCode INT PRIMARY KEY NOT NULL,
-  shopName VARCHAR(25) UNIQUE NOT NULL,
-  isOutlet BOOLEAN DEFAULT 5 CHECK (isOutlet IS NOT NULL) NOT NULL,
-  address  VARCHAR(25) NOT NULL,
-  city int[][] NOT NULL,
-  isClosed REAL NOT NULL DEFAULT FALSE,
-  opened DATE DEFAULT '02-12-1997',
+CREATE or replace function go() returns int as $$
+begin
+  if (1>2) then
+    RAISE 'bad';
+    --return 1;
 
-  area FLOAT(8) NOT NULL,
-  countOfVisitorsToday INT NOT NULL CHECK (countOfVisitorsToday >= 0),
-  FOREIGN KEY (area) REFERENCES ShopDB.shopschema.Employee (employeeCode)
-);
+  else
+    declare b int;
+    begin
+      SELECT * from shop join shop2 on a = b where c > 100;
+      LOOP
+        SELECT a from b;
+        EXIT WHEN a = 2;
+      END LOOP;
+      b := 10;
+      return b;
+    end;
+  end if;
+  return 1;
+end;
+$$ language plpgsql;
