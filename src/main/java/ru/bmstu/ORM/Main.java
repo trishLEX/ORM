@@ -27,6 +27,7 @@ public class Main {
         while (t.getTag() != TokenTag.END_OF_PROGRAM) {
             tokens.add(t);
             t = scanner.nextToken();
+            System.out.println(t);
         }
 
         for (Token token: tokens)

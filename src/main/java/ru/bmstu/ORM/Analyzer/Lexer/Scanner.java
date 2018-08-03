@@ -1019,6 +1019,21 @@ public class Scanner {
                                     }
                                 }
                             }
+                        } else if (cur.getChar() == 'n') {
+                            value.append("n");
+                            cur.nextCp();
+                            if (cur.getChar() == 'e') {
+                                value.append("e");
+                                cur.nextCp();
+                                if (cur.getChar() == 'r') {
+                                    value.append("r");
+                                    cur.nextCp();
+                                    if (cur.isWhiteSpace() || cur.isSpecial())
+                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.INNER);
+                                    else
+                                        return getIdent(start, value);
+                                }
+                            }
                         } else if (cur.getChar() == 's') {
                             value.append("s");
                             cur.nextCp();
@@ -1732,20 +1747,20 @@ public class Scanner {
                                 }
                             }
                         } else if (cur.getChar() == 't') {
-                            value.append("s");
+                            value.append("t");
                             cur.nextCp();
                             if (cur.getChar() == 'u') {
                                 value.append("u");
                                 cur.nextCp();
                                 if (cur.getChar() == 'r') {
                                     value.append("r");
-                                    cur.getChar();
+                                    cur.nextCp();
                                     if (cur.getChar() == 'n') {
                                         value.append("n");
-                                        cur.getChar();
+                                        cur.nextCp();
                                         if (cur.getChar() == 's') {
                                             value.append("s");
-                                            cur.getChar();
+                                            cur.nextCp();
                                             if (cur.isWhiteSpace() || cur.isSpecial())
                                                 return new KeywordToken(start, (Position) cur.clone(), TokenTag.RETURNS);
                                             else
@@ -2250,7 +2265,7 @@ public class Scanner {
                 case '-':
                     cur.nextCp();
                     if (cur.getChar() == '-') {
-                        while (cur.getChar() != '\n')
+                        while (cur.getChar() != '\n' && cur.getChar() != '\r')
                             cur.nextCp();
 
                         continue;
@@ -2304,6 +2319,11 @@ public class Scanner {
                     return new CommaToken(start, (Position) cur.clone());
                 case '.':
                     cur.nextCp();
+                    if (cur.getChar() == '.') {
+                        cur.nextCp();
+
+                        return new SpecToken(TokenTag.DOUBLE_DOT, start, (Position) cur.clone(), "..");
+                    }
 
                     return new DotToken(start, (Position) cur.clone());
                 case ':':
@@ -2321,7 +2341,16 @@ public class Scanner {
                     cur.nextCp();
 
                     return new SemicolonToken(start, (Position) cur.clone());
+                case '$':
+                    cur.nextCp();
+                    if (cur.getChar() == '$') {
+                        cur.nextCp();
 
+                        return new SpecToken(TokenTag.DOUBLE_DOLLAR, start, (Position) cur.clone(), "$$");
+                    }
+
+                    messages.add(new Message((Position) cur.clone(), "Unrecognizable operator"));
+                    break;
                 default:
                    if (cur.isLetter())
                        return getIdent(start, new StringBuilder());
@@ -2331,12 +2360,15 @@ public class Scanner {
                            return number;
                        else {
                            messages.add(new Message((Position) cur.clone(), "Unrecognizable number"));
+                           cur.nextCp();
                            break;
                        }
                    }
-//                   else {
-//                       messages.add(new Message((Position) cur.clone(), "Unrecognizable token"));
-//                   }
+                   else {
+                       messages.add(new Message((Position) cur.clone(), "Unrecognizable token"));
+                       cur.nextCp();
+                       break;
+                   }
             }
         }
 
