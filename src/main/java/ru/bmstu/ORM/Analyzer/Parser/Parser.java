@@ -1,6 +1,7 @@
 package ru.bmstu.ORM.Analyzer.Parser;
 
 import ru.bmstu.ORM.Analyzer.Lexer.Scanner;
+import ru.bmstu.ORM.Analyzer.Symbols.Symbol;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.*;
@@ -108,6 +109,7 @@ public class Parser {
         QualifiedNameVar qualifiedName = new QualifiedNameVar();
         createTableStmt.addSymbol(qualifiedName);
         parseQualifiedName(qualifiedName);
+        createTableStmt.setTableName(qualifiedName);
 
         createTableStmt.addSymbol(sym);
         parse(TokenTag.LPAREN);
@@ -118,16 +120,22 @@ public class Parser {
             TableElementVar tableElement = new TableElementVar();
             createTableStmt.addSymbol(tableElement);
             parseTableElement(tableElement);
-
-            TableElementVar tableElementVar;
+            if (tableElement.get(0).getTag() == VarTag.COLUMN_DEF)
+                createTableStmt.addColumn((ColumnDefVar) tableElement.get(0));
+            else
+                createTableStmt.addTableConstraint((TableConstraintVar) tableElement.get(0));
 
             while (sym.getTag() == TokenTag.COMMA) {
                 tableElement.addSymbol(sym);
                 parse(TokenTag.COMMA);
 
-                tableElementVar = new TableElementVar();
+                TableElementVar tableElementVar = new TableElementVar();
                 createTableStmt.addSymbol(tableElementVar);
                 parseTableElement(tableElementVar);
+                if (tableElementVar.get(0).getTag() == VarTag.COLUMN_DEF)
+                    createTableStmt.addColumn((ColumnDefVar) tableElementVar.get(0));
+                else
+                    createTableStmt.addTableConstraint((TableConstraintVar) tableElementVar.get(0));
             }
         }
 
@@ -306,6 +314,8 @@ public class Parser {
             simpleTypeName.setCoords(sym.getCoords());
             parse(TokenTag.RECORD);
         } else if (sym.getTag() == TokenTag.BOOLEAN) {
+            simpleTypeName.addSymbol(sym);
+            simpleTypeName.setCoords(sym.getCoords());
             parse(TokenTag.BOOLEAN);
         } else {
             NumericTypeVar numericType = new NumericTypeVar();
@@ -812,6 +822,14 @@ public class Parser {
             expr.addSymbol(sym);
             expr.setCoords(sym.getCoords());
             parse(TokenTag.DATE_CONST);
+        } else if (sym.getTag() == TokenTag.TIME_CONST) {
+            expr.addSymbol(sym);
+            expr.setCoords(sym.getCoords());
+            parse(TokenTag.TIME_CONST);
+        } else if (sym.getTag() == TokenTag.TIMESTAMP_CONST) {
+            expr.addSymbol(sym);
+            expr.setCoords(sym.getCoords());
+            parse(TokenTag.TIMESTAMP_CONST);
         } else {
             throw new RuntimeException("Expression, string or datetime expected, got " + sym);
         }
@@ -1784,7 +1802,8 @@ public class Parser {
         }
     }
 
-    //CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' CreateFunctionRightPart
+    //CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' funcArgsWithDefaultsList? ')' RETURNS
+    //                                CreateFunctionReturnStmt CreateFuncBody
     private void parseCreateFunctionStmt(CreateFunctionStmtVar createFunctionStmt) throws CloneNotSupportedException {
         boolean wasOR = false;
 
@@ -1806,107 +1825,74 @@ public class Parser {
         QualifiedNameVar qualifiedName = new QualifiedNameVar();
         createFunctionStmt.addSymbol(qualifiedName);
         parseQualifiedName(qualifiedName);
+        createFunctionStmt.setFunctionName(qualifiedName);
 
         createFunctionStmt.addSymbol(sym);
         parse(TokenTag.LPAREN);
 
-        CreateFunctionRightPartVar createFunctionRightPart = new CreateFunctionRightPartVar();
-        createFunctionStmt.addSymbol(createFunctionRightPart);
-        parseCreateFunctionRightPart(createFunctionRightPart);
-        createFunctionStmt.setFollow(createFunctionRightPart.getFollow());
-    }
-
-    //CreateFunctionRightPart     ::= ')' RETURNS CreateFunctionAllReturnStmt
-    //                            |    funcArgsWithDefaultsList ')' RETURNS CreateFunctionNoTrReturnStmt
-    private void parseCreateFunctionRightPart(CreateFunctionRightPartVar createFunctionRightPart) throws CloneNotSupportedException {
-        if (sym.getTag() == TokenTag.RPAREN) {
-            createFunctionRightPart.addSymbol(sym);
-            createFunctionRightPart.setStart(sym.getStart());
-            parse(TokenTag.RPAREN);
-
-            createFunctionRightPart.addSymbol(sym);
-            parse(TokenTag.RETURNS);
-
-            CreateFunctionAllReturnStmtVar createFunctionAllReturnStmt = new CreateFunctionAllReturnStmtVar();
-            createFunctionRightPart.addSymbol(createFunctionAllReturnStmt);
-            parseCreateFunctionAllReturnStmt(createFunctionAllReturnStmt);
-            createFunctionRightPart.setFollow(createFunctionAllReturnStmt.getFollow());
-        } else {
+        if (sym.getTag() == TokenTag.IN
+                || sym.getTag() == TokenTag.INOUT
+                || sym.getTag() == TokenTag.OUT
+                || sym.getTag() == TokenTag.IDENTIFIER
+                || sym.getTag() == TokenTag.CHARACTER
+                || sym.getTag() == TokenTag.CHAR
+                || sym.getTag() == TokenTag.VARCHAR
+                || sym.getTag() == TokenTag.DATE
+                || sym.getTag() == TokenTag.TIME
+                || sym.getTag() == TokenTag.TIMESTAMP
+                || sym.getTag() == TokenTag.RECORD
+                || sym.getTag() == TokenTag.INT
+                || sym.getTag() == TokenTag.INTEGER
+                || sym.getTag() == TokenTag.SMALLINT
+                || sym.getTag() == TokenTag.BIGINT
+                || sym.getTag() == TokenTag.REAL
+                || sym.getTag() == TokenTag.FLOAT
+                || sym.getTag() == TokenTag.DOUBLE
+                || sym.getTag() == TokenTag.DECIMAL
+                || sym.getTag() == TokenTag.NUMERIC
+                || sym.getTag() == TokenTag.BOOLEAN) {
             FuncArgsWithDefaultsListVar funcArgsWithDefaultsList = new FuncArgsWithDefaultsListVar();
-            createFunctionRightPart.addSymbol(funcArgsWithDefaultsList);
+            createFunctionStmt.addSymbol(funcArgsWithDefaultsList);
             parseFuncArgsWithDefaultsList(funcArgsWithDefaultsList);
-            createFunctionRightPart.setStart(funcArgsWithDefaultsList.getStart());
-
-            createFunctionRightPart.addSymbol(sym);
-            parse(TokenTag.RPAREN);
-
-            createFunctionRightPart.addSymbol(sym);
-            parse(TokenTag.RETURNS);
-
-            CreateFunctionNoTrReturnStmtVar createFunctionNoTrReturnStmt = new CreateFunctionNoTrReturnStmtVar();
-            createFunctionRightPart.addSymbol(createFunctionNoTrReturnStmt);
-            parseCreateFunctionNoTrStmt(createFunctionNoTrReturnStmt);
-            createFunctionRightPart.setFollow(createFunctionNoTrReturnStmt.getFollow());
+            for (Symbol s: funcArgsWithDefaultsList.getSymbols()) {
+                if (s.getTag() == VarTag.FUNC_ARG_WITH_DEFAULT)
+                    createFunctionStmt.addParameter((FuncArgWithDefaultVar) s);
+            }
         }
-    }
 
-    //CreateFunctionAllReturnStmt ::= Typename CreateFuncBody
-    //                            |   TABLE '(' TableFuncColumnList ')' CreateFuncBody
-    //                            |   TRIGGER CreateFuncBody //В семантическом анализе, если имя NEW.smth валидировать это
-    private void parseCreateFunctionAllReturnStmt(CreateFunctionAllReturnStmtVar createFunctionAllReturnStmt) throws CloneNotSupportedException {
-        if (sym.getTag() == TokenTag.CHARACTER
-                || sym.getTag() == TokenTag.CHAR
-                || sym.getTag() == TokenTag.VARCHAR
-                || sym.getTag() == TokenTag.DATE
-                || sym.getTag() == TokenTag.TIME
-                || sym.getTag() == TokenTag.TIMESTAMP
-                || sym.getTag() == TokenTag.RECORD
-                || sym.getTag() == TokenTag.INT
-                || sym.getTag() == TokenTag.INTEGER
-                || sym.getTag() == TokenTag.SMALLINT
-                || sym.getTag() == TokenTag.BIGINT
-                || sym.getTag() == TokenTag.REAL
-                || sym.getTag() == TokenTag.FLOAT
-                || sym.getTag() == TokenTag.DOUBLE
-                || sym.getTag() == TokenTag.DECIMAL
-                || sym.getTag() == TokenTag.NUMERIC
-                || sym.getTag() == TokenTag.BOOLEAN) {
-            TypenameVar typename = new TypenameVar();
-            createFunctionAllReturnStmt.addSymbol(typename);
-            parseTypename(typename);
-            createFunctionAllReturnStmt.setStart(typename.getStart());
+        createFunctionStmt.addSymbol(sym);
+        parse(TokenTag.RPAREN);
 
-            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
-            createFunctionAllReturnStmt.addSymbol(createFuncBody);
-            parseCreateFuncBody(createFuncBody);
-            createFunctionAllReturnStmt.setFollow(createFuncBody.getFollow());
-        } else if (sym.getTag() == TokenTag.TABLE) {
-            createFunctionAllReturnStmt.addSymbol(sym);
-            createFunctionAllReturnStmt.setStart(sym.getStart());
-            parse(TokenTag.TABLE);
+        createFunctionStmt.addSymbol(sym);
+        parse(TokenTag.RETURNS);
 
-            createFunctionAllReturnStmt.addSymbol(sym);
-            parse(TokenTag.LPAREN);
+        CreateFunctionReturnStmtVar createFunctionReturnStmt = new CreateFunctionReturnStmtVar();
+        createFunctionStmt.addSymbol(createFunctionReturnStmt);
+        parseCreateFunctionReturnStmt(createFunctionReturnStmt);
+        if (createFunctionReturnStmt.get(0).getTag() == VarTag.TYPENAME)
+            createFunctionStmt.setReturnsTable(false);
+        else
+            createFunctionStmt.setReturnsTable(true);
 
-            TableFuncColumnListVar tableFuncColumnList = new TableFuncColumnListVar();
-            createFunctionAllReturnStmt.addSymbol(tableFuncColumnList);
-            parseTableFuncColumnList(tableFuncColumnList);
-
-            createFunctionAllReturnStmt.addSymbol(sym);
-            parse(TokenTag.RPAREN);
-
-            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
-            createFunctionAllReturnStmt.addSymbol(createFuncBody);
-            parseCreateFuncBody(createFuncBody);
-            createFunctionAllReturnStmt.setFollow(createFuncBody.getFollow());
+        if (createFunctionStmt.isReturnsTable()) {
+            for (Symbol s: ((TableFuncColumnListVar) createFunctionReturnStmt.get(2)).getSymbols()) {
+                if (s.getTag() == VarTag.TYPENAME) {
+                    createFunctionStmt.addReturnedType((TypenameVar) s);
+                }
+            }
         } else {
-            throw new RuntimeException("Typename or TABLE expected, got " + sym);
+            createFunctionStmt.addReturnedType((TypenameVar) createFunctionReturnStmt.get(0));
         }
+
+        CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
+        createFunctionStmt.addSymbol(createFuncBody);
+        parseCreateFuncBody(createFuncBody);
+        createFunctionStmt.setFollow(createFuncBody.getFollow());
     }
 
-    //CreateFunctionNoTrReturnStmt::= Typename CreateFuncBody
-    //                            |   TABLE '(' TableFuncColumnList ')' CreateFuncBody
-    private void parseCreateFunctionNoTrStmt(CreateFunctionNoTrReturnStmtVar createFunctionNoTrReturnStmt) throws CloneNotSupportedException {
+    //CreateFunctionAllReturnStmt ::= Typename
+    //                            |   TABLE '(' TableFuncColumnList ')'
+    private void parseCreateFunctionReturnStmt(CreateFunctionReturnStmtVar createFunctionReturnStmt) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.CHARACTER
                 || sym.getTag() == TokenTag.CHAR
                 || sym.getTag() == TokenTag.VARCHAR
@@ -1925,33 +1911,24 @@ public class Parser {
                 || sym.getTag() == TokenTag.NUMERIC
                 || sym.getTag() == TokenTag.BOOLEAN) {
             TypenameVar typename = new TypenameVar();
-            createFunctionNoTrReturnStmt.addSymbol(typename);
+            createFunctionReturnStmt.addSymbol(typename);
             parseTypename(typename);
-            createFunctionNoTrReturnStmt.setStart(typename.getStart());
-
-            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
-            createFunctionNoTrReturnStmt.addSymbol(createFuncBody);
-            parseCreateFuncBody(createFuncBody);
-            createFunctionNoTrReturnStmt.setFollow(createFuncBody.getFollow());
+            createFunctionReturnStmt.setCoords(typename.getCoords());
         } else if (sym.getTag() == TokenTag.TABLE) {
-            createFunctionNoTrReturnStmt.addSymbol(sym);
-            createFunctionNoTrReturnStmt.setStart(sym.getStart());
+            createFunctionReturnStmt.addSymbol(sym);
+            createFunctionReturnStmt.setStart(sym.getStart());
             parse(TokenTag.TABLE);
 
-            createFunctionNoTrReturnStmt.addSymbol(sym);
+            createFunctionReturnStmt.addSymbol(sym);
             parse(TokenTag.LPAREN);
 
             TableFuncColumnListVar tableFuncColumnList = new TableFuncColumnListVar();
-            createFunctionNoTrReturnStmt.addSymbol(tableFuncColumnList);
+            createFunctionReturnStmt.addSymbol(tableFuncColumnList);
             parseTableFuncColumnList(tableFuncColumnList);
 
-            createFunctionNoTrReturnStmt.addSymbol(sym);
+            createFunctionReturnStmt.addSymbol(sym);
+            createFunctionReturnStmt.setFollow(sym.getFollow());
             parse(TokenTag.RPAREN);
-
-            CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
-            createFunctionNoTrReturnStmt.addSymbol(createFuncBody);
-            parseCreateFuncBody(createFuncBody);
-            createFunctionNoTrReturnStmt.setFollow(createFuncBody.getFollow());
         } else {
             throw new RuntimeException("Typename or TABLE expected, got " + sym);
         }
@@ -2017,11 +1994,11 @@ public class Parser {
         }
     }
 
-    //funcArg                     ::= argClass IDENT? Typename
+    //funcArg                     ::= argClass IDENT? Typename TODO support this
     //                            |   IDENT argClass? Typename
-    //                            |   Typename
+    //                            |   Typename                 TODO support this
     private void parseFuncArg(FuncArgVar funcArg) throws CloneNotSupportedException {
-        if (sym.getTag() == TokenTag.IN
+        /*if (sym.getTag() == TokenTag.IN
                 || sym.getTag() == TokenTag.OUT
                 || sym.getTag() == TokenTag.INOUT) {
             ArgClassVar argClass = new ArgClassVar();
@@ -2038,7 +2015,7 @@ public class Parser {
             funcArg.addSymbol(typename);
             parseTypename(typename);
             funcArg.setFollow(typename.getFollow());
-        } else if (sym.getTag() == TokenTag.IDENTIFIER) {
+        } else*/ if (sym.getTag() == TokenTag.IDENTIFIER) {
             funcArg.addSymbol(sym);
             funcArg.setStart(sym.getStart());
             parse(TokenTag.IDENTIFIER);
@@ -2055,7 +2032,7 @@ public class Parser {
             funcArg.addSymbol(typename);
             parseTypename(typename);
             funcArg.setFollow(typename.getFollow());
-        } else if (sym.getTag() == TokenTag.CHARACTER
+        } /*else if (sym.getTag() == TokenTag.CHARACTER
                 || sym.getTag() == TokenTag.CHAR
                 || sym.getTag() == TokenTag.VARCHAR
                 || sym.getTag() == TokenTag.DATE
@@ -2076,7 +2053,7 @@ public class Parser {
             funcArg.addSymbol(typename);
             parseTypename(typename);
             funcArg.setCoords(typename.getCoords());
-        } else {
+        }*/ else {
             throw new RuntimeException("IN, OUT, identifier or typename expected, got " + sym);
         }
     }
@@ -2243,12 +2220,11 @@ public class Parser {
         } while (sym.getTag() == TokenTag.IDENTIFIER);
     }
 
-    //variableDecl                ::= QualifiedName Typename (':=' ConstExpr)? ';'
+    //variableDecl                ::= IDENT Typename (':=' ConstExpr)? ';'
     private void parseVariableDecl(VariableDeclVar variableDecl) throws CloneNotSupportedException {
-        QualifiedNameVar qualifiedName = new QualifiedNameVar();
-        variableDecl.addSymbol(qualifiedName);
-        parseQualifiedName(qualifiedName);
-        variableDecl.setStart(qualifiedName.getStart());
+        variableDecl.addSymbol(sym);
+        variableDecl.setStart(sym.getStart());
+        parse(TokenTag.IDENTIFIER);
 
         TypenameVar typename = new TypenameVar();
         variableDecl.addSymbol(typename);
@@ -2364,10 +2340,9 @@ public class Parser {
 
     //variableAssign              ::= QualifiedName ':=' Expr ';'
     private void parseVariableAssign(VariableAssignVar variableAssign) throws CloneNotSupportedException {
-        QualifiedNameVar qualifiedName = new QualifiedNameVar();
-        variableAssign.addSymbol(qualifiedName);
-        parseQualifiedName(qualifiedName);
-        variableAssign.setStart(qualifiedName.getStart());
+        variableAssign.addSymbol(sym);
+        variableAssign.setStart(sym.getStart());
+        parse(TokenTag.IDENTIFIER);
 
         variableAssign.addSymbol(sym);
         parse(TokenTag.ASSIGN);

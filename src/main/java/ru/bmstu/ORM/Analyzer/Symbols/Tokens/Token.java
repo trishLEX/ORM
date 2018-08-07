@@ -40,6 +40,6 @@ public abstract class Token<T> extends Symbol {
 
     @Override
     public int hashCode() {
-        return getTag().hashCode() + value.hashCode();
+        return getTag().hashCode() * 31 + value.hashCode();
     }
 }

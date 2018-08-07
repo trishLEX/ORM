@@ -5,6 +5,6 @@ import ru.bmstu.ORM.Analyzer.Symbols.Variables.VarTag;
 
 public class DateTimeTypeVar extends Var {
     public DateTimeTypeVar() {
-        super(VarTag.DATETIME);
+        super(VarTag.DATETIME_TYPE);
     }
 }

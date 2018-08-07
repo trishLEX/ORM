@@ -3,14 +3,13 @@ S                    ::= (CREATE CreateTableFunctionTrigger)*
 
 CreateTableFunctionTrigger ::= (CreateTableStmt ';')
                            |   (CreateFunctionStmt ';')
-                           //|   (CreateTriggerStmt ';')
 
 CreateTableStmt      ::= TABLE (IF NOT EXISTS)?
                          QualifiedName '(' (TableElement (',' TableElement)*)? ')'
 
 QualifiedName        ::= ColId ('.'ColId)*
 
-ColId                ::= IDENT //UNSUPPORTED TILL | UnreservedKeyword | ColNameKeyword
+ColId                ::= IDENT
 
 TableElement         ::= ColumnDef | TableConstraint
 
@@ -64,7 +63,7 @@ ColConstraintElem    ::= NOT NULL
                      |   PRIMARY KEY
                      |   CHECK '(' BoolExpr ')'    //HERE NEED TO CHECK APPLICATION OF OPs
                      |   DEFAULT ConstExpr         //ARITHMETIC, BOOL ONLY EXPR OR VALUE TILL
-                     |   REFERENCES QualifiedName ( '(' ColId (',' ColId)* ')' )? KeyActions?
+                     |   REFERENCES QualifiedName ( '(' ColId (',' ColId)* ')' )? KeyActions? //VALIDATE
 
 KeyActions           ::= ON UPDATE KeyAction (ON DELETE KeyAction)?
                      |   ON DELETE KeyAction (ON UPDATE KeyAction)?
@@ -150,14 +149,15 @@ CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' funcArg
                             |   (OR REPLACE)? FUNCTION QualifiedName '(' ')'
                                 RETURNS CreateFunctionReturnStmt
 
-CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' CreateFunctionRightPart
+CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' funcArgsWithDefaultsList? ')' RETURNS
+                                CreateFunctionReturnStmt CreateFuncBody
 
 CreateFunctionRightPart     ::= ')' RETURNS CreateFunctionAllReturnStmt
                             |    funcArgsWithDefaultsList ')' RETURNS CreateFunctionNoTrReturnStmt
 
-CreateFunctionAllReturnStmt ::= Typename CreateFuncBody
-                            |   TABLE '(' TableFuncColumnList ')' CreateFuncBody
-                            |   TRIGGER CreateFuncBody //В семантическом анализе, если имя NEW.smth валидировать это
+CreateFunctionReturnStmt    ::= Typename
+                            |   TABLE '(' TableFuncColumnList ')'
+                            //|   TRIGGER //В семантическом анализе, если имя NEW.smth валидировать это
 
 CreateFunctionNoTrReturnStmt::= Typename CreateFuncBody
                             |   TABLE '(' TableFuncColumnList ')' CreateFuncBody
@@ -169,9 +169,9 @@ funcArgWithDefault          ::= funcArg funcArgDefault?
 funcArgDefault              ::= DEFAULT constExpr
                             |   '=' constExpr
 
-funcArg                     ::= argClass IDENT? Typename
+funcArg                     ::= //argClass IDENT? Typename
                             |   IDENT argClass? Typename
-                            |   Typename
+                            //|   Typename
 
 argClass                    ::= IN OUT?
                             |   OUT
@@ -186,7 +186,7 @@ funcAs                      ::= declareBlock? BEGIN funcBody* END ';'
 
 declareBlock                ::= DECLARE variableDecl+
 
-variableDecl                ::= QualifiedName Typename (':=' ConstExpr)? ';'
+variableDecl                ::= IDENT Typename (':=' ConstExpr)? ';'
 
 funcBody                    ::= funcAs
                             |   variableAssign
@@ -200,7 +200,7 @@ funcBody                    ::= funcAs
                             |   DeleteStmt ';'
                             |   SelectStmt ';'
 
-variableAssign              ::= QualifiedName ':=' Expr ';'
+variableAssign              ::= IDENT ':=' Expr ';'
 
 raiseStmt                   ::= RAISE raiseLevel CharacterValue ';'
 

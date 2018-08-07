@@ -153,5 +153,5 @@ public enum TokenTag implements SymbolType {
     DATE_CONST,
     TIME_CONST,
     DOUBLE_DOLLAR,
-    DOUBLE_DOT,
+    DOUBLE_DOT;
 }
