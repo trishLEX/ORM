@@ -2,6 +2,7 @@ package ru.bmstu.ORM.Analyzer.Symbols.Variables.Common;
 
 import ru.bmstu.ORM.Analyzer.Symbols.Symbol;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.IdentToken;
+import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Var;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.VarTag;
 
@@ -24,16 +25,16 @@ public class QualifiedNameVar extends Var {
         return qualifiedName;
     }
 
-    public ColIdVar getLastColId() {
-        return (ColIdVar) get(getSymbols().size() - 1);
+    public IdentToken getLastColId() {
+        return (IdentToken) get(getSymbols().size() - 1);
     }
 
     @Override
     public String toString() {
         StringBuilder name = new StringBuilder();
         for (Symbol s: getSymbols()) {
-            if (s.getTag() == VarTag.COL_ID) {
-                name.append(((IdentToken) ((ColIdVar)s).get(0)).getValue());
+            if (s.getTag() == TokenTag.IDENTIFIER) {
+                name.append(((IdentToken) s).getValue());
             } else {
                 name.append('.');
             }

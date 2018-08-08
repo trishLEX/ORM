@@ -52,27 +52,27 @@ public class Main {
 //        test();
     }
 
-    private static void test() {
-        ColIdVar col11 = new ColIdVar();
-        col11.addSymbol(new IdentToken(Position.dummyPosition(), Position.dummyPosition(), "table"));
-        ColIdVar col12 = new ColIdVar();
-        col12.addSymbol(new IdentToken(Position.dummyPosition(), Position.dummyPosition(), "schema"));
-        DotToken dot1 = new DotToken(Position.dummyPosition(), Position.dummyPosition());
-        QualifiedNameVar qualifiedName1 = new QualifiedNameVar();
-        qualifiedName1.addSymbol(col11);
-        qualifiedName1.addSymbol(dot1);
-        qualifiedName1.addSymbol(col12);
-
-        ColIdVar col21 = new ColIdVar();
-        col21.addSymbol(new IdentToken(Position.dummyPosition(), Position.dummyPosition(), "table"));
-        ColIdVar col22 = new ColIdVar();
-        col22.addSymbol(new IdentToken(Position.dummyPosition(), Position.dummyPosition(), "schema"));
-        DotToken dot2 = new DotToken(Position.dummyPosition(), Position.dummyPosition());
-        QualifiedNameVar qualifiedName2 = new QualifiedNameVar();
-        qualifiedName2.addSymbol(col21);
-        qualifiedName2.addSymbol(dot2);
-        qualifiedName2.addSymbol(col22);
-
-        System.out.println(qualifiedName1.equals(qualifiedName2));
-    }
+//    private static void test() {
+//        ColIdVar col11 = new ColIdVar();
+//        col11.addSymbol(new IdentToken(Position.dummyPosition(), Position.dummyPosition(), "table"));
+//        ColIdVar col12 = new ColIdVar();
+//        col12.addSymbol(new IdentToken(Position.dummyPosition(), Position.dummyPosition(), "schema"));
+//        DotToken dot1 = new DotToken(Position.dummyPosition(), Position.dummyPosition());
+//        QualifiedNameVar qualifiedName1 = new QualifiedNameVar();
+//        qualifiedName1.addSymbol(col11);
+//        qualifiedName1.addSymbol(dot1);
+//        qualifiedName1.addSymbol(col12);
+//
+//        ColIdVar col21 = new ColIdVar();
+//        col21.addSymbol(new IdentToken(Position.dummyPosition(), Position.dummyPosition(), "table"));
+//        ColIdVar col22 = new ColIdVar();
+//        col22.addSymbol(new IdentToken(Position.dummyPosition(), Position.dummyPosition(), "schema"));
+//        DotToken dot2 = new DotToken(Position.dummyPosition(), Position.dummyPosition());
+//        QualifiedNameVar qualifiedName2 = new QualifiedNameVar();
+//        qualifiedName2.addSymbol(col21);
+//        qualifiedName2.addSymbol(dot2);
+//        qualifiedName2.addSymbol(col22);
+//
+//        System.out.println(qualifiedName1.equals(qualifiedName2));
+//    }
 }

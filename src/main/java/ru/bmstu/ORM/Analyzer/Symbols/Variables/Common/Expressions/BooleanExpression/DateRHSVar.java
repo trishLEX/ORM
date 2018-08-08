@@ -3,8 +3,8 @@ package ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.BooleanExpres
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Var;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.VarTag;
 
-public class BoolConstExprFactorVar extends Var {
-    public BoolConstExprFactorVar() {
-        super(VarTag.BOOL_CONST_EXPR_FACTOR);
+public class DateRHSVar extends Var {
+    public DateRHSVar() {
+        super(VarTag.DATE_RHS);
     }
 }

@@ -1,8 +1,8 @@
 package ru.bmstu.ORM.Analyzer.Symbols.Variables.Table;
 
 import ru.bmstu.ORM.Analyzer.Semantics.Types;
+import ru.bmstu.ORM.Analyzer.Symbols.Tokens.IdentToken;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.ColIdVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.QualifiedNameVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.SimpleTypeNameVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.TypenameVar;
@@ -15,7 +15,7 @@ import java.util.HashMap;
 
 public class CreateTableStmtVar extends Var {
     private QualifiedNameVar tableName;
-    private HashMap<ColIdVar, ColumnDefVar> columns;
+    private HashMap<IdentToken, ColumnDefVar> columns;
     private ArrayList<TableConstraintVar> tableConstraints;
 
     public CreateTableStmtVar() {
@@ -33,10 +33,10 @@ public class CreateTableStmtVar extends Var {
     }
 
     public void addColumn(ColumnDefVar columnDef) {
-        columns.put((ColIdVar) columnDef.get(0), columnDef);
+        columns.put((IdentToken) columnDef.get(0), columnDef);
     }
 
-    public Types getType(ColIdVar colId) {
+    public Types getType(IdentToken colId) {
         ColumnDefVar column = columns.get(colId);
         TypenameVar typename = (TypenameVar) column.get(1);
         if (typename.getSymbols().size() > 1) {
@@ -79,7 +79,7 @@ public class CreateTableStmtVar extends Var {
         return columns.values();
     }
 
-    public boolean containsColumn(ColIdVar colId) {
+    public boolean containsColumn(IdentToken colId) {
         return columns.containsKey(colId);
     }
 

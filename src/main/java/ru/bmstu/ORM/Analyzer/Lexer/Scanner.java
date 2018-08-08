@@ -2333,6 +2333,10 @@ public class Scanner {
                         cur.nextCp();
 
                         return new AssignOpToken(start, (Position) cur.clone());
+                    } else if (cur.getChar() == ':') {
+                        cur.nextCp();
+
+                        return new SpecToken(TokenTag.DOUBLE_COLON, start, (Position) cur.clone(), "::");
                     }
 
                     messages.add(new Message((Position) cur.clone(), "Unrecognizable operator"));

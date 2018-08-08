@@ -22,8 +22,12 @@ public abstract class Var extends Symbol {
         return symbols;
     }
 
-    public Symbol get(int i ) {
+    public Symbol get(int i) {
         return symbols.get(i);
+    }
+
+    public int size() {
+        return symbols.size();
     }
 
     @Override
