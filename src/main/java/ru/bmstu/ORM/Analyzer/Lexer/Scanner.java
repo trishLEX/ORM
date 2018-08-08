@@ -2254,7 +2254,7 @@ public class Scanner {
                     if (cur.getChar() == '=') {
                         cur.nextCp();
                     } else {
-                        messages.add(new Message((Position) cur.clone(), "'=' expected"));
+                        error("'=' expected");
                     }
 
                     return new ComparisonToken(TokenTag.NOTEQUAL, start, (Position) cur.clone(), "!=");
@@ -2285,7 +2285,7 @@ public class Scanner {
                     cur.nextCp();
                     while (cur.getChar() != '\'') {
                         if (cur.getChar() == '\n' || cur.getChar() == '\r')
-                            messages.add(new Message((Position) cur.clone(), "String must be in one line"));
+                            error("String must be in one line");
                         else
                             value.append(cur.getChar());
 
@@ -2339,7 +2339,7 @@ public class Scanner {
                         return new SpecToken(TokenTag.DOUBLE_COLON, start, (Position) cur.clone(), "::");
                     }
 
-                    messages.add(new Message((Position) cur.clone(), "Unrecognizable operator"));
+                    error("Unrecognizable operator");
                     break;
                 case ';':
                     cur.nextCp();
@@ -2353,7 +2353,7 @@ public class Scanner {
                         return new SpecToken(TokenTag.DOUBLE_DOLLAR, start, (Position) cur.clone(), "$$");
                     }
 
-                    messages.add(new Message((Position) cur.clone(), "Unrecognizable operator"));
+                    error("Unrecognizable operator");
                     break;
                 default:
                    if (cur.isLetter())
@@ -2363,13 +2363,13 @@ public class Scanner {
                        if (number != null)
                            return number;
                        else {
-                           messages.add(new Message((Position) cur.clone(), "Unrecognizable number"));
+                           error("Unrecognizable number");
                            cur.nextCp();
                            break;
                        }
                    }
                    else {
-                       messages.add(new Message((Position) cur.clone(), "Unrecognizable token"));
+                       error("Unrecognizable token");
                        cur.nextCp();
                        break;
                    }
@@ -2394,7 +2394,7 @@ public class Scanner {
         while (cur.isDigit() || cur.getChar() == '.') {
             if (cur.getChar() == '.') {
                 if (wasComma)
-                    messages.add(new Message((Position) cur.clone(), "Two dots in float number"));
+                    error("Two dots in float number");
                 else
                     wasComma = true;
             }
@@ -2412,7 +2412,7 @@ public class Scanner {
                     Double number = Double.parseDouble(value.toString());
                     return new NumberToken(TokenTag.DOUBLE_CONST, start, (Position) cur.clone(), number);
                 } catch (NumberFormatException ed) {
-                    messages.add(new Message((Position) cur.clone(), "Wrong number"));
+                    error("Wrong number");
                     return null;
                 }
             }
@@ -2433,12 +2433,16 @@ public class Scanner {
                             Long number = Long.parseLong(value.toString());
                             return new NumberToken(TokenTag.LONG_CONST, start, (Position) cur.clone(), number);
                         } catch (NumberFormatException el) {
-                            messages.add(new Message((Position) cur.clone(), "Wrong number"));
+                            error("Wrong number");
                             return null;
                         }
                     }
                 }
             }
         }
+    }
+
+    private void error(String msg) throws CloneNotSupportedException {
+        messages.add(new Message((Position) cur.clone(), msg));
     }
 }
