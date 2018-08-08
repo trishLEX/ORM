@@ -126,6 +126,8 @@ CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' funcArg
 CreateFunctionReturnStmt    ::= Typename
                             |   TABLE '(' TableFuncColumnList ')'
 
+TableFuncColumnList         ::= IDENT Typename (',' IDENT Typename)*
+
 funcArgsWithDefaultsList    ::= funcArgWithDefault (',' funcArgWithDefault)*
 
 funcArgWithDefault          ::= funcArg funcArgDefault?
@@ -140,8 +142,6 @@ funcArg                     ::= argClass IDENT? Typename
 argClass                    ::= IN OUT?
                             |   OUT
                             |   INOUT
-
-TableFuncColumnList         ::= IDENT Typename (',' IDENT Typename)*
 
 CreateFuncBody              ::= AS '$$' /*skip*/ '$$' LANGUAGE plpgsql
                             |   LANGUAGE plpgsql AS '$$' /*skip*/ '$$'

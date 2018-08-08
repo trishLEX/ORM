@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Shop
   address  VARCHAR(25) NOT NULL,
   city int[][] NOT NULL,
   isClosed REAL NOT NULL DEFAULT 1.3,
-  opened DATE DEFAULT '02-12-1997',
+  opened DATE DEFAULT '02-12-1997'::DATE,
 
   area FLOAT(8) NOT NULL,
   countOfVisitorsToday INT NOT NULL CHECK (countOfVisitorsToday >= 0),

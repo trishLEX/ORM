@@ -12,10 +12,12 @@ import java.util.Date;
 public class Scanner {
     private Position cur;
     private ArrayList<Message> messages;
+    private boolean isSearch;
 
     public Scanner(String program) {
         this.cur = new Position(program);
         this.messages = new ArrayList<>();
+        this.isSearch = false;
     }
 
     public ArrayList<Message> getMessages() {
@@ -2443,6 +2445,20 @@ public class Scanner {
     }
 
     private void error(String msg) throws CloneNotSupportedException {
-        messages.add(new Message((Position) cur.clone(), msg));
+        if (!isSearch)
+            messages.add(new Message((Position) cur.clone(), msg));
+    }
+
+    public Token searchToken(String sym) throws CloneNotSupportedException {
+        isSearch = true;
+        Token token = nextToken();
+        while (!token.getStringValue().equals(sym)) {
+            token = nextToken();
+            if (token.getTag() == TokenTag.END_OF_PROGRAM)
+                throw new RuntimeException("No token " + sym + " was found");
+        }
+
+        isSearch = false;
+        return token;
     }
 }
