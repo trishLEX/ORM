@@ -1,6 +1,6 @@
 package ru.bmstu.ORM.Analyzer.Symbols.Variables.Table;
 
-import ru.bmstu.ORM.Analyzer.Semantics.Types;
+import ru.bmstu.ORM.Analyzer.Symbols.SymbolType;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.IdentToken;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.QualifiedNameVar;
@@ -36,42 +36,14 @@ public class CreateTableStmtVar extends Var {
         columns.put((IdentToken) columnDef.get(0), columnDef);
     }
 
-    public Types getType(IdentToken colId) {
-        ColumnDefVar column = columns.get(colId);
-        TypenameVar typename = (TypenameVar) column.get(1);
-        if (typename.getSymbols().size() > 1) {
-            return Types.ARRAY;
+    public SymbolType getTypeOfColumn(IdentToken colId) {
+        TypenameVar typename = (TypenameVar) columns.get(colId).get(1);
+
+        if (typename.size() == 2) {
+            return TokenTag.ARRAY;
         } else {
             SimpleTypeNameVar simpleTypeName = (SimpleTypeNameVar) typename.get(0);
-            if (simpleTypeName.get(0).getTag() == TokenTag.RECORD)
-                return Types.RECORD;
-            else if (simpleTypeName.get(0).getTag() == TokenTag.BOOLEAN)
-                return Types.BOOLEAN;
-            else if (simpleTypeName.get(0).getTag() == VarTag.NUMERIC_TYPE) {
-                if (simpleTypeName.get(0).getTag() == TokenTag.INT
-                        || simpleTypeName.get(0).getTag() == TokenTag.INTEGER)
-                    return Types.INT;
-                else if (simpleTypeName.get(0).getTag() == TokenTag.SMALLINT)
-                    return Types.SHORT;
-                else if (simpleTypeName.get(0).getTag() == TokenTag.BIGINT)
-                    return Types.LONG;
-                else if (simpleTypeName.get(0).getTag() == TokenTag.REAL
-                        || simpleTypeName.get(0).getTag() == TokenTag.FLOAT)
-                    return Types.FLOAT;
-                else if (simpleTypeName.get(0).getTag() == TokenTag.DOUBLE)
-                    return Types.DOUBLE;
-                else
-                    return Types.INT;
-            } else if (simpleTypeName.get(0).getTag() == VarTag.CHARACTER_TYPE)
-                return Types.STRING;
-            else {
-                if (simpleTypeName.get(0).getTag() == TokenTag.TIMESTAMP)
-                    return Types.TIMESTAMP;
-                else if (simpleTypeName.get(0).getTag() == TokenTag.TIME)
-                    return Types.TIME;
-                else
-                    return Types.DATE;
-            }
+            return simpleTypeName.get(0).getTag();
         }
     }
 
@@ -89,5 +61,20 @@ public class CreateTableStmtVar extends Var {
 
     public void addTableConstraint(TableConstraintVar constraint) {
         tableConstraints.add(constraint);
+    }
+
+    @Override
+    public String toString() {
+        return this.getTag() + " " + getCoords() + ": " + tableName;
+    }
+
+    public SymbolType getFullTypeOfColumn(IdentToken colId) {
+        TypenameVar typename = (TypenameVar) columns.get(colId).get(1);
+        if (typename.size() == 2) {
+            return TokenTag.ARRAY;
+        } else {
+            SimpleTypeNameVar simpleTypeName = (SimpleTypeNameVar) typename.get(0);
+            return simpleTypeName.getFullType();
+        }
     }
 }

@@ -1,7 +1,6 @@
 package ru.bmstu.ORM.Analyzer.Parser;
 
 import ru.bmstu.ORM.Analyzer.Lexer.Scanner;
-import ru.bmstu.ORM.Analyzer.Symbols.SymbolType;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.IdentToken;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
@@ -20,13 +19,17 @@ public class Parser {
     private Scanner scanner;
     private SVar start;
     private Token sym;
-    private QualifiedNameVar currentTable;
-    private HashMap<QualifiedNameVar, HashMap<IdentToken, TypenameVar>> tables;
+    private CreateTableStmtVar currentTable;
+    private HashMap<QualifiedNameVar, CreateTableStmtVar> tables;
 
     public Parser(Scanner scanner) {
         this.scanner = scanner;
         this.start = new SVar();
         this.tables = new HashMap<>();
+    }
+
+    public HashMap<QualifiedNameVar, CreateTableStmtVar> getTables() {
+        return tables;
     }
 
     public SVar parse() throws CloneNotSupportedException {
@@ -44,9 +47,13 @@ public class Parser {
 
     //S                    ::= (CREATE CreateTableFunction)*
     private void parseS(SVar s) throws CloneNotSupportedException {
+        boolean wasFirst = false;
         while (sym.getTag() == TokenTag.CREATE) {
             s.addSymbol(sym);
-            s.setStart(sym.getStart());
+            if (!wasFirst) {
+                s.setStart(sym.getStart());
+                wasFirst = true;
+            }
             parse(TokenTag.CREATE);
 
             CreateTableFunctionVar createTableFunction = new CreateTableFunctionVar();
@@ -66,7 +73,7 @@ public class Parser {
             parseCreateTableStmt(createTableStmt);
             createTableFunction.addSymbol(createTableStmt);
             createTableFunction.setStart(createTableStmt.getStart());
-
+            tables.put(createTableStmt.getTableName(), createTableStmt);
         } else if (sym.getTag() == TokenTag.FUNCTION || sym.getTag() == TokenTag.OR) {
             CreateFunctionStmtVar createFunctionStmt = new CreateFunctionStmtVar();
             parseCreateFunctionStmt(createFunctionStmt);
@@ -84,6 +91,8 @@ public class Parser {
     //CreateTableStmt      ::= TABLE (IF NOT EXISTS)?
     //                         QualifiedName '(' (TableElement (',' TableElement)*)? ')'
     private void parseCreateTableStmt(CreateTableStmtVar createTableStmt) throws CloneNotSupportedException {
+        currentTable = createTableStmt;
+
         createTableStmt.setStart(sym.getStart());
         createTableStmt.addSymbol(sym);
         parse(TokenTag.TABLE);
@@ -103,9 +112,6 @@ public class Parser {
         createTableStmt.addSymbol(qualifiedName);
         parseQualifiedName(qualifiedName);
         createTableStmt.setTableName(qualifiedName);
-        currentTable = qualifiedName;
-        tables.put(qualifiedName, new HashMap<>());
-
         createTableStmt.addSymbol(sym);
         parse(TokenTag.LPAREN);
 
@@ -115,10 +121,6 @@ public class Parser {
             TableElementVar tableElement = new TableElementVar();
             createTableStmt.addSymbol(tableElement);
             parseTableElement(tableElement);
-            if (tableElement.get(0).getTag() == VarTag.COLUMN_DEF)
-                createTableStmt.addColumn((ColumnDefVar) tableElement.get(0));
-            else
-                createTableStmt.addTableConstraint((TableConstraintVar) tableElement.get(0));
 
             while (sym.getTag() == TokenTag.COMMA) {
                 tableElement.addSymbol(sym);
@@ -127,10 +129,6 @@ public class Parser {
                 TableElementVar tableElementVar = new TableElementVar();
                 createTableStmt.addSymbol(tableElementVar);
                 parseTableElement(tableElementVar);
-                if (tableElementVar.get(0).getTag() == VarTag.COLUMN_DEF)
-                    createTableStmt.addColumn((ColumnDefVar) tableElementVar.get(0));
-                else
-                    createTableStmt.addTableConstraint((TableConstraintVar) tableElementVar.get(0));
             }
         }
 
@@ -171,12 +169,15 @@ public class Parser {
             parseColumnDef(columnDef);
             tableElement.setStart(columnDef.getStart());
             tableElement.setFollow(columnDef.getFollow());
-        } else {
+        } else if (sym.getTag() == TokenTag.CONSTRAINT || sym.getTag() == TokenTag.UNIQUE
+                || sym.getTag() == TokenTag.PRIMARY || sym.getTag() == TokenTag.FOREIGN){
             TableConstraintVar tableConstraint = new TableConstraintVar();
             tableElement.addSymbol(tableConstraint);
             parseTableConstraint(tableConstraint);
             tableElement.setStart(tableConstraint.getStart());
             tableElement.setFollow(tableConstraint.getFollow());
+        } else {
+            throw new RuntimeException("Identifier, CONSTRAINT, UNIQUE, PRIMARY or FOREIGN expected, got " + sym);
         }
     }
 
@@ -191,8 +192,7 @@ public class Parser {
         columnDef.addSymbol(typename);
         parseTypename(typename);
         columnDef.setFollow(typename.getFollow());
-        HashMap<IdentToken, TypenameVar> columns = tables.get(currentTable);
-        columns.put((IdentToken) column, typename);
+        currentTable.addColumn(columnDef);
 
         while (sym.getTag() == TokenTag.CONSTRAINT
                 || sym.getTag() == TokenTag.NOT
@@ -480,22 +480,22 @@ public class Parser {
             ConstraintElemVar constraintElem = new ConstraintElemVar();
             tableConstraint.addSymbol(constraintElem);
             parseConstraintElem(constraintElem);
-
             tableConstraint.setFollow(constraintElem.getFollow());
         } else {
             ConstraintElemVar constraintElem = new ConstraintElemVar();
             tableConstraint.addSymbol(constraintElem);
             parseConstraintElem(constraintElem);
 
-            tableConstraint.setStart(constraintElem.getStart());
-            tableConstraint.setFollow(constraintElem.getFollow());
+            tableConstraint.setCoords(constraintElem.getCoords());
         }
+
+        currentTable.addTableConstraint(tableConstraint);
     }
 
     //ConstraintElem       ::= UNIQUE      '(' IDENT (',' IDENT)* ')'
     //                     |   PRIMARY KEY '(' IDENT (',' IDENT)* ')'
     //                     |   FOREIGN KEY '(' IDENT (',' IDENT)* ')' REFERENCES QualifiedName
-    //                         ('(' IDENT (',' IDENT)* ')' )? KeyActions
+    //                         ('(' IDENT (',' IDENT)* ')' )? KeyActions?
     private void parseConstraintElem(ConstraintElemVar constraintElem) throws CloneNotSupportedException {
         constraintElem.addSymbol(sym);
         constraintElem.setStart(sym.getStart());
@@ -631,7 +631,7 @@ public class Parser {
     //                     |   PRIMARY KEY
     //                     |   CHECK '(' BoolExpr ')'    //TODO HERE NEED TO CHECK APPLICATION OF OPs
     //                     |   DEFAULT ConstExpr         //TODO ARITHMETIC, BOOL ONLY EXPR OR VALUE TILL
-    //                     |   REFERENCES  QualifiedName ( '(' IDENT (',' IDENT)* ')' )? KeyActions?
+    //                     |   REFERENCES  QualifiedName ( '(' IDENT ')' )? KeyActions?
     private void parseColConstraintElem(ColConstraintElemVar colConstraintElem) throws CloneNotSupportedException {
         colConstraintElem.addSymbol(sym);
         colConstraintElem.setStart(sym.getStart());
@@ -688,14 +688,6 @@ public class Parser {
 
                 colConstraintElem.addSymbol(sym);
                 parse(TokenTag.IDENTIFIER);
-
-                while (sym.getTag() == TokenTag.COMMA) {
-                    colConstraintElem.addSymbol(sym);
-                    parse(TokenTag.COMMA);
-
-                    colConstraintElem.addSymbol(sym);
-                    parse(TokenTag.IDENTIFIER);
-                }
 
                 colConstraintElem.addSymbol(sym);
                 colConstraintElem.setFollow(sym.getFollow());
@@ -953,8 +945,8 @@ public class Parser {
             boolExprFactor.setFollow(sym.getFollow());
             parse(TokenTag.RPAREN);
         } else if (sym.getTag() == TokenTag.IDENTIFIER
-                && (getTypeOfColumn(currentTable, (IdentToken) sym) == VarTag.DATETIME_TYPE
-                    || getTypeOfColumn(currentTable, (IdentToken) sym) == TokenTag.BOOLEAN)) {
+                && (currentTable.getTypeOfColumn((IdentToken) sym) == VarTag.DATETIME_TYPE
+                    || currentTable.getTypeOfColumn((IdentToken) sym) == TokenTag.BOOLEAN)) {
             boolExprFactor.addSymbol(sym);
             boolExprFactor.setCoords(sym.getCoords());
             parse(TokenTag.IDENTIFIER);
@@ -987,7 +979,7 @@ public class Parser {
                 parseBoolRHS(boolRHS);
                 boolExprFactor.setFollow(boolRHS.getFollow());
             }
-        } else if ((sym.getTag() == TokenTag.IDENTIFIER && getTypeOfColumn(currentTable, (IdentToken) sym) == VarTag.NUMERIC_TYPE)
+        } else if ((sym.getTag() == TokenTag.IDENTIFIER && currentTable.getTypeOfColumn((IdentToken) sym) == VarTag.NUMERIC_TYPE)
                 || sym.getTag() == TokenTag.BYTE_CONST
                 || sym.getTag() == TokenTag.SHORT_CONST
                 || sym.getTag() == TokenTag.INT_CONST
@@ -1296,7 +1288,7 @@ public class Parser {
             parseDateTimeCast(dateTimeCast);
             constExpr.setCoords(dateTimeCast.getCoords());
         } else {
-            throw new RuntimeException("Expected expression without variables, got" + sym);
+            throw new RuntimeException("Expected expression without variables, got " + sym);
         }
     }
 
@@ -1761,18 +1753,6 @@ public class Parser {
             parse(TokenTag.DOUBLE_DOLLAR);
         } else {
             throw new RuntimeException("AS or LANGUAGE expected, got " + sym);
-        }
-    }
-
-    private SymbolType getTypeOfColumn(QualifiedNameVar tableName, IdentToken column) {
-        HashMap<IdentToken, TypenameVar> table = tables.get(tableName);
-        TypenameVar typename = table.get(column);
-
-        if (typename.size() == 2) {
-            return TokenTag.ARRAY;
-        } else {
-            SimpleTypeNameVar simpleTypeName = (SimpleTypeNameVar) typename.get(0);
-            return simpleTypeName.get(0).getTag();
         }
     }
 }

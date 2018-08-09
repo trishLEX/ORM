@@ -50,7 +50,7 @@ TableConstraint      ::= CONSTRAINT IDENT ConstraintElem
 ConstraintElem       ::= UNIQUE      '(' IDENT (',' IDENT)* ')'
                      |   PRIMARY KEY '(' IDENT (',' IDENT)* ')'
                      |   FOREIGN KEY '(' IDENT (',' IDENT)* ')' REFERENCES QualifiedName
-                         ('(' IDENT (',' IDENT)* ')' )? KeyActions?
+                         ('(' IDENT (',' IDENT)* ')' )? KeyActions? //VALIDATE
 
 ColConstraint        ::= CONSTRAINT IDENT ColConstraintElem
                      |   ColConstraintElem
@@ -61,7 +61,7 @@ ColConstraintElem    ::= NOT NULL
                      |   PRIMARY KEY
                      |   CHECK '(' BoolExpr ')'    //HERE NEED TO CHECK APPLICATION OF OPs
                      |   DEFAULT ConstExpr         //ARITHMETIC, BOOL ONLY EXPR OR VALUE TILL
-                     |   REFERENCES QualifiedName ( '(' IDENT (',' IDENT)* ')' )? KeyActions? //VALIDATE
+                     |   REFERENCES QualifiedName ( '(' IDENT ')' )? KeyActions? //VALIDATE
 
 KeyActions           ::= ON UPDATE KeyAction (ON DELETE KeyAction)?
                      |   ON DELETE KeyAction (ON UPDATE KeyAction)?

@@ -56,7 +56,7 @@ public abstract class Var extends Symbol {
 
     @Override
     public int hashCode() {
-        int hashCode = 31;
+        int hashCode = 1;
         for (Symbol s: symbols) {
             hashCode = 31 * hashCode + s.hashCode();
         }

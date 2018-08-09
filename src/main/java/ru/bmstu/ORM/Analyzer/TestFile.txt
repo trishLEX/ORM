@@ -9,9 +9,27 @@ CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Shop
   opened DATE DEFAULT '02-12-1997'::DATE,
 
   area FLOAT(8) NOT NULL,
-  countOfVisitorsToday INT NOT NULL CHECK (countOfVisitorsToday >= 0),
-  FOREIGN KEY (area) REFERENCES ShopDB.shopschema.Employee (employeeCode)
+  countOfVisitorsToday INT NOT NULL CHECK (countOfVisitorsToday >= 0)
 );
+
+CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Employee
+(
+  employeeCode INT PRIMARY KEY NOT NULL, --//TODO support this DEFAULT nextval('ShopDB.shopschema.emp_codes'),
+  firstName VARCHAR(25) NOT NULL,
+  lastName VARCHAR(25) NOT NULL,
+  middleName VARCHAR(25),
+  dateOfBirth DATE NOT NULL,
+  phone CHAR(11) NOT NULL UNIQUE,
+  position VARCHAR(25) NOT NULL,
+  isFired BOOLEAN DEFAULT FALSE NOT NULL,
+  salary float NOT NULL,
+  sex boolean NOT NULL,
+  chief INT,
+  shopCode INT,
+
+  FOREIGN KEY (shopCode) REFERENCES ShopDB.ShopSchema.Shop (shopCode) ON DELETE CASCADE
+);
+
 
 CREATE or replace function go() returns int as $$
 begin
