@@ -1,6 +1,7 @@
 package ru.bmstu.ORM.Analyzer.Semantics;
 
 import ru.bmstu.ORM.Analyzer.Symbols.Symbol;
+import ru.bmstu.ORM.Analyzer.Symbols.SymbolType;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.IdentToken;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.BooleanExpression.*;
@@ -9,18 +10,18 @@ import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.QualifiedNameVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.SimpleTypeNameVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.TypenameVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.CreateTableFunctionVar;
-import ru.bmstu.ORM.Analyzer.Symbols.Variables.Function.CreateFunctionStmtVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.SVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Table.*;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.VarTag;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class SemanticAnalyzer {
     private HashMap<QualifiedNameVar, CreateTableStmtVar> tables;
 
-    public SemanticAnalyzer() {
-        this.tables = new HashMap<>();
+    public SemanticAnalyzer(HashMap<QualifiedNameVar, CreateTableStmtVar> tables) {
+        this.tables = tables;
     }
 
     public void analyze(SVar S) {
@@ -28,11 +29,13 @@ public class SemanticAnalyzer {
     }
 
     private void analyzeS(SVar S) {
-        analyzeCreateTableFunctionTrigger((CreateTableFunctionVar) S.get(1));
+        for (Symbol symbol: S.getSymbols())
+            if (symbol.getTag() == VarTag.CREATE_TABLE_FUNCTION_STMT)
+                analyzeCreateTableFunctionTrigger((CreateTableFunctionVar) symbol);
     }
 
-    private void analyzeCreateTableFunctionTrigger(CreateTableFunctionVar createTableFunctionTrigger) {
-        for (Symbol symbol: createTableFunctionTrigger.getSymbols()) {
+    private void analyzeCreateTableFunctionTrigger(CreateTableFunctionVar createTableFunction) {
+        for (Symbol symbol: createTableFunction.getSymbols()) {
             if (symbol.getTag() == VarTag.CREATE_TABLE_STMT) {
                 analyzeCreateTableStmt((CreateTableStmtVar) symbol);
             } else if (symbol.getTag() == VarTag.CREATE_FUNCTION_STMT) {
@@ -42,14 +45,12 @@ public class SemanticAnalyzer {
     }
 
     private void analyzeCreateTableStmt(CreateTableStmtVar createTableStmt) {
-        if (!tables.containsKey(createTableStmt.getTableName())) {
-            tables.put(createTableStmt.getTableName(), createTableStmt);
-        } else {
-            throw new RuntimeException("Table " + createTableStmt.getTableName() + " is existed");
-        }
-
         for (ColumnDefVar column: createTableStmt.getColumns()) {
             analyzeColumnDef(createTableStmt, column);
+        }
+
+        for (TableConstraintVar tableConstraint: createTableStmt.getTableConstraints()) {
+            analyzeTableConstraint(createTableStmt, tableConstraint);
         }
     }
 
@@ -76,16 +77,25 @@ public class SemanticAnalyzer {
             analyzeConstExpr(typename, (ConstExprVar) colConstraintElem.get(1));
         } else if (colConstraintElem.get(0).getTag() == TokenTag.REFERENCES) {
             if (tables.containsKey(colConstraintElem.get(1))) {
-                for (int i = 3; i < colConstraintElem.getSymbols().size() - 1; i++) {
-                    if (colConstraintElem.get(i).getTag() == TokenTag.IDENTIFIER
-                            && !tables.get(colConstraintElem.get(1)).containsColumn((IdentToken) colConstraintElem.get(i)))
-                        throw new RuntimeException("No column " + colConstraintElem.get(i) + " in " + tables.get(colConstraintElem.get(1)));
+                if (colConstraintElem.size() > 2) {
+                    if (colConstraintElem.get(3).getTag() == TokenTag.IDENTIFIER) {
+                        if (!tables.get(colConstraintElem.get(1)).containsColumn((IdentToken) colConstraintElem.get(3)))
+                            throw new RuntimeException("No column " + colConstraintElem.get(3) + " in " + tables.get(colConstraintElem.get(1)));
+
+                        if (typename.size() == 2)
+                            throw new RuntimeException("Array as foreign key at " + colConstraintElem);
+                        else {
+                            SimpleTypeNameVar simpleTypeName = (SimpleTypeNameVar) typename.get(0);
+                            System.out.println(simpleTypeName.get(0).getTag() + " " + tables.get(colConstraintElem.get(1)).getTypeOfColumn((IdentToken) colConstraintElem.get(3)));
+                            if (simpleTypeName.getFullType() != tables.get(colConstraintElem.get(1)).getFullTypeOfColumn((IdentToken) colConstraintElem.get(3)))
+                                throw new RuntimeException("Types of foreign key and referenced key are different at " + colConstraintElem);
+                        }
+                    } else
+                        throw new RuntimeException("Identifier expected, got " + colConstraintElem.get(3));
+                } else {
+                    throw new RuntimeException("No referenced column specified at " + colConstraintElem);
                 }
-
-                return;
-            }
-
-            if (!tables.containsKey(((QualifiedNameVar) colConstraintElem.get(1)).getWithoutLastName()))
+            } else if (!tables.containsKey(((QualifiedNameVar) colConstraintElem.get(1)).getWithoutLastName()))
                 throw new RuntimeException(colConstraintElem.get(1) + " does not exist");
             else {
                 if (!tables.get(((QualifiedNameVar) colConstraintElem.get(1)).getWithoutLastName()).containsColumn(((QualifiedNameVar) colConstraintElem.get(1)).getLastColId()))
@@ -113,18 +123,15 @@ public class SemanticAnalyzer {
             analyzeBoolExpr(createTableStmt, (BoolExprVar) boolExprFactor.get(1));
         else if (boolExprFactor.get(0).getTag() == TokenTag.IDENTIFIER) {
             if (boolExprFactor.getSymbols().size() == 1
-                    && createTableStmt.getType((IdentToken) boolExprFactor.get(0)) != Types.BOOLEAN)
+                    && createTableStmt.getTypeOfColumn((IdentToken) boolExprFactor.get(0)) != TokenTag.BOOLEAN)
                 throw new RuntimeException("Invalid type of " + boolExprFactor.get(0) + ", bool expected");
-
-            if (boolExprFactor.getSymbols().size() == 2) {
-                Types colType = createTableStmt.getType((IdentToken) boolExprFactor.get(0));
+            else {
+                SymbolType colType = createTableStmt.getTypeOfColumn((IdentToken) boolExprFactor.get(0));
                 RHSVar rhs = (RHSVar) boolExprFactor.get(1);
-                if (rhs.get(0).getTag() == VarTag.ARITHM_RHS
-                        && (colType != Types.BYTE && colType != Types.SHORT && colType != Types.INT && colType != Types.LONG
-                            && colType != Types.FLOAT && colType != Types.DOUBLE))
-                    throw new RuntimeException("Invalid type of " + boolExprFactor.get(0) + ", numeric exepcted");
+                if (rhs.get(0).getTag() == VarTag.DATE_RHS && colType != VarTag.DATETIME_TYPE)
+                    throw new RuntimeException("Invalid type of " + boolExprFactor.get(0) + ", datetime expected");
 
-                if (colType != Types.BOOLEAN && rhs.get(0).getTag() == VarTag.BOOL_RHS) {
+                if (colType != TokenTag.BOOLEAN && rhs.get(0).getTag() == VarTag.BOOL_RHS) {
                     BoolRHSVar boolRHS = (BoolRHSVar) rhs.get(0);
                     BoolConstVar boolConst = (BoolConstVar) boolRHS.get(boolRHS.getSymbols().size() - 1);
                     if (boolConst.get(0).getTag() != TokenTag.NULL)
@@ -146,7 +153,7 @@ public class SemanticAnalyzer {
             if (simpleType.get(0).getTag() == VarTag.CHARACTER_TYPE && constExpr.get(0).getTag() != TokenTag.STRING_CONST)
                 throw new RuntimeException("Invalid type of " + constExpr.get(0) + ", string expected");
 
-            if (simpleType.get(0).getTag() == VarTag.DATETIME_TYPE && constExpr.get(0).getTag() != TokenTag.DATE_CONST)
+            if (simpleType.get(0).getTag() == VarTag.DATE_TIME_CAST && constExpr.get(0).getTag() != TokenTag.DATE_CONST)
                 throw new RuntimeException("Invalid type of " + constExpr.get(0) + ", date/time expected");
 
             if (simpleType.get(0).getTag() == TokenTag.RECORD)
@@ -155,6 +162,60 @@ public class SemanticAnalyzer {
             if (simpleType.get(0).getTag() == TokenTag.BOOLEAN && (constExpr.get(0).getTag() != VarTag.BOOL_CONST ||
                     (constExpr.getSymbols().size() == 2 && constExpr.get(1).getTag() != VarTag.BOOL_CONST)))
                 throw new RuntimeException("Invalid type of " + constExpr.get(0) + ", boolean expected");
+        }
+    }
+
+    private void analyzeTableConstraint(CreateTableStmtVar createTableStmt, TableConstraintVar tableConstraint) {
+        analyzeConstraintElem(createTableStmt, (ConstraintElemVar) tableConstraint.get(tableConstraint.size() - 1));
+    }
+
+    private void analyzeConstraintElem(CreateTableStmtVar createTableStmtVar, ConstraintElemVar constraintElem) {
+        if (constraintElem.get(0).getTag() == TokenTag.UNIQUE || constraintElem.get(0).getTag() == TokenTag.PRIMARY) {
+            for (Symbol s: constraintElem.getSymbols()) {
+                if (s.getTag() == TokenTag.IDENTIFIER) {
+                    if (!createTableStmtVar.containsColumn((IdentToken) s))
+                        throw new RuntimeException("No column " + s + " at " + createTableStmtVar);
+                }
+            }
+        } else {
+            int keysIn = 0;
+            ArrayList<IdentToken> foreignKeys = new ArrayList<>();
+            for (int i = 3; constraintElem.get(i).getTag() != TokenTag.RPAREN; i++) {
+                if (constraintElem.get(i).getTag() == TokenTag.IDENTIFIER) {
+                    if (!createTableStmtVar.containsColumn((IdentToken) constraintElem.get(i)))
+                        throw new RuntimeException("No column " + constraintElem.get(i) + " at " + createTableStmtVar);
+                    foreignKeys.add((IdentToken) constraintElem.get(i));
+                    keysIn++;
+                }
+            }
+
+            if (tables.containsKey(constraintElem.get(2 * keysIn + 4))) {
+                if (constraintElem.size() > 2 * keysIn + 5) {
+                    int keysOut = 0;
+                    ArrayList<IdentToken> referencedKeys = new ArrayList<>();
+                    for (int i = 2 * keysIn + 6; constraintElem.get(i).getTag() != TokenTag.RPAREN; i++) {
+                        if (constraintElem.get(i).getTag() == TokenTag.IDENTIFIER) {
+                            if (!tables.get(constraintElem.get(2 * keysIn + 4)).containsColumn((IdentToken) constraintElem.get(i))) {
+                                throw new RuntimeException("No column " + constraintElem.get(i) + " in " + tables.get(constraintElem.get(2 * keysIn + 4)));
+                            }
+                            keysOut++;
+                            referencedKeys.add((IdentToken) constraintElem.get(i));
+                        }
+                    }
+
+                    if (keysIn != keysOut)
+                        throw new RuntimeException("Count of foreign and referenced columns is different at " + constraintElem);
+
+                    for (int i = 0; i < keysIn; i++) {
+                        if (createTableStmtVar.getFullTypeOfColumn(foreignKeys.get(i)) != tables.get(constraintElem.get(2 * keysIn + 4)).getFullTypeOfColumn(referencedKeys.get(i)))
+                            throw new RuntimeException("Types of column " + foreignKeys.get(i) + " and " + referencedKeys.get(i) + " are different");
+                    }
+                } else {
+                    throw new RuntimeException("Some referenced columns are not specified at " + constraintElem);
+                }
+            } else {
+                throw new RuntimeException("Table " + constraintElem.get(2 * keysIn + 4) + " does not exist");
+            }
         }
     }
 }
