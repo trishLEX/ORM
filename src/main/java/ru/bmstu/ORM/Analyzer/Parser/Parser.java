@@ -534,6 +534,7 @@ public class Parser {
             constraintElem.setFollow(sym.getFollow());
             parse(TokenTag.RPAREN);
         } else if (sym.getTag() == TokenTag.PRIMARY) {
+            currentTable.setExistsPK(true);
             parse(TokenTag.PRIMARY);
 
             constraintElem.addSymbol(sym);
@@ -662,6 +663,7 @@ public class Parser {
             colConstraintElem.setFollow(sym.getFollow());
             parse(TokenTag.UNIQUE);
         } else if (sym.getTag() == TokenTag.PRIMARY) {
+            currentTable.setExistsPK(true);
             parse(TokenTag.PRIMARY);
 
             colConstraintElem.setFollow(sym.getFollow());

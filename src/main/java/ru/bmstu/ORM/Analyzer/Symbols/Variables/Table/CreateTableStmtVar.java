@@ -17,11 +17,13 @@ public class CreateTableStmtVar extends Var {
     private QualifiedNameVar tableName;
     private HashMap<IdentToken, ColumnDefVar> columns;
     private ArrayList<TableConstraintVar> tableConstraints;
+    private boolean existsPK;
 
     public CreateTableStmtVar() {
         super(VarTag.CREATE_TABLE_STMT);
         columns = new HashMap<>();
         tableConstraints = new ArrayList<>();
+        existsPK = false;
     }
 
     public QualifiedNameVar getTableName() {
@@ -78,5 +80,13 @@ public class CreateTableStmtVar extends Var {
             SimpleTypeNameVar simpleTypeName = (SimpleTypeNameVar) typename.get(0);
             return simpleTypeName.getFullType();
         }
+    }
+
+    public boolean isExistsPK() {
+        return existsPK;
+    }
+
+    public void setExistsPK(boolean existsPK) {
+        this.existsPK = existsPK;
     }
 }

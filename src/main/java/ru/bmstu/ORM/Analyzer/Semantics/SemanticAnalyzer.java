@@ -45,6 +45,9 @@ public class SemanticAnalyzer {
     }
 
     private void analyzeCreateTableStmt(CreateTableStmtVar createTableStmt) {
+        if (!createTableStmt.isExistsPK())
+            throw new RuntimeException("No primary key in " + createTableStmt.getTableName());
+
         for (ColumnDefVar column: createTableStmt.getColumns()) {
             analyzeColumnDef(createTableStmt, column);
         }
