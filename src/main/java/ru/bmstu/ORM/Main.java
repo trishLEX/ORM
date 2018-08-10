@@ -7,16 +7,19 @@ import ru.bmstu.ORM.Analyzer.Semantics.SemanticAnalyzer;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.SVar;
+import ru.bmstu.ORM.Service.Session.Session;
+import ru.bmstu.ORM.Tables.Shop;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class Main {
-    private static final String PATH = "E:\\Sorry\\Documents\\IdeaProjects\\ORM\\src\\main\\java\\ru\\bmstu\\ORM\\Analyzer\\TestFile.txt";
+    private static final String PATH = "E:\\Sorry\\Documents\\IdeaProjects\\ORM\\src\\main\\resources\\TestFile.txt";
 
-    public static void main(String[] args) throws IOException, CloneNotSupportedException {
+    public static void main(String[] args) throws IOException, CloneNotSupportedException, SQLException {
         String program = new String(Files.readAllBytes(Paths.get(PATH)));
 
         Scanner scanner = new Scanner(program);
@@ -44,5 +47,11 @@ public class Main {
         analyzer.analyze(start);
 
         System.out.println(start);
+
+        Session session = new Session("localhost", "5432", "postgres", "shopdb", "0212");
+        session.open();
+        Shop shop = (Shop) session.selectFrom(Shop.class).where("shopCode = 100").fetchFirst();
+        System.out.println(shop);
+        session.close();
     }
 }

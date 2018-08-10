@@ -217,7 +217,7 @@ public class SemanticAnalyzer {
                     throw new RuntimeException("Some referenced columns are not specified at " + constraintElem);
                 }
             } else {
-                throw new RuntimeException("Table " + constraintElem.get(2 * keysIn + 4) + " does not exist");
+                throw new RuntimeException("Entity " + constraintElem.get(2 * keysIn + 4) + " does not exist");
             }
         }
     }
