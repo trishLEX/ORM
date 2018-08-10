@@ -3,11 +3,13 @@ package ru.bmstu.ORM.Analyzer.Lexer;
 import ru.bmstu.ORM.Analyzer.Service.Position;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.*;
 
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 public class Scanner {
     private Position cur;
@@ -2298,17 +2300,17 @@ public class Scanner {
 
                     try {
                         DateFormat dfISO = new SimpleDateFormat("dd-MM-yyyy'T'HH:mm:ss");
-                        Date date = dfISO.parse(value.toString());
+                        Timestamp date = new Timestamp(dfISO.parse(value.toString()).getTime());
                         return new DateTimeToken(TokenTag.TIMESTAMP_CONST, start, (Position) cur.clone(), date);
                     } catch (ParseException e1) {
                         try {
                             DateFormat dateOnlyISO = new SimpleDateFormat("dd-MM-yyyy");
-                            Date date = dateOnlyISO.parse(value.toString());
+                            Date date = new Date(dateOnlyISO.parse(value.toString()).getTime());
                             return new DateTimeToken(TokenTag.DATE_CONST, start, (Position) cur.clone(), date);
                         } catch (ParseException e2) {
                             try {
                                 DateFormat timeOnlyISO = new SimpleDateFormat("HH:mm:ss");
-                                Date date = timeOnlyISO.parse(value.toString());
+                                Time date = new Time(timeOnlyISO.parse(value.toString()).getTime());
                                 return new DateTimeToken(TokenTag.TIME_CONST, start, (Position) cur.clone(), date);
                             } catch (ParseException e3) {
                                 return new StringToken(start, (Position) cur.clone(), value.toString());
