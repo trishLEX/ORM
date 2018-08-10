@@ -2,6 +2,7 @@ package ru.bmstu.ORM.Analyzer.Parser;
 
 import ru.bmstu.ORM.Analyzer.Lexer.Scanner;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.IdentToken;
+import ru.bmstu.ORM.Analyzer.Symbols.Tokens.NumberToken;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.*;
@@ -251,7 +252,11 @@ public class Parser {
                         || sym.getTag() == TokenTag.INT_CONST
                         || sym.getTag() == TokenTag.LONG_CONST) {
                     arrayType.addSymbol(sym);
+                    Token number = sym;
                     parseIntConst();
+                    Number value = ((NumberToken) number).getValue();
+                    if (value.intValue() <= 0)
+                        throw new RuntimeException("Array with negative size: " + number);
                 }
 
                 arrayType.setFollow(sym.getFollow());
@@ -268,7 +273,11 @@ public class Parser {
                 parse(TokenTag.LBRACKET);
 
                 arrayType.addSymbol(sym);
+                Token number = sym;
                 parseIntConst();
+                Number value = ((NumberToken) number).getValue();
+                if (value.intValue() <= 0)
+                    throw new RuntimeException("Array with negative size: " + number);
 
                 arrayType.setFollow(sym.getFollow());
                 arrayType.addSymbol(sym);
@@ -384,7 +393,11 @@ public class Parser {
             parse(TokenTag.LPAREN);
 
             characterType.addSymbol(sym);
+            Token number = sym;
             parseIntConst();
+            Number value = ((NumberToken) number).getValue();
+            if (value.intValue() <= 0)
+                throw new RuntimeException("String with negative size: " + number);
 
             characterType.setFollow(sym.getFollow());
             characterType.addSymbol(sym);

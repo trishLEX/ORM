@@ -33,6 +33,8 @@ public class CreateTableStmtVar extends Var {
     }
 
     public void addColumn(ColumnDefVar columnDef) {
+        if (columns.containsKey(columnDef))
+            throw new RuntimeException("Column " + columnDef.get(0) + " already exists");
         columns.put((IdentToken) columnDef.get(0), columnDef);
     }
 
