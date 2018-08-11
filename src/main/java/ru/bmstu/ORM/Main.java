@@ -52,6 +52,8 @@ public class Main {
         session.open();
         Shop shop = (Shop) session.selectFrom(Shop.class).where("shopCode = 100").fetchFirst();
         System.out.println(shop);
+        shop = (Shop) session.selectFrom(Shop.class).getById(100);
+        System.out.println(shop);
         session.close();
     }
 }
