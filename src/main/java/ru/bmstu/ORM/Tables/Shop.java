@@ -10,17 +10,17 @@ public class Shop implements Entity {
     @Column(name = "shopCode", unique = true, nullable = false)
     private int shopCode;
 
-    @Column(name = "shopName", nullable = false)
+    @Column(name = "shopName", nullable = false, length = 25)
     private String shopName;
 
     @Default
     @Column(name = "isOutlet", nullable = false)
     private boolean isOutlet = true;
 
-    @Column(name = "address", nullable = false)
+    @Column(name = "address", nullable = false, length = 25)
     private String address;
 
-    @Column(name = "city", nullable = false)
+    @Column(name = "city", nullable = false, length = 50)
     private String city;
 
     @Default
