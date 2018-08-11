@@ -8,14 +8,14 @@ import java.util.Objects;
 public class Shop implements Entity {
     @PK
     @Column(name = "shopCode", unique = true, nullable = false)
-    private int shopCode;
+    private Integer shopCode;
 
     @Column(name = "shopName", nullable = false, length = 25)
     private String shopName;
 
     @Default
     @Column(name = "isOutlet", nullable = false)
-    private boolean isOutlet = true;
+    private Boolean isOutlet = true;
 
     @Column(name = "address", nullable = false, length = 25)
     private String address;
@@ -25,13 +25,13 @@ public class Shop implements Entity {
 
     @Default
     @Column(name = "isClosed", nullable = false)
-    private boolean isClosed = false;
+    private Boolean isClosed = false;
 
     @Column(name = "area", nullable = false)
-    private double area;
+    private Double area;
 
     @Column(name = "countOfVisitorsToday", nullable = false)
-    private int countOfVisitorsToday;
+    private Integer countOfVisitorsToday;
 
     public int getShopCode() {
         return shopCode;

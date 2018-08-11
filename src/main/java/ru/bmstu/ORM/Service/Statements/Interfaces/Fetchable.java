@@ -1,8 +1,11 @@
 package ru.bmstu.ORM.Service.Statements.Interfaces;
 
 import ru.bmstu.ORM.Service.Annotations.Column;
+import ru.bmstu.ORM.Service.Annotations.FK;
+import ru.bmstu.ORM.Service.Statements.SelectStmt;
 import ru.bmstu.ORM.Tables.Entity;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
@@ -10,7 +13,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class Fetchable<T extends Entity> {
     private String selectStmt;
@@ -92,11 +97,30 @@ public abstract class Fetchable<T extends Entity> {
     }
 
     private void fillField(ResultSet resultSet, T obj) throws IllegalAccessException, SQLException {
+        boolean wasFK = false;
+        Map<String, Serializable> FKs = new HashMap<>();
         for (Field field : tableClass.getDeclaredFields()) {
             if (field.isAnnotationPresent(Column.class)) {
                 Column column = field.getAnnotation(Column.class);
                 field.setAccessible(true);
                 field.set(obj, resultSet.getObject(column.name()));
+
+                if (field.isAnnotationPresent(FK.class)) {
+                    wasFK = true;
+                    FKs.put(field.getAnnotation(FK.class).table(), (Serializable) resultSet.getObject(column.name()));
+                }
+            }
+        }
+
+        if (wasFK) {
+            for (Field field : tableClass.getDeclaredFields()) {
+                if (field.isAnnotationPresent(FK.class) && !field.isAnnotationPresent(Column.class)) {
+                    Class referenced = field.getType();
+                    SelectStmt selectStmt = new SelectStmt<>(getConnection(), referenced);
+                    Object foreignObject = selectStmt.getById(FKs.get(field.getAnnotation(FK.class).table()));
+                    field.setAccessible(true);
+                    field.set(obj, foreignObject);
+                }
             }
         }
     }

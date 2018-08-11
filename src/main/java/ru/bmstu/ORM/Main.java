@@ -8,6 +8,7 @@ import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.SVar;
 import ru.bmstu.ORM.Service.Session.Session;
+import ru.bmstu.ORM.Tables.Employee;
 import ru.bmstu.ORM.Tables.Shop;
 
 import java.io.IOException;
@@ -52,8 +53,9 @@ public class Main {
         session.open();
         Shop shop = (Shop) session.selectFrom(Shop.class).where("shopCode = 100").fetchFirst();
         System.out.println(shop);
-        shop = (Shop) session.selectFrom(Shop.class).getById(100);
-        System.out.println(shop);
+        Employee employee = (Employee) session.selectFrom(Employee.class).fetchFirst();
+        System.out.println(employee);
+        System.out.println(employee.getShop());
         session.close();
     }
 }

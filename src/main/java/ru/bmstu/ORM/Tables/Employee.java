@@ -9,7 +9,7 @@ import java.util.Objects;
 public class Employee implements Entity {
     @PK
     @Column(name = "employeeCode", unique = true, nullable = false)
-    private int employeeCode;
+    private Integer employeeCode;
 
     @Column(name = "firstName", nullable = false, length = 25)
     private String firstName;
@@ -31,20 +31,22 @@ public class Employee implements Entity {
 
     @Default
     @Column(name = "isFired", nullable = false)
-    private boolean isFired = true;
+    private Boolean isFired = true;
 
     @Column(name = "salary", nullable = false)
-    private double salary;
+    private Float salary;
 
     @Column(name = "sex", nullable = false)
     private String sex;
 
     @Column(name = "chief")
-    private int chief;
+    private Integer chief;
 
-    @FK
+    @FK(table = "shop")
     @Column(name = "shopCode")
-    private int shopCode;
+    private Integer shopCode;
+
+    @FK(table = "shop")
     private Shop shop;
 
     public int getEmployeeCode() {
@@ -111,11 +113,11 @@ public class Employee implements Entity {
         isFired = fired;
     }
 
-    public double getSalary() {
+    public float getSalary() {
         return salary;
     }
 
-    public void setSalary(double salary) {
+    public void setSalary(float salary) {
         this.salary = salary;
     }
 
@@ -170,7 +172,8 @@ public class Employee implements Entity {
     @Override
     public String toString() {
         return "Employee { " + "employeeCode: " + employeeCode + ", firstName: " + firstName + ", lastName: " + lastName +
-                ", middleName: " + middleName + ", dateOfBirth: " + dateOfBirth + ", phone: " + phone + ", position: " + position +
-                ", isFired: " + isFired + ", salary: " + salary + ", sex: " + sex + ", chief: " + chief + ", shopCode: " + shopCode;
+                ", middleName: " + middleName + ", dateOfBirth: " + dateOfBirth + ", phone: " + phone +
+                ", position: " + position + ", isFired: " + isFired + ", salary: " + salary + ", sex: " + sex +
+                ", chief: " + chief + ", shopCode: " + shopCode + " } ";
     }
 }
