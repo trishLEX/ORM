@@ -1,7 +1,6 @@
 package ru.bmstu.ORM.Tables;
 
 import ru.bmstu.ORM.Service.Annotations.*;
-import ru.bmstu.ORM.Service.Annotations.Defaults.BoolDefault;
 
 import java.util.Objects;
 
@@ -14,7 +13,7 @@ public class Shop implements Entity {
     @Column(name = "shopName", nullable = false)
     private String shopName;
 
-    @BoolDefault(value = true)
+    @Default
     @Column(name = "isOutlet", nullable = false)
     private boolean isOutlet = true;
 
@@ -24,7 +23,7 @@ public class Shop implements Entity {
     @Column(name = "city", nullable = false)
     private String city;
 
-    @BoolDefault(value = false)
+    @Default
     @Column(name = "isClosed", nullable = false)
     private boolean isClosed = false;
 
@@ -106,7 +105,7 @@ public class Shop implements Entity {
             return false;
 
         Shop other = (Shop) obj;
-        return this.shopCode == other.shopCode;
+        return Objects.equals(this.shopCode, other.shopCode);
     }
 
     @Override
@@ -116,8 +115,8 @@ public class Shop implements Entity {
 
     @Override
     public String toString() {
-        return "Shop: " + "shopcode: " + shopCode + ", shopName: " + shopName + ", isOutlet: " + isOutlet +
+        return "Shop { " + "shopcode: " + shopCode + ", shopName: " + shopName + ", isOutlet: " + isOutlet +
                 ", address: " + address + ", city: " + city + ", isClosed: " + isClosed + ", area: " + area +
-                ", countOfVisitorsToday: " + countOfVisitorsToday;
+                ", countOfVisitorsToday: " + countOfVisitorsToday + " } ";
     }
 }

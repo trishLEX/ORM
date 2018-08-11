@@ -92,7 +92,7 @@ public abstract class Fetchable<T extends Entity> {
     }
 
     private void fillField(ResultSet resultSet, T obj) throws IllegalAccessException, SQLException {
-        for (Field field : obj.getClass().getDeclaredFields()) {
+        for (Field field : tableClass.getDeclaredFields()) {
             if (field.isAnnotationPresent(Column.class)) {
                 Column column = field.getAnnotation(Column.class);
                 field.setAccessible(true);
