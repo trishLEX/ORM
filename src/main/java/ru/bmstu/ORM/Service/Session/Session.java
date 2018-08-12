@@ -30,8 +30,12 @@ public final class Session implements AutoCloseable {
     }
 
     @Override
-    public void close() throws SQLException {
-        connection.close();
+    public void close() {
+        try {
+            connection.close();
+        } catch (SQLException exception) {
+            throw new RuntimeException("Error while closing connection", exception);
+        }
     }
 
     public <T extends Entity> SelectStmt selectFrom(Class<T> table) {
