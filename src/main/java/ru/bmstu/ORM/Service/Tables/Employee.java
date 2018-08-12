@@ -3,6 +3,7 @@ package ru.bmstu.ORM.Service.Tables;
 import ru.bmstu.ORM.Service.ColumnAnnotations.*;
 
 import java.sql.Date;
+import java.util.ArrayList;
 import java.util.Objects;
 
 @Table(db = "shopdb", schema = "shopschema", name = "employee")
@@ -45,6 +46,9 @@ public class Employee implements Entity {
     @FK(table = "shop", referencedColumn = "shopCode")
     @Column(name = "shopCode")
     private Integer shopCode;
+
+    @Column(name = "array")
+    private ArrayList<Integer> array;
 
     @FO(table = "shop")
     private Shop shop;
@@ -153,6 +157,14 @@ public class Employee implements Entity {
         this.shop = shop;
     }
 
+    public ArrayList<Integer> getArray() {
+        return array;
+    }
+
+    public void setArray(ArrayList<Integer> array) {
+        this.array = array;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -174,6 +186,6 @@ public class Employee implements Entity {
         return "Employee { " + "employeeCode: " + employeeCode + ", firstName: " + firstName + ", lastName: " + lastName +
                 ", middleName: " + middleName + ", dateOfBirth: " + dateOfBirth + ", phone: " + phone +
                 ", position: " + position + ", isFired: " + isFired + ", salary: " + salary + ", sex: " + sex +
-                ", chief: " + chief + ", shopCode: " + shopCode + " } ";
+                ", chief: " + chief + ", shopCode: " + shopCode + ", array: " + array + " } ";
     }
 }

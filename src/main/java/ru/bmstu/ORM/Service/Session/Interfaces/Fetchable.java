@@ -7,16 +7,14 @@ import ru.bmstu.ORM.Service.Session.Clauses.SelectClause;
 import ru.bmstu.ORM.Service.Tables.Entity;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class Fetchable<T extends Entity> {
     private String selectStmt;
@@ -104,7 +102,11 @@ public abstract class Fetchable<T extends Entity> {
             if (field.isAnnotationPresent(Column.class)) {
                 Column column = field.getAnnotation(Column.class);
                 field.setAccessible(true);
-                field.set(obj, resultSet.getObject(column.name()));
+                if (field.getType().equals(ArrayList.class)) {
+                    field.set(obj, new ArrayList<>(Arrays.asList((Object[])resultSet.getArray(column.name()).getArray())));
+                } else {
+                    field.set(obj, resultSet.getObject(column.name()));
+                }
 
                 if (field.isAnnotationPresent(FK.class)) {
                     String foreignTableName = field.getAnnotation(FK.class).table();
