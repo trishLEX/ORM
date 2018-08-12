@@ -42,11 +42,11 @@ public class Employee implements Entity {
     @Column(name = "chief")
     private Integer chief;
 
-    @FK(table = "shop")
+    @FK(table = "shop", referencedColumn = "shopCode")
     @Column(name = "shopCode")
     private Integer shopCode;
 
-    @FK(table = "shop")
+    @FO(table = "shop")
     private Shop shop;
 
     public int getEmployeeCode() {

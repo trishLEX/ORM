@@ -2,6 +2,7 @@ package ru.bmstu.ORM.Service.Statements.Interfaces;
 
 import ru.bmstu.ORM.Service.Annotations.Column;
 import ru.bmstu.ORM.Service.Annotations.FK;
+import ru.bmstu.ORM.Service.Annotations.FO;
 import ru.bmstu.ORM.Service.Statements.SelectStmt;
 import ru.bmstu.ORM.Tables.Entity;
 
@@ -98,7 +99,7 @@ public abstract class Fetchable<T extends Entity> {
 
     private void fillField(ResultSet resultSet, T obj) throws IllegalAccessException, SQLException {
         boolean wasFK = false;
-        Map<String, Serializable> FKs = new HashMap<>();
+        Map<String, Map<String, Serializable>> FKs = new HashMap<>();
         for (Field field : tableClass.getDeclaredFields()) {
             if (field.isAnnotationPresent(Column.class)) {
                 Column column = field.getAnnotation(Column.class);
@@ -106,18 +107,22 @@ public abstract class Fetchable<T extends Entity> {
                 field.set(obj, resultSet.getObject(column.name()));
 
                 if (field.isAnnotationPresent(FK.class)) {
+                    String foreignTableName = field.getAnnotation(FK.class).table();
+                    if (!FKs.containsKey(foreignTableName))
+                        FKs.put(foreignTableName, new HashMap<>());
+                    Map<String, Serializable> foreignTable = FKs.get(foreignTableName);
                     wasFK = true;
-                    FKs.put(field.getAnnotation(FK.class).table(), (Serializable) resultSet.getObject(column.name()));
+                    foreignTable.put(field.getAnnotation(FK.class).referencedColumn(), (Serializable) resultSet.getObject(column.name()));
                 }
             }
         }
 
         if (wasFK) {
             for (Field field : tableClass.getDeclaredFields()) {
-                if (field.isAnnotationPresent(FK.class) && !field.isAnnotationPresent(Column.class)) {
+                if (field.isAnnotationPresent(FO.class)) {
                     Class referenced = field.getType();
                     SelectStmt selectStmt = new SelectStmt<>(getConnection(), referenced);
-                    Object foreignObject = selectStmt.getById(FKs.get(field.getAnnotation(FK.class).table()));
+                    Object foreignObject = selectStmt.getById(FKs.get(field.getAnnotation(FO.class).table()));
                     field.setAccessible(true);
                     field.set(obj, foreignObject);
                 }
