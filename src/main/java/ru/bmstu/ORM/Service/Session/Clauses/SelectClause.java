@@ -1,16 +1,13 @@
-package ru.bmstu.ORM.Service.Statements;
+package ru.bmstu.ORM.Service.Session.Clauses;
 
-import ru.bmstu.ORM.Service.Annotations.Column;
-import ru.bmstu.ORM.Service.Annotations.PK;
-import ru.bmstu.ORM.Service.Annotations.Table;
-import ru.bmstu.ORM.Service.Statements.Clauses.GroupByClause;
-import ru.bmstu.ORM.Service.Statements.Clauses.OrderByClause;
-import ru.bmstu.ORM.Service.Statements.Clauses.WhereClause;
-import ru.bmstu.ORM.Service.Statements.Interfaces.Fetchable;
-import ru.bmstu.ORM.Service.Statements.Interfaces.GroupByAble;
-import ru.bmstu.ORM.Service.Statements.Interfaces.OrderByAble;
-import ru.bmstu.ORM.Service.Statements.Interfaces.WhereAble;
-import ru.bmstu.ORM.Tables.Entity;
+import ru.bmstu.ORM.Service.ColumnAnnotations.Column;
+import ru.bmstu.ORM.Service.ColumnAnnotations.PK;
+import ru.bmstu.ORM.Service.ColumnAnnotations.Table;
+import ru.bmstu.ORM.Service.Session.Interfaces.Fetchable;
+import ru.bmstu.ORM.Service.Session.Interfaces.GroupByAble;
+import ru.bmstu.ORM.Service.Session.Interfaces.OrderByAble;
+import ru.bmstu.ORM.Service.Session.Interfaces.WhereAble;
+import ru.bmstu.ORM.Service.Tables.Entity;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -18,8 +15,8 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SelectStmt<T extends Entity> extends Fetchable<T> implements WhereAble<T>, GroupByAble<T>, OrderByAble<T> {
-    public SelectStmt(Connection connection, Class<T> tableClass) {
+public class SelectClause<T extends Entity> extends Fetchable<T> implements WhereAble<T>, GroupByAble<T>, OrderByAble<T> {
+    public SelectClause(Connection connection, Class<T> tableClass) {
         super(connection, tableClass);
         Table table = tableClass.getAnnotation(Table.class);
 

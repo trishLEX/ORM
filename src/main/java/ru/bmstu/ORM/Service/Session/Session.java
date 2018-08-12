@@ -1,7 +1,7 @@
 package ru.bmstu.ORM.Service.Session;
 
-import ru.bmstu.ORM.Service.Statements.SelectStmt;
-import ru.bmstu.ORM.Tables.Entity;
+import ru.bmstu.ORM.Service.Session.Clauses.SelectClause;
+import ru.bmstu.ORM.Service.Tables.Entity;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -38,7 +38,7 @@ public final class Session implements AutoCloseable {
         }
     }
 
-    public <T extends Entity> SelectStmt selectFrom(Class<T> table) {
-        return new SelectStmt<>(connection, table);
+    public <T extends Entity> SelectClause selectFrom(Class<T> table) {
+        return new SelectClause<>(connection, table);
     }
 }

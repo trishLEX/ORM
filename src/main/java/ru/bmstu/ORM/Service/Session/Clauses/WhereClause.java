@@ -1,14 +1,14 @@
-package ru.bmstu.ORM.Service.Statements.Clauses;
+package ru.bmstu.ORM.Service.Session.Clauses;
 
-import ru.bmstu.ORM.Service.Statements.Interfaces.Fetchable;
-import ru.bmstu.ORM.Service.Statements.Interfaces.GroupByAble;
-import ru.bmstu.ORM.Service.Statements.Interfaces.OrderByAble;
-import ru.bmstu.ORM.Tables.Entity;
+import ru.bmstu.ORM.Service.Session.Interfaces.Fetchable;
+import ru.bmstu.ORM.Service.Session.Interfaces.GroupByAble;
+import ru.bmstu.ORM.Service.Session.Interfaces.OrderByAble;
+import ru.bmstu.ORM.Service.Tables.Entity;
 
 import java.sql.Connection;
 
 public class WhereClause<T extends Entity> extends Fetchable<T> implements GroupByAble, OrderByAble<T> {
-    public WhereClause(Connection connection, Class<T> tableClass, String selectStmt, String whereClause) {
+    WhereClause(Connection connection, Class<T> tableClass, String selectStmt, String whereClause) {
         super(connection, tableClass, selectStmt + " WHERE " + whereClause);
     }
 

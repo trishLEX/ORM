@@ -8,8 +8,8 @@ import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.SVar;
 import ru.bmstu.ORM.Service.Session.Session;
-import ru.bmstu.ORM.Tables.Employee;
-import ru.bmstu.ORM.Tables.Shop;
+import ru.bmstu.ORM.Service.Tables.Employee;
+import ru.bmstu.ORM.Service.Tables.Shop;
 
 import java.io.IOException;
 import java.nio.file.Files;

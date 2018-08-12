@@ -1,10 +1,10 @@
-package ru.bmstu.ORM.Service.Statements.Interfaces;
+package ru.bmstu.ORM.Service.Session.Interfaces;
 
-import ru.bmstu.ORM.Service.Annotations.Column;
-import ru.bmstu.ORM.Service.Annotations.FK;
-import ru.bmstu.ORM.Service.Annotations.FO;
-import ru.bmstu.ORM.Service.Statements.SelectStmt;
-import ru.bmstu.ORM.Tables.Entity;
+import ru.bmstu.ORM.Service.ColumnAnnotations.Column;
+import ru.bmstu.ORM.Service.ColumnAnnotations.FK;
+import ru.bmstu.ORM.Service.ColumnAnnotations.FO;
+import ru.bmstu.ORM.Service.Session.Clauses.SelectClause;
+import ru.bmstu.ORM.Service.Tables.Entity;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -121,8 +121,8 @@ public abstract class Fetchable<T extends Entity> {
             for (Field field : tableClass.getDeclaredFields()) {
                 if (field.isAnnotationPresent(FO.class)) {
                     Class referenced = field.getType();
-                    SelectStmt selectStmt = new SelectStmt<>(getConnection(), referenced);
-                    Object foreignObject = selectStmt.getById(FKs.get(field.getAnnotation(FO.class).table()));
+                    SelectClause selectClause = new SelectClause<>(getConnection(), referenced);
+                    Object foreignObject = selectClause.getById(FKs.get(field.getAnnotation(FO.class).table()));
                     field.setAccessible(true);
                     field.set(obj, foreignObject);
                 }

@@ -1,4 +1,4 @@
-package ru.bmstu.ORM.Service.Annotations;
+package ru.bmstu.ORM.Service.ColumnAnnotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,9 +7,5 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Column {
-    String name();
-    boolean unique() default false;
-    boolean nullable() default true;
-    int length() default 255;
+public @interface PK {
 }

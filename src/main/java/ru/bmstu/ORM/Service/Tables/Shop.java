@@ -1,6 +1,6 @@
-package ru.bmstu.ORM.Tables;
+package ru.bmstu.ORM.Service.Tables;
 
-import ru.bmstu.ORM.Service.Annotations.*;
+import ru.bmstu.ORM.Service.ColumnAnnotations.*;
 
 import java.util.Objects;
 

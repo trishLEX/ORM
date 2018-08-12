@@ -10857,33 +10857,33 @@ insert_rest:
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = NIL;
-					$$->selectStmt = $1;
+					$$->selectClause = $1;
 				}
 			| OVERRIDING override_kind VALUE_P SelectStmt
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = NIL;
 					$$->override = $2;
-					$$->selectStmt = $4;
+					$$->selectClause = $4;
 				}
 			| '(' insert_column_list ')' SelectStmt
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
-					$$->selectStmt = $4;
+					$$->selectClause = $4;
 				}
 			| '(' insert_column_list ')' OVERRIDING override_kind VALUE_P SelectStmt
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
 					$$->override = $5;
-					$$->selectStmt = $7;
+					$$->selectClause = $7;
 				}
 			| DEFAULT VALUES
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = NIL;
-					$$->selectStmt = NULL;
+					$$->selectClause = NULL;
 				}
 		;
 
