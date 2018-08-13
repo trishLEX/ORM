@@ -57,6 +57,7 @@ public class Main {
         Employee employee = session.selectFrom(Employee.class).fetchFirst();
         System.out.println(employee);
         System.out.println(employee.getShop());
+        System.out.println(session.contains(employee));
         session.close();
     }
 }
