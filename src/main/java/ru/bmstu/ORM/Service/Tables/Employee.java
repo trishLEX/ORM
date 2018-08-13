@@ -47,8 +47,8 @@ public class Employee implements Entity {
     @Column(name = "shopCode")
     private Integer shopCode;
 
-    @Column(name = "array")
-    private ArrayList<Integer> array;
+    @Column(name = "ints")
+    private ArrayList<Integer> ints;
 
     @FO(table = "shop")
     private Shop shop;
@@ -157,12 +157,12 @@ public class Employee implements Entity {
         this.shop = shop;
     }
 
-    public ArrayList<Integer> getArray() {
-        return array;
+    public ArrayList<Integer> getInts() {
+        return ints;
     }
 
-    public void setArray(ArrayList<Integer> array) {
-        this.array = array;
+    public void setInts(ArrayList<Integer> ints) {
+        this.ints = ints;
     }
 
     @Override
@@ -186,6 +186,6 @@ public class Employee implements Entity {
         return "Employee { " + "employeeCode: " + employeeCode + ", firstName: " + firstName + ", lastName: " + lastName +
                 ", middleName: " + middleName + ", dateOfBirth: " + dateOfBirth + ", phone: " + phone +
                 ", position: " + position + ", isFired: " + isFired + ", salary: " + salary + ", sex: " + sex +
-                ", chief: " + chief + ", shopCode: " + shopCode + ", array: " + array + " } ";
+                ", chief: " + chief + ", shopCode: " + shopCode + ", ints: " + ints + " } ";
     }
 }

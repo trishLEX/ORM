@@ -58,6 +58,8 @@ public class Main {
         System.out.println(employee);
         System.out.println(employee.getShop());
         System.out.println(session.contains(employee));
+        employee.getInts().add(10);
+        session.update(employee);
         session.close();
     }
 }
