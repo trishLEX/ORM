@@ -40,8 +40,14 @@ public class SelectClause<T extends Entity> extends Fetchable<T> implements Wher
 
     public T getById(Map<String, Object> id) {
         StringBuilder suffix = new StringBuilder();
+        boolean wasFirst = false;
         for (Map.Entry<String, Object> entry: id.entrySet()) {
-            suffix.append(entry.getKey()).append(" = ").append(entry.getValue().toString());
+            if (!wasFirst) {
+                wasFirst = true;
+                suffix.append(entry.getKey()).append(" = ").append(entry.getValue());
+            } else {
+                suffix.append(" AND ").append(entry.getKey()).append(" = ").append(entry.getValue());
+            }
         }
         
         return this.where(suffix.toString()).fetchFirst();
