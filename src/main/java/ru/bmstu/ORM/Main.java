@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
     private static final String PATH = "E:\\Sorry\\Documents\\IdeaProjects\\ORM\\src\\main\\resources\\TestFile.txt";
@@ -51,9 +52,9 @@ public class Main {
 
         Session session = new Session("localhost", "5432", "postgres", "shopdb", "0212");
         session.open();
-        Shop shop = (Shop) session.selectFrom(Shop.class).where("shopCode = 100").fetchFirst();
+        List<Shop> shop = session.selectFrom(Shop.class).where("shopCode = 101").fetchAll();
         System.out.println(shop);
-        Employee employee = (Employee) session.selectFrom(Employee.class).fetchFirst();
+        Employee employee = session.selectFrom(Employee.class).fetchFirst();
         System.out.println(employee);
         System.out.println(employee.getShop());
         session.close();

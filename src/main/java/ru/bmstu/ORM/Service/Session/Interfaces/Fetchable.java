@@ -77,7 +77,11 @@ public abstract class Fetchable<T extends Entity> {
         try {
             Statement stmt = connection.createStatement();
             ResultSet resultSet = stmt.executeQuery(selectStmt);
-            resultSet.next();
+            boolean res = resultSet.next();
+
+            if (!res)
+                return null;
+
             try {
                 T obj = tableClass.getDeclaredConstructor().newInstance();
 

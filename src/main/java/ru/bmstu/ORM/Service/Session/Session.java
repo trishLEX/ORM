@@ -38,7 +38,7 @@ public final class Session implements AutoCloseable {
         }
     }
 
-    public <T extends Entity> SelectClause selectFrom(Class<T> table) {
+    public <T extends Entity> SelectClause<T> selectFrom(Class<T> table) {
         return new SelectClause<>(connection, table);
     }
 }
