@@ -2162,6 +2162,21 @@ public class Scanner {
                                 }
                             }
                         }
+                    } else if (cur.getChar() == 'o') {
+                        value.append("o");
+                        cur.nextCp();
+                        if (cur.getChar() == 'i') {
+                            value.append("i");
+                            cur.nextCp();
+                            if (cur.getChar() == 'd') {
+                                value.append("d");
+                                cur.nextCp();
+                                if (cur.isWhiteSpace() || cur.isSpecial())
+                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.VOID);
+                                else
+                                    return getIdent(start, value);
+                            }
+                        }
                     }
 
                     return getIdent(start, value);

@@ -1509,6 +1509,7 @@ public class Parser {
 
     //CreateFunctionReturnStmt    ::= Typename
     //                            |   TABLE '(' TableFuncColumnList ')'
+    //                            |   VOID
     private void parseCreateFunctionReturnStmt(CreateFunctionReturnStmtVar createFunctionReturnStmt) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.CHARACTER
                 || sym.getTag() == TokenTag.CHAR
@@ -1546,8 +1547,12 @@ public class Parser {
             createFunctionReturnStmt.addSymbol(sym);
             createFunctionReturnStmt.setFollow(sym.getFollow());
             parse(TokenTag.RPAREN);
+        } else if (sym.getTag() == TokenTag.VOID) {
+            createFunctionReturnStmt.addSymbol(sym);
+            createFunctionReturnStmt.setCoords(sym.getCoords());
+            parse(TokenTag.VOID);
         } else {
-            throw new RuntimeException("Typename or TABLE expected, got " + sym);
+            throw new RuntimeException("Typename, TABLE or VOID expected, got " + sym);
         }
     }
 

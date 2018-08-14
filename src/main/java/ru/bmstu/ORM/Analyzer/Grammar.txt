@@ -125,6 +125,7 @@ CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' funcArg
 
 CreateFunctionReturnStmt    ::= Typename
                             |   TABLE '(' TableFuncColumnList ')'
+                            |   VOID
 
 TableFuncColumnList         ::= IDENT Typename (',' IDENT Typename)*
 

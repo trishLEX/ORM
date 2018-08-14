@@ -117,6 +117,7 @@ public enum TokenTag implements SymbolType {
     USING,
     VARCHAR,
     VALUES,
+    VOID,
     WHERE,
     WHEN,
     WHILE,
