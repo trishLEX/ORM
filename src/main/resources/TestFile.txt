@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Shop
   isOutlet BOOLEAN DEFAULT FALSE NOT NULL,
   address  VARCHAR(25) NOT NULL,
   city VARCHAR(50) NOT NULL,
-  isClosed BOOLEAN NOT NULL DEFAULT FALSE,
+  "isClosed" BOOLEAN NOT NULL DEFAULT FALSE,
 
   area FLOAT NOT NULL,
   countOfVisitorsToday INT NOT NULL CHECK (countOfVisitorsToday >= 0)

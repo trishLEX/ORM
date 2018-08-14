@@ -2302,7 +2302,7 @@ public class Scanner {
                 case '\'':
                     value = new StringBuilder();
                     cur.nextCp();
-                    while (cur.getChar() != '\'') {
+                    while (cur.getChar() != '\'' && cur.getChar() != (char) 0xFFFFFFFF) {
                         if (cur.getChar() == '\n' || cur.getChar() == '\r')
                             error("String must be in one line");
                         else
@@ -2332,6 +2332,21 @@ public class Scanner {
                             }
                         }
                     }
+                case '"':
+                    value = new StringBuilder().append('"');
+                    cur.nextCp();
+                    while (cur.getChar() != '"' && cur.getChar() != (char) 0xFFFFFFFF) {
+                        if (cur.getChar() == '\n' || cur.getChar() == '\r')
+                            error("Identifier can't contain new line symbols");
+                        else
+                            value.append(cur.getChar());
+
+                        cur.nextCp();
+                    }
+                    value.append('"');
+                    cur.nextCp();
+
+                    return new IdentToken(start, (Position) cur.clone(), value.toString());
                 case ',':
                     cur.nextCp();
 
