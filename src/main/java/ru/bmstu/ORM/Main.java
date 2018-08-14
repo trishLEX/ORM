@@ -8,6 +8,7 @@ import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.SVar;
 import ru.bmstu.ORM.Service.Session.Session;
+import ru.bmstu.ORM.Service.Session.SessionFactory;
 import ru.bmstu.ORM.Service.Tables.Employee;
 import ru.bmstu.ORM.Service.Tables.Shop;
 
@@ -50,8 +51,9 @@ public class Main {
 
         System.out.println(start);
 
-        Session session = new Session("localhost", "5432", "postgres", "shopdb", "0212");
-        session.open();
+        SessionFactory sessionFactory = new SessionFactory("localhost", "5432", "postgres", "shopdb", "0212");
+        Session session = sessionFactory.openSession();
+
         List<Shop> shop = session.selectFrom(Shop.class).where("shopCode = 101").fetchAll();
         System.out.println(shop);
         Employee employee = session.selectFrom(Employee.class).fetchFirst();

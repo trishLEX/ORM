@@ -16,20 +16,18 @@ import java.util.Map;
 public final class Session implements AutoCloseable {
     private final String connectionString;
     private Connection connection;
+    private boolean isClosed;
 
-    public Session(String host, String port, String user, String catalog, String password) {
-        this.connectionString = "jdbc:postgresql://" +
-                host + ":" +
-                port + "/" +
-                catalog +
-                "?user=" + user +
-                "&password=" + password;
+    Session(String connectionString) {
+        this.connectionString = connectionString;
+        this.isClosed = true;
     }
 
-    public void open() {
+    void open() {
         try {
             Class.forName("org.postgresql.Driver");
             connection = DriverManager.getConnection(connectionString);
+            isClosed = false;
         } catch (ClassNotFoundException | SQLException classException) {
             classException.printStackTrace();
         }
@@ -39,9 +37,14 @@ public final class Session implements AutoCloseable {
     public void close() {
         try {
             connection.close();
+            isClosed = true;
         } catch (SQLException exception) {
             throw new RuntimeException("Error while closing connection", exception);
         }
+    }
+
+    public boolean isClosed() {
+        return isClosed;
     }
 
     public <T extends Entity> SelectClause<T> selectFrom(Class<T> table) {
