@@ -376,7 +376,7 @@ public class Parser {
         } else if (sym.getTag() == TokenTag.NUMERIC) {
             parse(TokenTag.NUMERIC);
         } else {
-            throw new RuntimeException("Invalid type at " + sym);
+            throw new RuntimeException("Invalid symbol at " + sym);
         }
     }
 
