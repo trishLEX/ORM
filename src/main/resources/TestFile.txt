@@ -21,10 +21,11 @@ CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Employee
   phone CHAR(11) NOT NULL UNIQUE,
   position VARCHAR(25) NOT NULL,
   isFired BOOLEAN DEFAULT FALSE NOT NULL,
-  salary float NOT NULL,
+  salary real NOT NULL,
   sex boolean NOT NULL,
   chief INT,
   shopCode INT,
+  ints INT[],
 
   FOREIGN KEY (shopCode) REFERENCES ShopDB.ShopSchema.Shop (shopCode) ON DELETE CASCADE
 );

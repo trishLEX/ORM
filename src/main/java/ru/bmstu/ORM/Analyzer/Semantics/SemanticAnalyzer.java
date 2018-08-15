@@ -3,10 +3,12 @@ package ru.bmstu.ORM.Analyzer.Semantics;
 import ru.bmstu.ORM.Analyzer.Symbols.Symbol;
 import ru.bmstu.ORM.Analyzer.Symbols.SymbolType;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.IdentToken;
+import ru.bmstu.ORM.Analyzer.Symbols.Tokens.NumberToken;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.TokenTag;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.BooleanExpression.*;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Expressions.GeneralExpression.ConstExprVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.QualifiedNameVar;
+import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.CharacterTypeVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.SimpleTypeNameVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.Common.Types.TypenameVar;
 import ru.bmstu.ORM.Analyzer.Symbols.Variables.CreateTableFunctionVar;
@@ -60,28 +62,55 @@ public class SemanticAnalyzer {
     private void analyzeColumnDef(CreateTableStmtVar createTableStmt, ColumnDefVar columnDef) {
         if (columnDef.getSymbols().size() > 2) {
             for (int i = 2; i < columnDef.getSymbols().size(); i++) {
-                analyzeColConstraint(createTableStmt, (TypenameVar) columnDef.get(1), (ColConstraintVar) columnDef.get(i));
+                analyzeColConstraint(createTableStmt, (TypenameVar) columnDef.get(1),
+                        (ColConstraintVar) columnDef.get(i), columnDef);
+            }
+        }
+
+        TypenameVar typename = (TypenameVar) columnDef.get(1);
+        SimpleTypeNameVar simpleTypeName = (SimpleTypeNameVar) typename.get(0);
+        if (simpleTypeName.get(0).getTag() == VarTag.CHARACTER_TYPE) {
+            CharacterTypeVar characterType = (CharacterTypeVar) simpleTypeName.get(0);
+            if (characterType.size() > 1) {
+                NumberToken number = (NumberToken) characterType.get(2);
+                columnDef.setLength(number.getValue().intValue());
             }
         }
     }
 
-    private void analyzeColConstraint(CreateTableStmtVar createTableStmt, TypenameVar typename, ColConstraintVar colConstraint) {
+    private void analyzeColConstraint(CreateTableStmtVar createTableStmt, TypenameVar typename,
+                                      ColConstraintVar colConstraint, ColumnDefVar columnDef) {
         if (colConstraint.getSymbols().size() == 1) {
-            analyzeColConstraintElem(createTableStmt, typename, (ColConstraintElemVar) colConstraint.get(0));
+            analyzeColConstraintElem(createTableStmt, typename, (ColConstraintElemVar) colConstraint.get(0), columnDef);
         } else {
-            analyzeColConstraintElem(createTableStmt, typename, (ColConstraintElemVar) colConstraint.get(2));
+            analyzeColConstraintElem(createTableStmt, typename, (ColConstraintElemVar) colConstraint.get(2), columnDef);
         }
     }
 
-    private void analyzeColConstraintElem(CreateTableStmtVar createTableStmt, TypenameVar typename, ColConstraintElemVar colConstraintElem) {
-        if (colConstraintElem.getSymbols().size() > 2 && colConstraintElem.get(2).getTag() == VarTag.BOOL_EXPR) {
+    private void analyzeColConstraintElem(CreateTableStmtVar createTableStmt, TypenameVar typename,
+                                          ColConstraintElemVar colConstraintElem, ColumnDefVar columnDef) {
+        if (colConstraintElem.get(0).getTag() == TokenTag.NOT) {
+            columnDef.setNullable(false);
+        } else if (colConstraintElem.get(0).getTag() == TokenTag.NULL) {
+            columnDef.setNullable(true);
+        } else if (colConstraintElem.get(0).getTag() == TokenTag.UNIQUE) {
+            columnDef.setUnique(true);
+        } else if (colConstraintElem.get(0).getTag() == TokenTag.PRIMARY) {
+            columnDef.setPK(true);
+        } else if (colConstraintElem.get(0).getTag() == TokenTag.CHECK) {
             analyzeBoolExpr(createTableStmt, (BoolExprVar) colConstraintElem.get(2));
-        } else if (colConstraintElem.getSymbols().size() > 1 && colConstraintElem.get(1).getTag() == VarTag.CONST_EXPR) {
+        } else if (colConstraintElem.get(0).getTag() == TokenTag.DEFAULT) {
             analyzeConstExpr(typename, (ConstExprVar) colConstraintElem.get(1));
+            columnDef.setDefault(((ConstExprVar) colConstraintElem.get(1)).getJavaValue());
         } else if (colConstraintElem.get(0).getTag() == TokenTag.REFERENCES) {
             if (tables.containsKey(colConstraintElem.get(1))) {
                 if (colConstraintElem.size() > 2) {
                     if (colConstraintElem.get(3).getTag() == TokenTag.IDENTIFIER) {
+                        columnDef.setFK(String.format("table = \"%s\", column = \"%s\"",
+                                ((QualifiedNameVar) colConstraintElem.get(1)).getLastColId().getStringValue().toLowerCase(),
+                                ((IdentToken) colConstraintElem.get(3)).getStringValue()));
+                        columnDef.setFO(((QualifiedNameVar) colConstraintElem.get(1)).getLastColId().getStringValue());
+
                         if (!tables.get(colConstraintElem.get(1)).containsColumn((IdentToken) colConstraintElem.get(3)))
                             throw new RuntimeException("No column " + colConstraintElem.get(3) + " in " + tables.get(colConstraintElem.get(1)));
 
@@ -147,7 +176,6 @@ public class SemanticAnalyzer {
     private void analyzeConstExpr(TypenameVar typename, ConstExprVar constExpr) {
         if (constExpr.get(0).getTag() == TokenTag.LPAREN)
             analyzeConstExpr(typename, (ConstExprVar) constExpr.get(1));
-
         if (typename.getSymbols().size() == 1) {
             SimpleTypeNameVar simpleType = (SimpleTypeNameVar) typename.get(0);
             if (simpleType.get(0).getTag() == VarTag.NUMERIC_TYPE && constExpr.get(0).getTag() != VarTag.ARITHM_CONST_EXPR)
@@ -178,6 +206,12 @@ public class SemanticAnalyzer {
                 if (s.getTag() == TokenTag.IDENTIFIER) {
                     if (!createTableStmtVar.containsColumn((IdentToken) s))
                         throw new RuntimeException("No column " + s + " at " + createTableStmtVar);
+                    else {
+                        if (constraintElem.get(0).getTag() == TokenTag.UNIQUE)
+                            createTableStmtVar.getColumnDef((IdentToken) s).setUnique(true);
+                        else
+                            createTableStmtVar.getColumnDef((IdentToken) s).setPK(true);
+                    }
                 }
             }
         } else {
@@ -212,6 +246,13 @@ public class SemanticAnalyzer {
                     for (int i = 0; i < keysIn; i++) {
                         if (createTableStmtVar.getFullTypeOfColumn(foreignKeys.get(i)) != tables.get(constraintElem.get(2 * keysIn + 4)).getFullTypeOfColumn(referencedKeys.get(i)))
                             throw new RuntimeException("Types of column " + foreignKeys.get(i) + " and " + referencedKeys.get(i) + " are different");
+
+                        String fk = String.format("table = \"%s\", column = \"%s\"",
+                                tables.get(constraintElem.get(2 * keysIn + 4)).getName().toLowerCase(),
+                                referencedKeys.get(i).getStringValue().toLowerCase());
+                        String fo = tables.get(constraintElem.get(2 * keysIn + 4)).getName().toLowerCase();
+                        createTableStmtVar.getColumnDef(foreignKeys.get(i)).setFK(fk);
+                        createTableStmtVar.getColumnDef(foreignKeys.get(i)).setFO(fo);
                     }
                 } else {
                     throw new RuntimeException("Some referenced columns are not specified at " + constraintElem);

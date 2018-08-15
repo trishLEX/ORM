@@ -11,17 +11,17 @@ import ru.bmstu.ORM.Analyzer.Symbols.Variables.VarTag;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class CreateTableStmtVar extends Var {
     private QualifiedNameVar tableName;
-    private HashMap<IdentToken, ColumnDefVar> columns;
+    private LinkedHashMap<IdentToken, ColumnDefVar> columns;
     private ArrayList<TableConstraintVar> tableConstraints;
     private boolean existsPK;
 
     public CreateTableStmtVar() {
         super(VarTag.CREATE_TABLE_STMT);
-        columns = new HashMap<>();
+        columns = new LinkedHashMap<>();
         tableConstraints = new ArrayList<>();
         existsPK = false;
     }
@@ -49,6 +49,10 @@ public class CreateTableStmtVar extends Var {
             SimpleTypeNameVar simpleTypeName = (SimpleTypeNameVar) typename.get(0);
             return simpleTypeName.get(0).getTag();
         }
+    }
+
+    public ColumnDefVar getColumnDef(IdentToken colId) {
+        return columns.get(colId);
     }
 
     public Collection<ColumnDefVar> getColumns() {
@@ -88,5 +92,37 @@ public class CreateTableStmtVar extends Var {
 
     public void setExistsPK(boolean existsPK) {
         this.existsPK = existsPK;
+    }
+
+    public String getCatalog() {
+        if (tableName.size() == 5) {
+            String catalog = ((IdentToken)tableName.get(0)).getValue();
+            return Character.toUpperCase(catalog.charAt(0)) + catalog.substring(1);
+        } else {
+            return "Postgres";
+        }
+    }
+
+    public String getSchema() {
+        if (tableName.size() == 5) {
+            String schema = ((IdentToken) tableName.get(2)).getValue();
+            return Character.toUpperCase(schema.charAt(0)) + schema.substring(1);
+        } else if (tableName.size() == 3) {
+            String schema = ((IdentToken)tableName.get(0)).getValue();
+            return Character.toUpperCase(schema.charAt(0)) + schema.substring(1);
+        } else {
+            return "Public";
+        }
+    }
+
+    public String getName() {
+        String name = ((IdentToken) tableName.get(tableName.size() - 1)).getValue();
+        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+    }
+
+    public ArrayList<ColumnDefVar> getPKs() {
+        ArrayList<ColumnDefVar> res = new ArrayList<>(columns.values());
+        res.removeIf(column -> !column.isPK());
+        return res;
     }
 }
