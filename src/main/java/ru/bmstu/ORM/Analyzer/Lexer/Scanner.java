@@ -814,7 +814,7 @@ public class Scanner {
                                     value.append("e");
                                     cur.nextCp();
                                     if (cur.isWhiteSpace() || cur.isSpecial())
-                                        return new KeywordToken(start, (Position) cur.clone(), TokenTag.FALSE);
+                                        return new BoolToken(start, (Position) cur.clone(), false, TokenTag.FALSE);
                                     else
                                         return getIdent(start, value);
                                 }
@@ -1360,7 +1360,7 @@ public class Scanner {
                                 value.append("l");
                                 cur.nextCp();
                                 if (cur.isWhiteSpace() || cur.isSpecial())
-                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.NULL);
+                                    return new BoolToken(start, (Position) cur.clone(), null, TokenTag.NULL);
                                 else
                                     return getIdent(start, value);
                             }
@@ -1998,7 +1998,7 @@ public class Scanner {
                                 value.append("e");
                                 cur.nextCp();
                                 if (cur.isWhiteSpace() || cur.isSpecial())
-                                    return new KeywordToken(start, (Position) cur.clone(), TokenTag.TRUE);
+                                    return new BoolToken(start, (Position) cur.clone(), true, TokenTag.TRUE);
                                 else
                                     return getIdent(start, value);
                             }
