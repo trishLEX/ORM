@@ -1254,7 +1254,7 @@ public class Parser {
         }
     }
 
-    //ConstExpr           ::= ArithmConstExpr | NOT? BoolConst | CharacterValue | DateValue'::'DateTimeCastVar
+    //ConstExpr           ::= ArithmConstExpr | NOT? BoolConst | CharacterValue | DateTimeCast
     private void parseConstExpr(ConstExprVar constExpr) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.BYTE_CONST
                 || sym.getTag() == TokenTag.SHORT_CONST

@@ -108,16 +108,16 @@ DateRHS             ::= '<'  DateTimeCast
                     |   '!=' DateTimeCast
                     |   NOT? BETWEEN DateTimeCast AND DateTimeCast
 
-ConstExpr           ::= ArithmConstExpr | NOT? BoolConst | CharacterValue | DateTimeCast | '(' ConstExpr ')'
+ConstExpr           ::= ArithmConstExpr | NOT? BoolConst | CharacterValue | DateTimeCast
 
 DateTimeCast        ::= DateValue'::'DATE
                     |   TimeValue'::'TIME
                     |   TimestampValue'::'TIMESTAMP
 
-ArithmConstExpr      ::= ArithmExprNoVarTerm ( {'+' | '-'} ArithmExprNoVarTerm )*
-ArithmConstExprTerm  ::= ArithmExprNoVarFactor ( {'*' | '/'} ArithmExprNoVarFactor )*
+ArithmConstExpr      ::= ArithmConstExprTerm ( {'+' | '-'} ArithmConstExprTerm )*
+ArithmConstExprTerm  ::= ArithmConstExprFactor ( {'*' | '/'} ArithmConstExprFactor )*
 ArithmConstExprFactor::= NumericValue
-                     |   '-' ArithmExprNoVarFactor
+                     |   '-' ArithmConstExprFactor
                      |   '(' ArithmConstExpr ')'
 
 CreateFunctionStmt          ::= (OR REPLACE)? FUNCTION QualifiedName '(' funcArgsWithDefaultsList? ')' RETURNS
