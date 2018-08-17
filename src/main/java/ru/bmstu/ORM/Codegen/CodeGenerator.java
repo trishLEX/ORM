@@ -83,14 +83,14 @@ public class CodeGenerator {
             if (symbol.getTag() == VarTag.CREATE_TABLE_STMT)
                 generateCreateTableStmt((CreateTableStmtVar) symbol);
             else if (symbol.getTag() == VarTag.CREATE_FUNCTION_STMT) {
-                //TODO generateCreateFunctionStmt((CreateFunctionStmtVar) symbol);
+                generateCreateFunctionStmt((CreateFunctionStmtVar) symbol);
             }
         }
     }
 
     private void generateCreateTableStmt(CreateTableStmtVar createTableStmt) {
-        File classFile = new File(this.path + "\\Tables\\" + createTableStmt.getCatalog() + "\\" +
-            createTableStmt.getSchema() + "\\" + createTableStmt.getName() + ".java");
+        File classFile = new File(this.path + createTableStmt.getCatalog() + "\\" +
+            createTableStmt.getSchema() + "\\Tables\\" + createTableStmt.getName() + ".java");
 
         try {
             classFile.getParentFile().mkdirs();
@@ -153,7 +153,7 @@ public class CodeGenerator {
                 writer.write("\t@Override\n");
                 writer.write("\tpublic boolean equals(Object obj) {\n");
                 writer.write("\t\tif (this == obj)\n\t\t\treturn true;\n");
-                writer.write("\t\tif (this.getClass() != obj.getClass()\n\t\t\treturn false;\n\n");
+                writer.write("\t\tif (this.getClass() != obj.getClass())\n\t\t\treturn false;\n\n");
                 writer.write("\t\t" + createTableStmt.getName() + " other = (" + createTableStmt.getName() + ") obj;\n");
                 writer.write("\t\treturn ");
                 boolean wasFirst = false;
@@ -168,8 +168,8 @@ public class CodeGenerator {
                 writer.write(";\n\t}\n\n");
 
                 writer.write("\t@Override\n");
-                writer.write("\tpublic int hashcode() {\n");
-                writer.write("\t\treturn Objects.hashcode(");
+                writer.write("\tpublic int hashCode() {\n");
+                writer.write("\t\treturn Objects.hashCode(");
                 wasFirst = false;
                 for (ColumnDefVar column: createTableStmt.getPKs()) {
                     if (!wasFirst)
@@ -188,9 +188,14 @@ public class CodeGenerator {
                     writer.write("\t\t\t\"\\t" + column.getName() + ": \" + this." + column.getName() + " + \"\\n\" +\n");
                 writer.write("\t\t\t\"}\";\n");
                 writer.write("\t}");
+                writer.write("}");
             }
         } catch (IOException e) {
             throw new RuntimeException("Can't create file " + classFile.getName(), e);
         }
+    }
+
+    private void generateCreateFunctionStmt(CreateFunctionStmtVar createFunctionStmt) {
+        //TODO
     }
 }

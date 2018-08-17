@@ -106,7 +106,7 @@ public class SemanticAnalyzer {
             if (tables.containsKey(colConstraintElem.get(1))) {
                 if (colConstraintElem.size() > 2) {
                     if (colConstraintElem.get(3).getTag() == TokenTag.IDENTIFIER) {
-                        columnDef.setFK(String.format("table = \"%s\", column = \"%s\"",
+                        columnDef.setFK(String.format("table = \"%s\", referencedColumn = \"%s\"",
                                 ((QualifiedNameVar) colConstraintElem.get(1)).getLastColId().getStringValue().toLowerCase(),
                                 ((IdentToken) colConstraintElem.get(3)).getStringValue()));
                         columnDef.setFO(((QualifiedNameVar) colConstraintElem.get(1)).getLastColId().getStringValue());
@@ -247,7 +247,7 @@ public class SemanticAnalyzer {
                         if (createTableStmtVar.getFullTypeOfColumn(foreignKeys.get(i)) != tables.get(constraintElem.get(2 * keysIn + 4)).getFullTypeOfColumn(referencedKeys.get(i)))
                             throw new RuntimeException("Types of column " + foreignKeys.get(i) + " and " + referencedKeys.get(i) + " are different");
 
-                        String fk = String.format("table = \"%s\", column = \"%s\"",
+                        String fk = String.format("table = \"%s\", referencedColumn = \"%s\"",
                                 tables.get(constraintElem.get(2 * keysIn + 4)).getName().toLowerCase(),
                                 referencedKeys.get(i).getStringValue().toLowerCase());
                         String fo = tables.get(constraintElem.get(2 * keysIn + 4)).getName().toLowerCase();
