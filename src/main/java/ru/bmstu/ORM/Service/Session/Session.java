@@ -5,8 +5,10 @@ import ru.bmstu.ORM.Service.ColumnAnnotations.PK;
 import ru.bmstu.ORM.Service.ColumnAnnotations.Table;
 import ru.bmstu.ORM.Service.Session.Clauses.SelectClause;
 import ru.bmstu.ORM.Service.Tables.Entity;
+import ru.bmstu.ORM.Service.Session.Interfaces.FunctionsExecutor;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -197,6 +199,15 @@ public final class Session implements AutoCloseable {
             return  "'" + object + "'::TIMESTAMP";
         } else {
             return object.toString();
+        }
+    }
+
+    public <T extends FunctionsExecutor> T getFunctions(Class<T> clazz) {
+        try {
+            return clazz.getConstructor(Connection.class).newInstance(connection);
+        } catch (InstantiationException | InvocationTargetException
+                | NoSuchMethodException | IllegalAccessException exception) {
+            throw new RuntimeException("Can't create " + clazz, exception);
         }
     }
 }

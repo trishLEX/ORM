@@ -95,29 +95,15 @@ public class CreateTableStmtVar extends Var {
     }
 
     public String getCatalog() {
-        if (tableName.size() == 5) {
-            String catalog = ((IdentToken)tableName.get(0)).getValue();
-            return Character.toUpperCase(catalog.charAt(0)) + catalog.substring(1);
-        } else {
-            return "Postgres";
-        }
+        return this.tableName.getCatalog();
     }
 
     public String getSchema() {
-        if (tableName.size() == 5) {
-            String schema = ((IdentToken) tableName.get(2)).getValue();
-            return Character.toUpperCase(schema.charAt(0)) + schema.substring(1);
-        } else if (tableName.size() == 3) {
-            String schema = ((IdentToken)tableName.get(0)).getValue();
-            return Character.toUpperCase(schema.charAt(0)) + schema.substring(1);
-        } else {
-            return "Public";
-        }
+        return this.tableName.getSchema();
     }
 
     public String getName() {
-        String name = ((IdentToken) tableName.get(tableName.size() - 1)).getValue();
-        return Character.toUpperCase(name.charAt(0)) + name.substring(1);
+        return this.tableName.getName();
     }
 
     public ArrayList<ColumnDefVar> getPKs() {
