@@ -1,6 +1,7 @@
 package ru.bmstu.ORM.Analyzer.Parser;
 
 import ru.bmstu.ORM.Analyzer.Lexer.Scanner;
+import ru.bmstu.ORM.Analyzer.Symbols.Symbol;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.IdentToken;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.NumberToken;
 import ru.bmstu.ORM.Analyzer.Symbols.Tokens.Token;
@@ -1461,6 +1462,7 @@ public class Parser {
         QualifiedNameVar qualifiedName = new QualifiedNameVar();
         createFunctionStmt.addSymbol(qualifiedName);
         parseQualifiedName(qualifiedName);
+        createFunctionStmt.setFunctionName(qualifiedName);
 
         createFunctionStmt.addSymbol(sym);
         parse(TokenTag.LPAREN);
@@ -1489,6 +1491,12 @@ public class Parser {
             FuncArgsWithDefaultsListVar funcArgsWithDefaultsList = new FuncArgsWithDefaultsListVar();
             createFunctionStmt.addSymbol(funcArgsWithDefaultsList);
             parseFuncArgsWithDefaultsList(funcArgsWithDefaultsList);
+
+            for (Symbol s: funcArgsWithDefaultsList.getSymbols()) {
+                if (s.getTag() == VarTag.FUNC_ARG_WITH_DEFAULT) {
+                    createFunctionStmt.addArg((FuncArgWithDefaultVar) s);
+                }
+            }
         }
 
         createFunctionStmt.addSymbol(sym);
@@ -1500,6 +1508,10 @@ public class Parser {
         CreateFunctionReturnStmtVar createFunctionReturnStmt = new CreateFunctionReturnStmtVar();
         createFunctionStmt.addSymbol(createFunctionReturnStmt);
         parseCreateFunctionReturnStmt(createFunctionReturnStmt);
+        if (createFunctionReturnStmt.getTable() != null)
+            createFunctionStmt.setReturnedTable(createFunctionReturnStmt.getTable());
+        if (createFunctionReturnStmt.getReturnedType() != null)
+            createFunctionStmt.setReturnedType(createFunctionReturnStmt.getReturnedType());
 
         CreateFuncBodyVar createFuncBody = new CreateFuncBodyVar();
         createFunctionStmt.addSymbol(createFuncBody);
@@ -1532,6 +1544,7 @@ public class Parser {
             createFunctionReturnStmt.addSymbol(typename);
             parseTypename(typename);
             createFunctionReturnStmt.setCoords(typename.getCoords());
+            createFunctionReturnStmt.setReturnedType(typename);
         } else if (sym.getTag() == TokenTag.TABLE) {
             createFunctionReturnStmt.addSymbol(sym);
             createFunctionReturnStmt.setStart(sym.getStart());
@@ -1543,6 +1556,7 @@ public class Parser {
             TableFuncColumnListVar tableFuncColumnList = new TableFuncColumnListVar();
             createFunctionReturnStmt.addSymbol(tableFuncColumnList);
             parseTableFuncColumnList(tableFuncColumnList);
+            createFunctionReturnStmt.setTable(tableFuncColumnList.getTable());
 
             createFunctionReturnStmt.addSymbol(sym);
             createFunctionReturnStmt.setFollow(sym.getFollow());
@@ -1560,24 +1574,30 @@ public class Parser {
     private void parseTableFuncColumnList(TableFuncColumnListVar tableFuncColumnList) throws CloneNotSupportedException {
         tableFuncColumnList.addSymbol(sym);
         tableFuncColumnList.setStart(sym.getStart());
+        Token ident = sym;
         parse(TokenTag.IDENTIFIER);
 
         TypenameVar typename = new TypenameVar();
         tableFuncColumnList.addSymbol(typename);
         parseTypename(typename);
         tableFuncColumnList.setFollow(typename.getFollow());
+        String name = ((IdentToken) ident).getValue();
+        tableFuncColumnList.addColumn(Character.toUpperCase(name.charAt(0)) + name.substring(1), typename);
 
         while (sym.getTag() == TokenTag.COMMA) {
             tableFuncColumnList.addSymbol(sym);
             parse(TokenTag.COMMA);
 
             tableFuncColumnList.addSymbol(sym);
+            ident = sym;
             parse(TokenTag.IDENTIFIER);
 
             TypenameVar typenameVar = new TypenameVar();
             tableFuncColumnList.addSymbol(typenameVar);
             parseTypename(typenameVar);
             tableFuncColumnList.setFollow(typenameVar.getFollow());
+            name = ((IdentToken) ident).getValue();
+            tableFuncColumnList.addColumn(Character.toUpperCase(name.charAt(0)) + name.substring(1), typename);
         }
     }
 

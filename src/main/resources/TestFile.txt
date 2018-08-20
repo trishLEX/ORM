@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Employee
 );
 
 
-CREATE or replace function go() returns int as $$
+CREATE or replace function shopdb.shopschema.go(c int = 2, k int) returns int as $$
 begin
   if (1>2) then
     RAISE 'bad';
@@ -52,3 +52,11 @@ begin
   return 1;
 end;
 $$ language plpgsql;
+
+CREATE OR REPLACE FUNCTION shopdb.shopschema.a(a INT DEFAULT 3)
+RETURNS TABLE(col int, col1 int) AS $$
+BEGIN
+  a := a * 2;
+  RETURN QUERY SELECT a, a/2;
+end;
+$$ LANGUAGE plpgsql;

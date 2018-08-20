@@ -17,13 +17,8 @@ public abstract class Token<T> extends Symbol {
     }
 
     public String getStringValue() {
-        return value.toString();
+        return value == null ? "null" : value.toString();
     }
-
-    //    @Override
-//    public String toString() {
-//        return value.toString();
-//    }
 
     @Override
     public String toString() {

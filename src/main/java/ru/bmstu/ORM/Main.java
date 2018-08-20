@@ -10,7 +10,7 @@ import ru.bmstu.ORM.Analyzer.Symbols.Variables.SVar;
 import ru.bmstu.ORM.Codegen.CodeGenerator;
 import ru.bmstu.ORM.Service.Session.Session;
 import ru.bmstu.ORM.Service.Session.SessionFactory;
-import ru.bmstu.ORM.Service.Tables.Employee;
+import ru.bmstu.ORM.Service.Functions.Functions;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,8 +71,13 @@ public class Main {
         CodeGenerator codeGenerator = new CodeGenerator(start, "E:\\Sorry\\Documents\\IdeaProjects\\ORM\\src\\main\\test");
         codeGenerator.generateFiles();
 
-        //SessionFactory sessionFactory = new SessionFactory("localhost", "5432", "postgres", "shopdb", "0212");
-        //Session session = sessionFactory.openSession();
+
+        SessionFactory sessionFactory = new SessionFactory("localhost", "5432", "postgres", "shopdb", "0212");
+        Session session = sessionFactory.openSession();
+        Functions funcs = session.getFunctions(Functions.class);
+        System.out.println(funcs.go());
+        System.out.println(funcs.a(1));
+        System.out.println(funcs.a());
 //
 //        List<Shop> shop = session.selectFrom(Shop.class).where("shopCode = 101").fetchAll();
 //        System.out.println(shop);
