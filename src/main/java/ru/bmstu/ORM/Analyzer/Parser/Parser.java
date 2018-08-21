@@ -964,12 +964,14 @@ public class Parser {
             parse(TokenTag.RPAREN);
         } else if (sym.getTag() == TokenTag.IDENTIFIER
                 && (currentTable.getTypeOfColumn((IdentToken) sym) == VarTag.DATETIME_TYPE
-                    || currentTable.getTypeOfColumn((IdentToken) sym) == TokenTag.BOOLEAN)) {
+                    || currentTable.getTypeOfColumn((IdentToken) sym) == TokenTag.BOOLEAN
+                    || currentTable.getTypeOfColumn((IdentToken) sym) == VarTag.CHARACTER_TYPE)) {
             boolExprFactor.addSymbol(sym);
             boolExprFactor.setCoords(sym.getCoords());
             parse(TokenTag.IDENTIFIER);
 
             if (sym.getTag() == TokenTag.IS
+                    || sym.getTag() == TokenTag.LIKE
                     || sym.getTag() == TokenTag.LESS
                     || sym.getTag() == TokenTag.LESSEQ
                     || sym.getTag() == TokenTag.GREATER
@@ -1036,7 +1038,7 @@ public class Parser {
         }
     }
 
-    //RHS                 ::= DateRHS | BoolRHS
+    //RHS                 ::= DateRHS | BoolRHS | StringRHS
     private void parseRHS(RHSVar rhs) throws CloneNotSupportedException {
         if (sym.getTag() == TokenTag.LESS
                 || sym.getTag() == TokenTag.LESSEQ
@@ -1055,6 +1057,11 @@ public class Parser {
             rhs.addSymbol(boolRHS);
             parseBoolRHS(boolRHS);
             boolRHS.setCoords(boolRHS.getCoords());
+        } else if (sym.getTag() == TokenTag.LIKE) {
+            StringRHSVar stringRHS = new StringRHSVar();
+            rhs.addSymbol(stringRHS);
+            parseStringRHS(stringRHS);
+            rhs.setCoords(stringRHS.getCoords());
         } else {
             throw new RuntimeException("Boolean RHS expected, got " + sym);
         }
@@ -1255,6 +1262,17 @@ public class Parser {
             parseDateTimeCast(dateTimeCastVar);
             dateRHS.setFollow(dateTimeCastVar.getFollow());
         }
+    }
+
+    //StringRHS           ::= LIKE CharacterValue
+    private void parseStringRHS(StringRHSVar stringRHS) throws CloneNotSupportedException {
+        stringRHS.addSymbol(sym);
+        stringRHS.setStart(sym.getStart());
+        parse(TokenTag.LIKE);
+
+        stringRHS.addSymbol(sym);
+        stringRHS.setFollow(sym.getFollow());
+        parse(TokenTag.STRING_CONST);
     }
 
     //ConstExpr           ::= ArithmConstExpr | NOT? BoolConst | CharacterValue | DateTimeCast

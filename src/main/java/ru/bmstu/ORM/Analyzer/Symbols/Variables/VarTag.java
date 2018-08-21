@@ -33,6 +33,7 @@ public enum VarTag implements SymbolType {
     ARITHM_RHS,
     BOOL_RHS,
     DATE_RHS,
+    STRING_RHS,
     BOOL_CONST,
     CONST_EXPR,
     ARITHM_CONST_EXPR,

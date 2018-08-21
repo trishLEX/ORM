@@ -88,7 +88,7 @@ BoolExprFactor       ::= BoolConst BoolRHS?
 
 BoolConst            ::= TRUE | FALSE | NULL
 
-RHS                 ::= BoolRHS | DateRHS //TODO support string type, array in expressions
+RHS                 ::= BoolRHS | DateRHS | StringRHS
 
 ArithmRHS           ::= '<'  ArithmExpr
                     |   '<=' ArithmExpr
@@ -107,6 +107,8 @@ DateRHS             ::= '<'  DateTimeCast
                     |   '='  DateTimeCast
                     |   '!=' DateTimeCast
                     |   NOT? BETWEEN DateTimeCast AND DateTimeCast
+
+StringRHS           ::= LIKE CharacterValue
 
 ConstExpr           ::= ArithmConstExpr | NOT? BoolConst | CharacterValue | DateTimeCast
 

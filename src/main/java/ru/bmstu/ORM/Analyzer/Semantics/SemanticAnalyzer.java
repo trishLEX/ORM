@@ -165,8 +165,11 @@ public class SemanticAnalyzer {
                     BoolRHSVar boolRHS = (BoolRHSVar) rhs.get(0);
                     BoolConstVar boolConst = (BoolConstVar) boolRHS.get(boolRHS.getSymbols().size() - 1);
                     if (boolConst.get(0).getTag() != TokenTag.NULL)
-                        throw new RuntimeException("Invalid type of " + boolExprFactor.get(0));
+                        throw new RuntimeException("Invalid type of " + boolExprFactor.get(0) + ", boolean expected");
                 }
+
+                if (rhs.get(0).getTag() == VarTag.STRING_RHS && colType != VarTag.CHARACTER_TYPE)
+                    throw new RuntimeException("Invalid type of " + boolExprFactor.get(0) + ", string expected");
             }
         }
     }
