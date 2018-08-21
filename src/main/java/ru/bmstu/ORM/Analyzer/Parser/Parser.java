@@ -161,6 +161,8 @@ public class Parser {
         }
 
         qualifiedName.setFollow(col.getFollow());
+        if (qualifiedName.size() > 5)
+            throw new RuntimeException("Wrong qualified name " + qualifiedName);
     }
 
     //TableElement         ::= ColumnDef | TableConstraint
