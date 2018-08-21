@@ -2233,19 +2233,19 @@ public class Scanner {
                 case '(':
                     cur.nextCp();
 
-                    return new LParenToken(start, (Position) cur.clone());
+                    return new SpecToken(TokenTag.LPAREN, start, (Position) cur.clone(), "(");
                 case ')':
                     cur.nextCp();
 
-                    return new RParenToken(start, (Position) cur.clone());
+                    return new SpecToken(TokenTag.RPAREN, start, (Position) cur.clone(), ")");
                 case '[':
                     cur.nextCp();
 
-                    return new LBracketToken(start, (Position) cur.clone());
+                    return new SpecToken(TokenTag.LBRACKET, start, (Position) cur.clone(), "[");
                 case ']':
                     cur.nextCp();
 
-                    return new RBracketToken(start, (Position) cur.clone());
+                    return new SpecToken(TokenTag.RBRACKET, start, (Position) cur.clone(), "]");
                 case '{':
                     cur.nextCp();
 
@@ -2259,23 +2259,23 @@ public class Scanner {
                     if (cur.getChar() == '=') {
                         cur.nextCp();
 
-                        return new ComparisonToken(TokenTag.LESSEQ, start, (Position) cur.clone(), "<=");
+                        return new SpecToken(TokenTag.LESSEQ, start, (Position) cur.clone(), "<=");
                     } else
 
-                        return new ComparisonToken(TokenTag.LESS, start, (Position) cur.clone(), "<");
+                        return new SpecToken(TokenTag.LESS, start, (Position) cur.clone(), "<");
                 case '>':
                     cur.nextCp();
                     if (cur.getChar() == '=') {
                         cur.nextCp();
 
-                        return new ComparisonToken(TokenTag.GREATEREQ, start, (Position) cur.clone(), ">=");
+                        return new SpecToken(TokenTag.GREATEREQ, start, (Position) cur.clone(), ">=");
                     } else
 
-                        return new ComparisonToken(TokenTag.GREATER, start, (Position) cur.clone(), ">");
+                        return new SpecToken(TokenTag.GREATER, start, (Position) cur.clone(), ">");
                 case '=':
                     cur.nextCp();
 
-                    return new ComparisonToken(TokenTag.EQUAL, start, (Position) cur.clone(), "=");
+                    return new SpecToken(TokenTag.EQUAL, start, (Position) cur.clone(), "=");
                 case '!':
                     cur.nextCp();
                     if (cur.getChar() == '=') {
@@ -2284,11 +2284,11 @@ public class Scanner {
                         error("'=' expected");
                     }
 
-                    return new ComparisonToken(TokenTag.NOTEQUAL, start, (Position) cur.clone(), "!=");
+                    return new SpecToken(TokenTag.NOTEQUAL, start, (Position) cur.clone(), "!=");
                 case '+':
                     cur.nextCp();
 
-                    return new ArithmeticOpToken(TokenTag.ADD, start, (Position) cur.clone(), '+');
+                    return new SpecToken(TokenTag.ADD, start, (Position) cur.clone(), "+");
                 case '-':
                     cur.nextCp();
                     if (cur.getChar() == '-') {
@@ -2298,15 +2298,15 @@ public class Scanner {
                         continue;
                     }
 
-                    return new ArithmeticOpToken(TokenTag.SUB, start, (Position) cur.clone(), '-');
+                    return new SpecToken(TokenTag.SUB, start, (Position) cur.clone(), "-");
                 case '*':
                     cur.nextCp();
 
-                    return new ArithmeticOpToken(TokenTag.MUL, start, (Position) cur.clone(), '*');
+                    return new SpecToken(TokenTag.MUL, start, (Position) cur.clone(), "*");
                 case '/':
                     cur.nextCp();
 
-                    return new ArithmeticOpToken(TokenTag.DIV, start, (Position) cur.clone(), '/');
+                    return new SpecToken(TokenTag.DIV, start, (Position) cur.clone(), "/");
                 case '\'':
                     value = new StringBuilder();
                     cur.nextCp();
@@ -2358,7 +2358,7 @@ public class Scanner {
                 case ',':
                     cur.nextCp();
 
-                    return new CommaToken(start, (Position) cur.clone());
+                    return new SpecToken(TokenTag.COMMA, start, (Position) cur.clone(), ",");
                 case '.':
                     cur.nextCp();
                     if (cur.getChar() == '.') {
@@ -2367,14 +2367,14 @@ public class Scanner {
                         return new SpecToken(TokenTag.DOUBLE_DOT, start, (Position) cur.clone(), "..");
                     }
 
-                    return new DotToken(start, (Position) cur.clone());
+                    return new SpecToken(TokenTag.DOT, start, (Position) cur.clone(), ".");
                 case ':':
                     cur.nextCp();
 
                     if (cur.getChar() == '=') {
                         cur.nextCp();
 
-                        return new AssignOpToken(start, (Position) cur.clone());
+                        return new SpecToken(TokenTag.ASSIGN, start, (Position) cur.clone(), ":=");
                     } else if (cur.getChar() == ':') {
                         cur.nextCp();
 
@@ -2386,7 +2386,7 @@ public class Scanner {
                 case ';':
                     cur.nextCp();
 
-                    return new SemicolonToken(start, (Position) cur.clone());
+                    return new SpecToken(TokenTag.SEMICOLON, start, (Position) cur.clone(), ";");
                 case '$':
                     cur.nextCp();
                     if (cur.getChar() == '$') {
