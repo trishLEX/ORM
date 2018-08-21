@@ -40,8 +40,6 @@ public class SemanticAnalyzer {
         for (Symbol symbol: createTableFunction.getSymbols()) {
             if (symbol.getTag() == VarTag.CREATE_TABLE_STMT) {
                 analyzeCreateTableStmt((CreateTableStmtVar) symbol);
-            } else if (symbol.getTag() == VarTag.CREATE_FUNCTION_STMT) {
-                //TODO analyzeCreateFunctionStmt((CreateFunctionStmtVar) symbol);
             }
         }
     }
