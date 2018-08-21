@@ -646,8 +646,8 @@ public class Parser {
     //                     |   NULL
     //                     |   UNIQUE
     //                     |   PRIMARY KEY
-    //                     |   CHECK '(' BoolExpr ')'    //TODO HERE NEED TO CHECK APPLICATION OF OPs
-    //                     |   DEFAULT ConstExpr         //TODO ARITHMETIC, BOOL ONLY EXPR OR VALUE TILL
+    //                     |   CHECK '(' BoolExpr ')'
+    //                     |   DEFAULT ConstExpr
     //                     |   REFERENCES  QualifiedName ( '(' IDENT ')' )? KeyActions?
     private void parseColConstraintElem(ColConstraintElemVar colConstraintElem) throws CloneNotSupportedException {
         colConstraintElem.addSymbol(sym);

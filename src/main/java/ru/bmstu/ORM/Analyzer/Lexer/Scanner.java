@@ -2246,6 +2246,14 @@ public class Scanner {
                     cur.nextCp();
 
                     return new RBracketToken(start, (Position) cur.clone());
+                case '{':
+                    cur.nextCp();
+
+                    return new SpecToken(TokenTag.LBRACE, start, (Position) cur.clone(), "{");
+                case '}':
+                    cur.nextCp();
+
+                    return new SpecToken(TokenTag.RBRACE, start, (Position) cur.clone(), "}");
                 case '<':
                     cur.nextCp();
                     if (cur.getChar() == '=') {

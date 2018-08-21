@@ -128,6 +128,8 @@ public enum TokenTag implements SymbolType {
     RPAREN,
     LBRACKET,
     RBRACKET,
+    LBRACE,
+    RBRACE,
     LESS,
     LESSEQ,
     GREATER,

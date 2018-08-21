@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Shop
 
 CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Employee
 (
-  employeeCode INT PRIMARY KEY NOT NULL, --//TODO support this DEFAULT nextval('ShopDB.shopschema.emp_codes'),
+  employeeCode INT PRIMARY KEY NOT NULL,
   firstName VARCHAR(25) NOT NULL,
   lastName VARCHAR(25) NOT NULL,
   middleName VARCHAR(25),
