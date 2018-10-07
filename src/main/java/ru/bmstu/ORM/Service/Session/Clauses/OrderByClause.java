@@ -8,6 +8,5 @@ import java.sql.Connection;
 public class OrderByClause<T extends Entity> extends Fetchable<T> {
     OrderByClause(Connection connection, Class<T> tableClass, String selectStmt, String orderByClause) {
         super(connection, tableClass, selectStmt + " ORDER BY " + orderByClause);
-
     }
 }
