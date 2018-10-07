@@ -1,4 +1,4 @@
 package ru.bmstu.ORM.Service.Tables;
 
-public interface Entity {
+public abstract class Entity {
 }

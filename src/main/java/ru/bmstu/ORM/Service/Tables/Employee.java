@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 @Table(db = "shopdb", schema = "shopschema", name = "employee")
-public class Employee implements Entity {
+public class Employee extends Entity {
     @PK
     @Column(name = "employeeCode", unique = true, nullable = false)
     private Integer employeeCode;

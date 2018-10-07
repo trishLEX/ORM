@@ -5,7 +5,7 @@ import ru.bmstu.ORM.Service.ColumnAnnotations.*;
 import java.util.Objects;
 
 @Table(db = "shopdb", schema = "shopschema", name = "shop")
-public class Shop implements Entity {
+public class Shop extends Entity {
     @PK
     @Column(name = "shopCode", unique = true, nullable = false)
     private Integer shopCode;
