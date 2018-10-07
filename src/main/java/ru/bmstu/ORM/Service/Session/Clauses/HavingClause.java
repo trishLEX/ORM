@@ -6,7 +6,7 @@ import ru.bmstu.ORM.Service.Tables.Entity;
 
 import java.sql.Connection;
 
-public class HavingClause<T extends Entity> extends Fetchable<T> implements OrderByAble {
+public class HavingClause<T extends Entity> extends Fetchable<T> implements OrderByAble<T> {
     HavingClause(Connection connection, Class<T> tableClass, String selectStmt, String havingClause) {
         super(connection, tableClass, selectStmt + " HAVING " + havingClause);
     }
