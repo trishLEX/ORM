@@ -12,7 +12,7 @@ public class HavingClause<T extends Entity> extends Fetchable<T> implements Orde
     }
 
     @Override
-    public OrderByClause orderBy(String orderByClause) {
+    public OrderByClause<T> orderBy(String orderByClause) {
         return new OrderByClause<>(getConnection(), getTableClass(), getSelectStmt(), orderByClause);
     }
 }
