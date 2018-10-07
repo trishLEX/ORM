@@ -7,7 +7,7 @@ import ru.bmstu.ORM.Service.Tables.Entity;
 
 import java.sql.Connection;
 
-public class WhereClause<T extends Entity> extends Fetchable<T> implements GroupByAble, OrderByAble<T> {
+public class WhereClause<T extends Entity> extends Fetchable<T> implements GroupByAble<T>, OrderByAble<T> {
     WhereClause(Connection connection, Class<T> tableClass, String selectStmt, String whereClause) {
         super(connection, tableClass, selectStmt + " WHERE " + whereClause);
     }
