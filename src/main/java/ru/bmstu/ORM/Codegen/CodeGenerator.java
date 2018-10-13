@@ -59,7 +59,7 @@ public class CodeGenerator {
                     createTableStmt.getCatalog().toLowerCase(),
                     createTableStmt.getSchema().toLowerCase(),
                     createTableStmt.getName().toLowerCase()));
-            writer.write(String.format("public class %s implements Entity {\n", createTableStmt.getName()));
+            writer.write(String.format("public class %s extends Entity {\n", createTableStmt.getName()));
             String foreignObj = null;
             for (ColumnDefVar column : createTableStmt.getColumns()) {
                 if (column.isPK())
