@@ -119,7 +119,7 @@ public class CodeGenerator {
 
             writer.write("\t@Override\n");
             writer.write("\tpublic int hashCode() {\n");
-            writer.write("\t\treturn Objects.hashCode(");
+            writer.write("\t\treturn Objects.hash(");
             wasFirst = false;
             for (ColumnDefVar column : createTableStmt.getPKs()) {
                 if (!wasFirst)

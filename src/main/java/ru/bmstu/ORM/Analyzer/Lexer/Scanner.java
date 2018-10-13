@@ -2422,7 +2422,7 @@ public class Scanner {
     }
 
     private IdentToken getIdent(Position start, StringBuilder value) throws CloneNotSupportedException {
-        while (cur.isLetterOrDigit()) {
+        while (cur.isLetterOrDigit() || cur.getChar() == '_') {
             value.append(cur.getChar());
             cur.nextCp();
         }
