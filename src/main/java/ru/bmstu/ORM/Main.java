@@ -9,8 +9,6 @@ import ru.bmstu.ORM.Service.Tables.Shop;
 import java.util.List;
 
 public class Main {
-    private static final String PATH = "E:\\Sorry\\Documents\\IdeaProjects\\ORM\\src\\main\\resources\\TestFile.txt";
-
     public static void main(String[] args) {
         SessionFactory sessionFactory = new SessionFactory("localhost", "5432", "postgres", "shopdb", "0212");
         Session session = sessionFactory.openSession();
