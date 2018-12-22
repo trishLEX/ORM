@@ -1,62 +1,6 @@
-CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Shop
-(
-  shopCode INT PRIMARY KEY NOT NULL,
-  shopName VARCHAR(25) UNIQUE NOT NULL,
-  isOutlet BOOLEAN DEFAULT FALSE NOT NULL,
-  address  VARCHAR(25) NOT NULL,
-  city VARCHAR(50) NOT NULL,
-  "isClosed" BOOLEAN NOT NULL DEFAULT FALSE,
-
-  area FLOAT NOT NULL,
-  countOfVisitorsToday INT NOT NULL CHECK (countOfVisitorsToday >= 0)
+CREATE TABLE Math.public.powers (
+  x INT NOT NULL,
+  square INT NOT NULL,
+  cube INT NOT NULL,
+  PRIMARY KEY (x, square, cube)
 );
-
-CREATE TABLE IF NOT EXISTS ShopDB.shopschema.Employee
-(
-  employeeCode INT PRIMARY KEY NOT NULL,
-  firstName VARCHAR(25) NOT NULL,
-  lastName VARCHAR(25) NOT NULL,
-  middleName VARCHAR(25) CHECK (middleName LIKE '%A'),
-  dateOfBirth DATE NOT NULL,
-  phone CHAR(11) NOT NULL UNIQUE,
-  position VARCHAR(25) NOT NULL,
-  isFired BOOLEAN DEFAULT FALSE NOT NULL,
-  salary real NOT NULL,
-  sex boolean NOT NULL,
-  chief INT,
-  shopCode INT,
-  ints INT[],
-
-  FOREIGN KEY (shopCode) REFERENCES ShopDB.ShopSchema.Shop (shopCode) ON DELETE CASCADE
-);
-
-
-CREATE or replace function shopdb.shopschema.go(c int = 2, k int) returns int as $$
-begin
-  if (1>2) then
-    RAISE 'bad';
-    --return 1;
-
-  else
-    declare b int;
-    begin
-      SELECT * from shop join shop2 on a = b where c > 100;
-      LOOP
-        SELECT a from b;
-        EXIT WHEN a = 2;
-      END LOOP;
-      b := 10;
-      return b;
-    end;
-  end if;
-  return 1;
-end;
-$$ language plpgsql;
-
-CREATE OR REPLACE FUNCTION shopdb.shopschema.a(a INT DEFAULT 3)
-RETURNS TABLE(col int, col1 int) AS $$
-BEGIN
-  a := a * 2;
-  RETURN QUERY SELECT a, a/2;
-end;
-$$ LANGUAGE plpgsql;
